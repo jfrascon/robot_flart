@@ -12,12 +12,12 @@ base:
     wheelbase: 0.92
     track_width: 0.438
     ground_clearance: 0.06 # Distance from the ground to the bottom face of the base.
-    mesh_visual: bases/flart/mesh_low_res.stl
+    mesh_visual: xut_robot_flart/meshes/mesh_low_res.stl
     mesh_visual_has_color: False
     color: { "r": 0, "g": 0, "b": 1, "a": 1 }
-    mesh_collision: null
+    mesh_collision: xut_robot_flart/meshes/mesh_low_res.stl
     scale: { "x": 1, "y": 1, "z": 1 }
-  # mecanum wheel
+  # Motowheel
   wheel:
     mass: 6.5 # optional, default is 0.1 Kg
     # A wheel is either a cylinder (c) with its rotation axis along the y-axis or a sphere (s), no more geometries are
@@ -39,11 +39,12 @@ base:
     # This is not a realistic simulation of the mecanum wheels, but it is a practical solution to have a robot that can
     # move omnidirectionally in simulation.
     max_contacts: 2 # optional
-    mu: 0.01        # optional
-    mu2: 0.01       # optional
-    slip1: 0        # optional
-    slip2: 0        # optional
-    mesh_visual: null
+    mu: 0.01 # optional
+    mu2: 0.01 # optional
+    slip1: 0 # optional
+    slip2: 0 # optional
+    mesh_visual: null # By using null a cylinder along y-axis or sphere will be used, depending on the shape type.
+    # Wheels always use a cylinder or sphere for collision, depending on the shape type.
     mesh_visual_has_color: False
     color: { "r": 0.1, "g": 0.1, "b": 0.1, "a": 1 }
     # A wheel is a cylinder with its axis along the y-axis, which means that:
@@ -58,9 +59,9 @@ fork:
   tine:
     mass: 60
     size: { "x": 1.19, "y": 0.119669, "z": 0.06 }
-    mesh_visual: extras/fork_tine/mesh_low_res.stl
+    mesh_visual: eut_robotics_description/meshes/extras/fork_tine/mesh_low_res.stl
     mesh_visual_has_color: False
-    mesh_collision: null
+    mesh_collision: eut_robotics_description/meshes/extras/fork_tine/mesh_low_res.stl
     scale: { "x": 1, "y": 1, "z": 1 }
   base:
     mass: 70
@@ -69,7 +70,7 @@ fork:
   # Usually, forks are attached to the robot, on the front or the back side. The fork usually is a heavy body.
   # Attaching the fork with a considerable mass to the robot base, will affect the robot's center of mass,
   # which will affect the robot's dynamics and stability in simulation.
-  # Thefore, the parameters oyu have tune for your robot to move, will not work when you have the fork attached.
+  # Thefore, the parameters you have tuned for your robot to move, will not work when you have the fork attached.
   # Since we use simulation to have a kinematic simulation not a dynamic simulation, we can ignore the inertia
   # of the fork, so even though it is attached to the robot, the robot will move as it has no fork attached.
   use_inertia: False

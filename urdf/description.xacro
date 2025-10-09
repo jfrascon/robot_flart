@@ -5,26 +5,26 @@ which is the company that manufactures the forklift robot.
 -->
 <robot name="flart" xmlns:xacro="http://www.ros.org/wiki/xacro" xmlns:gz="http://gazebosim.org/schema">
 
-  <xacro:property name="pkg_dir"    value="$(find eut_robotics_description)"/>
-  <xacro:property name="config_dir" value="${pkg_dir}/config"/>
-  <xacro:property name="urdf_dir"   value="${pkg_dir}/urdf"/>
+  <xacro:property name="pkg_dir"      value="$(find xut_robot_flart)"/>
+  <xacro:property name="eut_rob_desc" value="$(find eut_robotics_description)"/>
 
   <!-- INCLUDES -->
 
-  <xacro:include filename="${urdf_dir}/common/all_commons.xacro"/>
-  <xacro:include filename="${urdf_dir}/bases/rectangular_body_macro.xacro"/>
-  <xacro:include filename="${urdf_dir}/bases/set_rectangular_body_props_macro.xacro"/>
-  <xacro:include filename="${urdf_dir}/wheels/wheel_macro.xacro"/>
-  <xacro:include filename="${urdf_dir}/wheels/set_wheel_props_macro.xacro"/>
-  <xacro:include filename="${urdf_dir}/extras/fork_macro.xacro"/>
-  <xacro:include filename="${urdf_dir}/extras/set_fork_props_macro.xacro"/>
-  <xacro:include filename="${urdf_dir}/sensors/all_sensors_macro.xacro"/>
+  <xacro:include filename="${eut_rob_desc}/urdf/common/all_commons.xacro"/>
+  <xacro:include filename="${eut_rob_desc}/urdf/bases/rectangular_body_macro.xacro"/>
+  <xacro:include filename="${eut_rob_desc}/urdf/bases/set_rectangular_body_props_macro.xacro"/>
+  <xacro:include filename="${eut_rob_desc}/urdf/wheels/wheel_macro.xacro"/>
+  <xacro:include filename="${eut_rob_desc}/urdf/wheels/set_wheel_props_macro.xacro"/>
+  <xacro:include filename="${eut_rob_desc}/urdf/extras/fork_macro.xacro"/>
+  <xacro:include filename="${eut_rob_desc}/urdf/extras/set_fork_props_macro.xacro"/>
+  <xacro:include filename="${eut_rob_desc}/urdf/sensors/all_sensors_macro.xacro"/>
 
   <!--
   An input configuration file can be provided when instantiating this xacro file.
   If no input configuration file is provided, the default configuration file is used.
   -->
-  <xacro:property name="desc_cfg" value="${xacro.load_yaml(config_dir + '/robots/flart/description.yaml')}"/>
+  <xacro:property name="desc_cfg"
+                  value="${xacro.load_yaml(pkg_dir + '/config/description.yaml')}"/>
 
   <!-- ===================================================================== -->
   <!-- ARGS -->
@@ -45,12 +45,18 @@ which is the company that manufactures the forklift robot.
   -->
 
   <!-- args into properties for easy manipulation -->
-  <xacro:property name="robname" value="$(arg robot_name)"/>
-  <xacro:property name="ns"      value="$(arg namespace)"/>
+  <xacro:property name="robot_name" value="$(arg robot_name)"/>
+  <xacro:property name="namespace"  value="$(arg namespace)"/>
 
-  <xacro:property name="robot_namespace"
-                  value="${(ns + robname) if ns in ('', '/') else (ns.rstrip('/') + '/' + robname)}"/>
-  <xacro:property name="robot_prefix" value="${robname + '_'}"/>
+  <!--
+  Set the property 'robot_namespace'
+  -->
+  <xacro:make_robot_namespace namespace="${namespace}" robot_name="${robot_name}"/>
+
+  <!--
+  Set the property 'robot_prefix'
+  -->
+  <xacro:make_robot_prefix robot_name="${robot_name}"/>
 
   <xacro:property name="odom_frame"           value="$(arg odom_frame)"/>
   <xacro:property name="use_visual_meshes"    value="$(arg use_visual_meshes)"/>
@@ -260,7 +266,7 @@ which is the company that manufactures the forklift robot.
   <xacro:property name="joint_base_fr_fork_fr_z"
                   value="${-base_body_ground_clearance + fork_tine_size_z + fork_clearance_under_fork}"/>
 
-    <xacro:fork
+  <xacro:fork
     name="fork"
     prefix="${robot_prefix}"
     parent_frame="${robot_prefix}base_link"
@@ -311,7 +317,6 @@ which is the company that manufactures the forklift robot.
     <origin rpy="0 0 0" xyz="-0.08629 0 ${base_body_size_z}"/>
   </joint>
 
-
   <!-- ===================================================================== -->
   <!-- SENSORS -->
   <!-- ===================================================================== -->
@@ -329,7 +334,7 @@ which is the company that manufactures the forklift robot.
   </xacro:if>
 
   <xacro:property name="front_lidar_cfg"
-                  value="${xacro.load_yaml(config_dir + '/sensors/lidars/robosense_helios_16p.yaml')}"/>
+                  value="${xacro.load_yaml(eut_rob_desc + '/config/sensors/lidars/robosense_helios_16p.yaml')}"/>
 
   <xacro:property name="joint_base_fr_front_lidar_fr_x"
                   value="${(0.5 * base_body_size_x) + (0.5 * front_lidar_cfg['shape']['size']['x']) - 0.028}"/>
@@ -377,19 +382,16 @@ which is the company that manufactures the forklift robot.
     use_mesh_collision="${use_collision_meshes}"/>
 
   <!--
-  The plugin 'gz_ros2_control' is not used.
-  -->
-  <xacro:if value="${use_sim_mode}">
-    <!--
-    <xacro:include filename="${urdf_dir}/robots/flart/ros2_control_sim.xacro"/>
-    <xacro:r2c namespace="${robot_namespace}"
-               fork_joint_name="${robot_prefix}fork_root_joint"
-               front_left_wheel_joint_name="${robot_prefix}front_left_wheel_joint"
-               front_right_wheel_joint_name="${robot_prefix}front_right_wheel_joint"
-               rear_left_wheel_joint_name="${robot_prefix}rear_left_wheel_joint"
-               rear_right_wheel_joint_name="${robot_prefix}rear_right_wheel_joint"/>
-    -->
+  GZ plugins to:
+  - Send position commands to fork_root_joint.
+  - Receive joint states from the fork_root_joint.
+  - Send velocity commands to the base.
+  - Receive velocity from the base.
 
+  This plugins simulate the behaviour the application uses to communicate with the real robot.
+  -->
+
+  <xacro:if value="${use_sim_mode}">
     <xacro:property name="base_vel_ctrl_sim_cfg"
                     value="${sim_cfg.get('base_velocity_controller', dict())}"/>
 
@@ -545,7 +547,7 @@ which is the company that manufactures the forklift robot.
           -->
           <use_velocity_commands>true</use_velocity_commands>
           <cmd_max>${fork_pos_ctrl_sim_cfg.get('v_max', 0.5)}</cmd_max>
-          <topic>${robot_namespace}/robot_description/fork_root_joint/cmd_pos</topic>
+          <topic>${robot_namespace}/fork_hardware_interface/cmd_pos</topic>
           <!--
           Initial position of a joint.
           -->
@@ -558,8 +560,8 @@ which is the company that manufactures the forklift robot.
         Reference: https://gazebosim.org/api/sim/7/classgz_1_1sim_1_1systems_1_1JointStatePublisher.html#details
         -->
         <plugin filename="gz-sim-joint-state-publisher-system" name="gz::sim::systems::JointStatePublisher">
-          <topic>${robot_namespace}/robot_description/fork_root_joint/pos</topic>
-          <joint_name>flart1_fork_root_joint</joint_name>
+          <topic>${robot_namespace}/fork_hardware_interface/pos</topic>
+          <joint_name>${robot_prefix}fork_root_joint</joint_name>
         </plugin>
       </xacro:if>
     </gazebo>

@@ -3,9 +3,9 @@ from pathlib import Path
 
 import yaml
 from ament_index_python.packages import get_package_share_directory
+from eut_robotics_description.tools import make_robot_namespace
 from launch_ros.actions import Node
 
-from eut_robotics_description.tools import make_robot_namespace
 from launch import LaunchContext, LaunchDescription, LaunchDescriptionEntity
 from launch.actions import DeclareLaunchArgument, LogInfo, OpaqueFunction, SetLaunchConfiguration
 from launch.substitutions import LaunchConfiguration
@@ -24,11 +24,7 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'sim_cfg_file',
             default_value=os.path.join(
-                get_package_share_directory('eut_robotics_description'),
-                'config',
-                'robots',
-                'flart',
-                'simulation_default.yaml',
+                get_package_share_directory('xut_robot_flart'), 'config', 'simulation_default.yaml'
             ),
             description='Path to the simulation configuration file (default: flart/simulation_default.yaml)',
         ),
@@ -199,7 +195,7 @@ def launch_rosgz_bridge(ctx: LaunchContext) -> list[LaunchDescriptionEntity]:
 
     if use_fork_pos_ctrl_plugin:
         # One channel in the rosgz_bridge for the fork position commands.
-        fork_pos_ctrl_plugin_topic = f'{robot_namespace}/robot_description/fork_root_joint/cmd_pos'
+        fork_pos_ctrl_plugin_topic = f'{robot_namespace}/fork_hardware_interface/cmd_pos'
 
         rosgz_bridge_channels.append(
             {
@@ -219,7 +215,7 @@ def launch_rosgz_bridge(ctx: LaunchContext) -> list[LaunchDescriptionEntity]:
 
     if use_fork_pos_pub_plugin:
         # One channel in the rosgz_bridge for the fork position.
-        fork_pos_pub_plugin_topic = f'{robot_namespace}/robot_description/fork_root_joint/pos'
+        fork_pos_pub_plugin_topic = f'{robot_namespace}/fork_hardware_interface/pos'
 
         rosgz_bridge_channels.append(
             {

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(eut_robotics_description)
+project(xut_robot_flart)
 
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_python REQUIRED)
@@ -9,14 +9,11 @@ install(
     DIRECTORY config launch meshes urdf
     DESTINATION share/${PROJECT_NAME})
 
-# Install Python package for reusable launch tools
-ament_python_install_package(${PROJECT_NAME})
+#ament_environment_hooks("${CMAKE_CURRENT_SOURCE_DIR}/hooks/${PROJECT_NAME}.dsv.in")
 
-ament_export_dependencies(${THIS_PACKAGE_INCLUDE_DEPENDS})
-
-if(BUILD_TESTING)
-  find_package(ament_cmake_pytest REQUIRED)
-  ament_add_pytest_test(xacro_test test/test_xacro.py)
-endif()
+# if(BUILD_TESTING)
+#   find_package(ament_cmake_pytest REQUIRED)
+#   ament_add_pytest_test(xacro_test <file_to_test>)
+# endif()
 
 ament_package()

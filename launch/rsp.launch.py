@@ -2,10 +2,10 @@ import os
 from pathlib import Path
 
 from ament_index_python.packages import get_package_share_directory
+from eut_robotics_description.tools import make_robot_namespace, make_robot_prefix
 from launch_ros.actions import Node
 from launch_ros.descriptions import ParameterValue
 
-from eut_robotics_description.tools import make_robot_namespace, make_robot_prefix
 from launch import LaunchContext, LaunchDescription, LaunchDescriptionEntity
 from launch.actions import DeclareLaunchArgument, LogInfo, OpaqueFunction, SetLaunchConfiguration
 from launch.substitutions import Command, FindExecutable, LaunchConfiguration
@@ -53,11 +53,7 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'sim_cfg_file',
             default_value=os.path.join(
-                get_package_share_directory('eut_robotics_description'),
-                'config',
-                'robots',
-                'flart',
-                'simulation_default.yaml',
+                get_package_share_directory('xut_robot_flart'), 'config', 'simulation_default.yaml'
             ),
             description='Path to the simulation configuration file (default: flart/simulation_default.yaml)',
         ),
@@ -68,20 +64,8 @@ def generate_launch_description():
         ),
         SetLaunchConfiguration('robot_namespace', robot_namespace),
         SetLaunchConfiguration('robot_prefix', robot_prefix),
-        LogInfo(
-            msg=[
-                "Launching description for the robot '",
-                robot_namespace,
-                "' (namespace: ",
-                namespace,
-                ', robot_name: ',
-                robot_name,
-                ')',
-            ]
-        ),
-        LogInfo(msg=['robot_prefix: ', robot_prefix]),
-        LogInfo(msg=['Simulation config file: ', LaunchConfiguration('sim_cfg_file')]),
-        LogInfo(msg=['RSP publish frequency: ', LaunchConfiguration('rsp_publish_frequency')]),
+        LogInfo(msg=['[', robot_namespace, '] Launching rsp at ', LaunchConfiguration('rsp_publish_frequency'), ' Hz']),
+        LogInfo(msg=['[', robot_namespace, '] Simulation config file: ', LaunchConfiguration('sim_cfg_file')]),
         OpaqueFunction(function=launch_robot_state_publisher),
     ]
 
@@ -123,13 +107,7 @@ def launch_robot_state_publisher(ctx: LaunchContext) -> list[LaunchDescriptionEn
             [
                 FindExecutable(name='xacro'),
                 ' ',
-                os.path.join(
-                    get_package_share_directory('eut_robotics_description'),
-                    'urdf',
-                    'robots',
-                    'flart',
-                    'description.xacro',
-                ),
+                os.path.join(get_package_share_directory('xut_robot_flart'), 'urdf', 'description.xacro'),
                 ' robot_name:=',
                 LaunchConfiguration('robot_name'),
                 ' namespace:=',
