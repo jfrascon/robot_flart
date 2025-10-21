@@ -3,29 +3,22 @@ from pathlib import Path
 
 import yaml
 from ament_index_python.packages import get_package_share_directory
-from eut_robotics_description.tools import make_robot_namespace
+from launch.actions import DeclareLaunchArgument, OpaqueFunction
+from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
+from ros2_launch_helpers import set_robot_namespace, set_robot_prefix
 
 from launch import LaunchContext, LaunchDescription, LaunchDescriptionEntity
-from launch.actions import DeclareLaunchArgument, LogInfo, OpaqueFunction, SetLaunchConfiguration
-from launch.substitutions import LaunchConfiguration
 
 
 def generate_launch_description():
-    namespace = LaunchConfiguration('namespace')
-    robot_name = LaunchConfiguration('robot_name')
-    # Build fully-qualified robot namespace using helper function.
-    robot_namespace = make_robot_namespace(namespace, robot_name)
-
     # ldes -> (l)aunch (d)escription (e)ntitie(s)
     ldes = [
         DeclareLaunchArgument('robot_name', default_value='flart', description='The unique name for the robot'),
         DeclareLaunchArgument('namespace', default_value='', description='Namespace for all resources'),
         DeclareLaunchArgument(
             'sim_cfg_file',
-            default_value=os.path.join(
-                get_package_share_directory('xut_robot_flart'), 'config', 'simulation_default.yaml'
-            ),
+            default_value=os.path.join(get_package_share_directory('robot_flart'), 'config', 'simulation_default.yaml'),
             description='Path to the simulation configuration file (default: flart/simulation_default.yaml)',
         ),
         DeclareLaunchArgument(
@@ -40,7 +33,8 @@ def generate_launch_description():
             choices=['debug', 'info', 'warn', 'error'],
             description='Log level for the rosgz_bridge_node (default: info)',
         ),
-        SetLaunchConfiguration('robot_namespace', robot_namespace),
+        OpaqueFunction(function=set_robot_namespace, args=['namespace', 'robot_name']),
+        OpaqueFunction(function=set_robot_prefix, args=['robot_name']),
         OpaqueFunction(function=launch_rosgz_bridge),
     ]
 
@@ -110,6 +104,7 @@ def launch_rosgz_bridge(ctx: LaunchContext) -> list[LaunchDescriptionEntity]:
     # <robot_namespace>/<sensor_or_controller_or_plugin>/<topic_base_name>
 
     robot_namespace = LaunchConfiguration('robot_namespace').perform(ctx)
+    robot_prefix = LaunchConfiguration('robot_prefix').perform(ctx)
 
     # Obtain the configuration for each sensor/plugin from the simulation configuration file.
 
@@ -122,8 +117,11 @@ def launch_rosgz_bridge(ctx: LaunchContext) -> list[LaunchDescriptionEntity]:
     fork_pos_ctrl_plugin_sim_cfg = data.get('fork_position_controller', {})
     use_fork_pos_ctrl_plugin = fork_pos_ctrl_plugin_sim_cfg.get('enabled', False)
 
-    fork_pos_pub_plugin_sim_cfg = data.get('fork_position_publisher', {})
-    use_fork_pos_pub_plugin = fork_pos_pub_plugin_sim_cfg.get('enabled', False)
+    steerable_wheel_pos_ctrl_plugin_sim_cfg = data.get('steerable_wheel_position_controller', {})
+    use_steerable_wheel_pos_ctrl_plugin = steerable_wheel_pos_ctrl_plugin_sim_cfg.get('enabled', False)
+
+    joint_state_publisher_plugin_sim_cfg = data.get('joint_state_publisher', {})
+    use_joint_state_publisher_plugin = joint_state_publisher_plugin_sim_cfg.get('enabled', False)
 
     front_lidar_sim_cfg = data.get('front_lidar', {})
     use_front_lidar = front_lidar_sim_cfg.get('enabled', False)
@@ -150,15 +148,13 @@ def launch_rosgz_bridge(ctx: LaunchContext) -> list[LaunchDescriptionEntity]:
             {
                 'ros_topic_name': vel_ctrl_plugin_topic,
                 'gz_topic_name': vel_ctrl_plugin_topic,
-                'ros_type_name': 'geometry_msgs/msg/TwistStamped',
+                'ros_type_name': 'geometry_msgs/msg/Twist',
                 'gz_type_name': 'gz.msgs.Twist',
                 'direction': 'ROS_TO_GZ',
                 'qos_profile': 'SENSOR_DATA',
                 'lazy': True,
             }
         )
-
-        ldes.append(LogInfo(msg=['[', robot_namespace, '] Bridging topic ', vel_ctrl_plugin_topic, ' (ROS -> GZ)']))
 
     if use_base_odom_pub_plugin:
         # One channel in the rosgz_bridge for the odometry.
@@ -176,8 +172,6 @@ def launch_rosgz_bridge(ctx: LaunchContext) -> list[LaunchDescriptionEntity]:
             }
         )
 
-        ldes.append(LogInfo(msg=['[', robot_namespace, '] Bridging topic ', odom_pub_plugin_topic, ' (GZ -> ROS)']))
-
         # Bridge the tf message from GZ to ROS, joining the odometry frame and the robot's root frame.
         rosgz_bridge_channels.append(
             {
@@ -191,11 +185,9 @@ def launch_rosgz_bridge(ctx: LaunchContext) -> list[LaunchDescriptionEntity]:
             }
         )
 
-        ldes.append(LogInfo(msg=['[', robot_namespace, "] Bridging tf odom fr -> robot's root fr (GZ -> ROS)"]))
-
     if use_fork_pos_ctrl_plugin:
         # One channel in the rosgz_bridge for the fork position commands.
-        fork_pos_ctrl_plugin_topic = f'{robot_namespace}/fork_hardware_interface/cmd_pos'
+        fork_pos_ctrl_plugin_topic = f'{robot_namespace}/joints/{robot_prefix}fork_root_joint/cmd_pos'
 
         rosgz_bridge_channels.append(
             {
@@ -209,18 +201,38 @@ def launch_rosgz_bridge(ctx: LaunchContext) -> list[LaunchDescriptionEntity]:
             }
         )
 
-        ldes.append(
-            LogInfo(msg=['[', robot_namespace, '] Bridging topic ', fork_pos_ctrl_plugin_topic, ' (ROS -> GZ)'])
-        )
+    if use_steerable_wheel_pos_ctrl_plugin:
+        # One channel in the rosgz_bridge for each steerable_wheel to command in position.
+        topics = [
+            f'{robot_namespace}/joints/{robot_prefix}front_steerable_wheel_steerable_joint/cmd_pos',
+            f'{robot_namespace}/joints/{robot_prefix}front_steerable_wheel_rotation_joint/cmd_pos',
+            f'{robot_namespace}/joints/{robot_prefix}rear_left_steerable_wheel_steerable_joint/cmd_pos',
+            f'{robot_namespace}/joints/{robot_prefix}rear_left_steerable_wheel_rotation_joint/cmd_pos',
+            f'{robot_namespace}/joints/{robot_prefix}rear_right_steerable_wheel_steerable_joint/cmd_pos',
+            f'{robot_namespace}/joints/{robot_prefix}rear_right_steerable_wheel_rotation_joint/cmd_pos',
+        ]
 
-    if use_fork_pos_pub_plugin:
+        for topic in topics:
+            rosgz_bridge_channels.append(
+                {
+                    'ros_topic_name': topic,
+                    'gz_topic_name': topic,
+                    'ros_type_name': 'std_msgs/msg/Float64',
+                    'gz_type_name': 'gz.msgs.Double',
+                    'direction': 'ROS_TO_GZ',
+                    'qos_profile': 'SENSOR_DATA',
+                    'lazy': True,
+                }
+            )
+
+    if use_joint_state_publisher_plugin:
         # One channel in the rosgz_bridge for the fork position.
-        fork_pos_pub_plugin_topic = f'{robot_namespace}/fork_hardware_interface/pos'
+        joint_states_publisher_plugin_topic = f'{robot_namespace}/joint_states'
 
         rosgz_bridge_channels.append(
             {
-                'ros_topic_name': fork_pos_pub_plugin_topic,
-                'gz_topic_name': fork_pos_pub_plugin_topic,
+                'ros_topic_name': joint_states_publisher_plugin_topic,
+                'gz_topic_name': joint_states_publisher_plugin_topic,
                 'ros_type_name': 'sensor_msgs/msg/JointState',
                 'gz_type_name': 'gz.msgs.Model',
                 'direction': 'GZ_TO_ROS',
@@ -228,8 +240,6 @@ def launch_rosgz_bridge(ctx: LaunchContext) -> list[LaunchDescriptionEntity]:
                 'lazy': True,
             }
         )
-
-        ldes.append(LogInfo(msg=['[', robot_namespace, '] Bridging topic ', fork_pos_pub_plugin_topic, ' (GZ -> ROS)']))
 
     if use_front_lidar:
         # One channel in the rosgz_bridge for the front lidar.
@@ -247,8 +257,6 @@ def launch_rosgz_bridge(ctx: LaunchContext) -> list[LaunchDescriptionEntity]:
             }
         )
 
-        ldes.append(LogInfo(msg=['[', robot_namespace, '] Bridging topic ', front_lidar_topic, ' (GZ -> ROS)']))
-
     if use_front_imu:
         # One channel in the bridge for the front imu.
         front_imu_topic = f'{robot_namespace}/front_imu/data'
@@ -264,8 +272,6 @@ def launch_rosgz_bridge(ctx: LaunchContext) -> list[LaunchDescriptionEntity]:
                 'lazy': True,
             }
         )
-
-        ldes.append(LogInfo(msg=['[', robot_namespace, '] Bridging topic ', front_imu_topic, ' (GZ -> ROS)']))
 
     # If no sensors are enabled, do nothing, i.e., return an empty list, so no bridge node is launched.
     if not rosgz_bridge_channels:

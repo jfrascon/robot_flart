@@ -2,14 +2,14 @@ import os
 from pathlib import Path
 
 from ament_index_python.packages import get_package_share_directory
-from eut_robotics_description.tools import make_robot_namespace, make_robot_prefix
-from launch_ros.actions import Node
-from launch_ros.descriptions import ParameterValue
-
-from launch import LaunchContext, LaunchDescription, LaunchDescriptionEntity
-from launch.actions import DeclareLaunchArgument, LogInfo, OpaqueFunction, SetLaunchConfiguration
+from launch.actions import DeclareLaunchArgument, LogInfo, OpaqueFunction
 from launch.substitutions import Command, FindExecutable, LaunchConfiguration
 from launch.utilities.type_utils import normalize_typed_substitution, perform_typed_substitution
+from launch_ros.actions import Node
+from launch_ros.descriptions import ParameterValue
+from ros2_launch_helpers import set_robot_namespace
+
+from launch import LaunchContext, LaunchDescription, LaunchDescriptionEntity
 
 
 def generate_launch_description():
@@ -19,12 +19,7 @@ def generate_launch_description():
     # The 'robot_namespace' is computed in this launch file and also inside the xacro file, using the same rules.
 
     # The 'robot_prefix' is prepended to the links and joints defined in the xacro file.
-    # The 'robot_prefix' is also computed inside the xacro file.
-
-    namespace = LaunchConfiguration('namespace')
-    robot_name = LaunchConfiguration('robot_name')
-    robot_namespace = make_robot_namespace(namespace, robot_name)
-    robot_prefix = make_robot_prefix(namespace, robot_name)
+    # The 'robot_prefix' is computed inside the xacro file.
 
     # ldes => (l)aunch (d)escription (e)ntitie(s)
 
@@ -35,8 +30,8 @@ def generate_launch_description():
             choices=['True', 'true', 'False', 'false'],
             description='Use simulation clock if true',
         ),
-        DeclareLaunchArgument('robot_name', default_value='flart', description='The unique name for the robot'),
         DeclareLaunchArgument('namespace', default_value='', description='Namespace for all resources'),
+        DeclareLaunchArgument('robot_name', default_value='flart', description='The unique name for the robot'),
         DeclareLaunchArgument('odom_frame', default_value='odom', description='Odometry frame name of the robot'),
         DeclareLaunchArgument(
             'use_visual_meshes',
@@ -52,9 +47,7 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             'sim_cfg_file',
-            default_value=os.path.join(
-                get_package_share_directory('xut_robot_flart'), 'config', 'simulation_default.yaml'
-            ),
+            default_value=os.path.join(get_package_share_directory('robot_flart'), 'config', 'simulation_default.yaml'),
             description='Path to the simulation configuration file (default: flart/simulation_default.yaml)',
         ),
         DeclareLaunchArgument(
@@ -62,10 +55,26 @@ def generate_launch_description():
             default_value='20.0',
             description='Frequency of publication for robot_state_publisher',
         ),
-        SetLaunchConfiguration('robot_namespace', robot_namespace),
-        SetLaunchConfiguration('robot_prefix', robot_prefix),
-        LogInfo(msg=['[', robot_namespace, '] Launching rsp at ', LaunchConfiguration('rsp_publish_frequency'), ' Hz']),
-        LogInfo(msg=['[', robot_namespace, '] Simulation config file: ', LaunchConfiguration('sim_cfg_file')]),
+        OpaqueFunction(
+            function=set_robot_namespace, kwargs={'namespace_key': 'namespace', 'robot_name_key': 'robot_name'}
+        ),
+        LogInfo(
+            msg=[
+                '[',
+                LaunchConfiguration('robot_namespace'),
+                '] Launching rsp at ',
+                LaunchConfiguration('rsp_publish_frequency'),
+                ' Hz',
+            ]
+        ),
+        LogInfo(
+            msg=[
+                '[',
+                LaunchConfiguration('robot_namespace'),
+                '] Simulation config file: ',
+                LaunchConfiguration('sim_cfg_file'),
+            ]
+        ),
         OpaqueFunction(function=launch_robot_state_publisher),
     ]
 
@@ -107,7 +116,7 @@ def launch_robot_state_publisher(ctx: LaunchContext) -> list[LaunchDescriptionEn
             [
                 FindExecutable(name='xacro'),
                 ' ',
-                os.path.join(get_package_share_directory('xut_robot_flart'), 'urdf', 'description.xacro'),
+                os.path.join(get_package_share_directory('robot_flart'), 'urdf', 'description.xacro'),
                 ' robot_name:=',
                 LaunchConfiguration('robot_name'),
                 ' namespace:=',

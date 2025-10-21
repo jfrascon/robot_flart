@@ -66,4 +66,3 @@ docstring-quotes = "double"
 
 [tool.ruff.lint.isort]
 split-on-trailing-comma = false
-known-first-party = ["xut_robot_flart"]

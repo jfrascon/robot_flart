@@ -1,13 +1,14 @@
 import os
 
+import ros2_launch_helpers as rlh
 from ament_index_python.packages import get_package_share_directory
-from launch_ros.substitutions import FindPackageShare
-
-from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.conditions import IfCondition, UnlessCondition  # noqa: F401
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import IfElseSubstitution, LaunchConfiguration, PathJoinSubstitution, TextSubstitution
+from launch_ros.substitutions import FindPackageShare
+
+from launch import LaunchDescription
 
 
 def generate_launch_description():
@@ -20,8 +21,8 @@ def generate_launch_description():
             choices=['True', 'true', 'False', 'false'],
             description='Use simulation clock if true',
         ),
-        DeclareLaunchArgument('robot_name', default_value='flart', description='The unique name for the robot'),
         DeclareLaunchArgument('namespace', default_value='', description='Namespace for all resources'),
+        DeclareLaunchArgument('robot_name', default_value='flart', description='The unique name for the robot'),
         # Launch arguments for the robot description.
         DeclareLaunchArgument(
             'use_visual_meshes',
@@ -37,9 +38,7 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             'sim_cfg_file',
-            default_value=os.path.join(
-                get_package_share_directory('xut_robot_flart'), 'config', 'simulation_default.yaml'
-            ),
+            default_value=os.path.join(get_package_share_directory('robot_flart'), 'config', 'simulation_default.yaml'),
             description='Path to the simulation configuration file (default: flart/simulation_default.yaml)',
         ),
         DeclareLaunchArgument(
@@ -63,7 +62,7 @@ def generate_launch_description():
         # Launch de robot description, both in simulation and real mode.
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
-                PathJoinSubstitution([FindPackageShare('xut_robot_flart'), 'launch', 'rsp.launch.py'])
+                PathJoinSubstitution([FindPackageShare('robot_flart'), 'launch', 'rsp.launch.py'])
             ),
             launch_arguments={
                 'use_sim_time': LaunchConfiguration('use_sim_time'),
@@ -89,7 +88,7 @@ def generate_launch_description():
         # Launch sensors: simulation vs real, based on 'use_sim_time'.
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
-                PathJoinSubstitution([FindPackageShare('xut_robot_flart'), 'launch', 'rosgz_bridge.launch.py'])
+                PathJoinSubstitution([FindPackageShare('robot_flart'), 'launch', 'rosgz_bridge.launch.py'])
             ),
             launch_arguments={
                 'robot_name': LaunchConfiguration('robot_name'),
@@ -99,6 +98,25 @@ def generate_launch_description():
                 'log_level_rosgz_bridge': LaunchConfiguration('log_level_rosgz_bridge'),
             }.items(),
             condition=IfCondition(LaunchConfiguration('use_sim_time')),
+        ),
+        # Launch Three Swerve Kinematics node.
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(
+                PathJoinSubstitution(
+                    [FindPackageShare('ground_vehicle_kinematics'), 'launch', 'three_swerve_bringup.launch.py']
+                )
+            ),
+            launch_arguments={
+                'use_sim_time': LaunchConfiguration('use_sim_time'),
+                'namespace': LaunchConfiguration('namespace'),
+                'robot_name': LaunchConfiguration('robot_name'),
+                'params_file': PathJoinSubstitution(
+                    [FindPackageShare('robot_flart'), 'config', 'three_swerve_kinematics.yaml']
+                ),
+                'remappings': TextSubstitution(text=''),
+                'log_options': rlh.default_log_options_str(),
+                'node_options': rlh.default_node_options_str(),
+            }.items(),
         ),
     ]
 

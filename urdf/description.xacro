@@ -5,7 +5,7 @@ which is the company that manufactures the forklift robot.
 -->
 <robot name="flart" xmlns:xacro="http://www.ros.org/wiki/xacro" xmlns:gz="http://gazebosim.org/schema">
 
-  <xacro:property name="pkg_dir"      value="$(find xut_robot_flart)"/>
+  <xacro:property name="pkg_dir" value="$(find robot_flart)"/>
   <xacro:property name="eut_rob_desc" value="$(find eut_robotics_description)"/>
 
   <!-- INCLUDES -->
@@ -13,8 +13,8 @@ which is the company that manufactures the forklift robot.
   <xacro:include filename="${eut_rob_desc}/urdf/common/all_commons.xacro"/>
   <xacro:include filename="${eut_rob_desc}/urdf/bases/rectangular_body_macro.xacro"/>
   <xacro:include filename="${eut_rob_desc}/urdf/bases/set_rectangular_body_props_macro.xacro"/>
-  <xacro:include filename="${eut_rob_desc}/urdf/wheels/wheel_macro.xacro"/>
-  <xacro:include filename="${eut_rob_desc}/urdf/wheels/set_wheel_props_macro.xacro"/>
+  <xacro:include filename="${eut_rob_desc}/urdf/wheels/steerable_wheel_macro.xacro"/>
+  <xacro:include filename="${eut_rob_desc}/urdf/wheels/set_steerable_wheel_props_macro.xacro"/>
   <xacro:include filename="${eut_rob_desc}/urdf/extras/fork_macro.xacro"/>
   <xacro:include filename="${eut_rob_desc}/urdf/extras/set_fork_props_macro.xacro"/>
   <xacro:include filename="${eut_rob_desc}/urdf/sensors/all_sensors_macro.xacro"/>
@@ -24,21 +24,21 @@ which is the company that manufactures the forklift robot.
   If no input configuration file is provided, the default configuration file is used.
   -->
   <xacro:property name="desc_cfg"
-                  value="${xacro.load_yaml(pkg_dir + '/config/description.yaml')}"/>
+    value="${xacro.load_yaml(pkg_dir + '/config/description.yaml')}"/>
 
   <!-- ===================================================================== -->
   <!-- ARGS -->
   <!-- ===================================================================== -->
-  <xacro:arg name="robot_name"           default="${desc_cfg['name']}"/>
-  <xacro:arg name="namespace"            default=""/>
+  <xacro:arg name="robot_name" default="${desc_cfg['name']}"/>
+  <xacro:arg name="namespace" default=""/>
   <!--
   Note that robot_prefix, defined below, will be appended to the odom_frame name.
   -->
-  <xacro:arg name="odom_frame"           default="odom"/>
-  <xacro:arg name="use_visual_meshes"    default="True"/>
+  <xacro:arg name="odom_frame" default="odom"/>
+  <xacro:arg name="use_visual_meshes" default="True"/>
   <xacro:arg name="use_collision_meshes" default="False"/>
-  <xacro:arg name="use_sim_mode"         default="False"/>
-  <xacro:arg name="sim_cfg_file"         default=""/>
+  <xacro:arg name="use_sim_mode" default="False"/>
+  <xacro:arg name="sim_cfg_file" default=""/>
 
   <!--
   Create properties from args for easy manipulation.
@@ -46,7 +46,7 @@ which is the company that manufactures the forklift robot.
 
   <!-- args into properties for easy manipulation -->
   <xacro:property name="robot_name" value="$(arg robot_name)"/>
-  <xacro:property name="namespace"  value="$(arg namespace)"/>
+  <xacro:property name="namespace" value="$(arg namespace)"/>
 
   <!--
   Set the property 'robot_namespace'
@@ -58,10 +58,10 @@ which is the company that manufactures the forklift robot.
   -->
   <xacro:make_robot_prefix robot_name="${robot_name}"/>
 
-  <xacro:property name="odom_frame"           value="$(arg odom_frame)"/>
-  <xacro:property name="use_visual_meshes"    value="$(arg use_visual_meshes)"/>
+  <xacro:property name="odom_frame" value="$(arg odom_frame)"/>
+  <xacro:property name="use_visual_meshes" value="$(arg use_visual_meshes)"/>
   <xacro:property name="use_collision_meshes" value="$(arg use_collision_meshes)"/>
-  <xacro:property name="use_sim_mode"         value="$(arg use_sim_mode)"/>
+  <xacro:property name="use_sim_mode" value="$(arg use_sim_mode)"/>
 
   <!--
   If not working in simulation mode, do not load the simulation configuration for the robot from the simulation
@@ -114,13 +114,13 @@ which is the company that manufactures the forklift robot.
   '${robot_prefix}${base_name}_link' IS JUST OVER IT, AT A HEIGHT OF 'GROUND_CLEARANCE' METERS.
   -->
 
-  <xacro:property name="base_name"              value="base"/>
-  <xacro:property name="front_wheel_name"       value="front_wheel"/>       <!-- fw -->
-  <xacro:property name="rear_left_wheel_name"   value="rear_left_wheel"/>   <!-- rlw -->
-  <xacro:property name="rear_right_wheel_name"  value="rear_right_wheel"/>  <!-- rrw -->
+  <xacro:property name="base_name" value="base"/>
+  <xacro:property name="front_steerable_wheel_name" value="front_steerable_wheel"/>       <!-- fsw -->
+  <xacro:property name="rear_left_steerable_wheel_name" value="rear_left_steerable_wheel"/>   <!-- rlsw -->
+  <xacro:property name="rear_right_steerable_wheel_name" value="rear_right_steerable_wheel"/>  <!-- rrsw -->
 
   <xacro:set_rectangular_body_props desc_cfg="${desc_cfg['base']['body']}" prop_prefix="base_body"/>
-  <xacro:property name="base_body_half_wheelbase"   value="${0.5 * base_body_wheelbase}"/>
+  <xacro:property name="base_body_half_wheelbase" value="${0.5 * base_body_wheelbase}"/>
   <xacro:property name="base_body_half_track_width" value="${0.5 * base_body_track_width}"/>
 
   <xacro:rectangular_body
@@ -144,106 +144,84 @@ which is the company that manufactures the forklift robot.
   Front and rear wheels can rotate around an axis to get the proper orientation, so this way the omnidirectional motion
   is achieved.
   -->
-  <link name="${robot_prefix}${front_wheel_name}_gear_link">
-    <xacro:null_inertia/>
-  </link>
 
-  <xacro:property name="z_wheel_gear" value="0.278"/>
+  <xacro:set_steerable_wheel_props desc_cfg="${desc_cfg['base']['steerable_wheel']}" prop_prefix="steerable_wheel"/>
+  <xacro:property name="z_steerable_wheel" value="${-base_body_ground_clearance + steerable_wheel_radius}"/>
 
-  <joint name="${robot_prefix}${front_wheel_name}_gear_joint" type="fixed">
-    <parent link="${robot_prefix}${base_name}_link"/>
-    <child link="${robot_prefix}${front_wheel_name}_gear_link"/>
-    <origin rpy="0 0 0" xyz="${base_body_half_wheelbase} 0 ${z_wheel_gear}"/>
-  </joint>
-
-  <xacro:set_wheel_props desc_cfg="${desc_cfg['base']['wheel']}" prop_prefix="wheel"/>
-  <xacro:property name="z_wheel" value="${-z_wheel_gear - base_body_ground_clearance + wheel_radius}"/>
-
-  <xacro:wheel
-    name="${front_wheel_name}"
+  <xacro:steerable_wheel
+    name="${front_steerable_wheel_name}"
     prefix="${robot_prefix}"
-    parent_frame="${robot_prefix}${front_wheel_name}_gear_link"
-    mass="${wheel_mass}"
-    shape="${wheel_shape}"
-    joint_type="${wheel_joint_type}"
-    velocity_limit="${wheel_velocity_limit}"
-    effort_limit="${wheel_effort_limit}"
-    max_contacts="${wheel_max_contacts}"
-    mu="${wheel_mu}"
-    mu2="${wheel_mu2}"
-    slip1="${wheel_slip1}"
-    slip2="${wheel_slip2}"
-    mesh_visual="${wheel_mesh_visual}"
-    mesh_visual_has_color="${wheel_mesh_visual_has_color}"
-    color="${wheel_color}"
-    scale="${wheel_scale}"
-    joint_parent_fr_wheel_fr="0 0 ${z_wheel} 0 0 0"
-    fdir1_fr="${robot_prefix}${front_wheel_name}_gear_link"
-    fdir1="1 0 0"/>
+    parent_frame="${robot_prefix}${base_name}_link"
+    mass="${steerable_wheel_mass}"
+    shape="${steerable_wheel_shape}"
+    steerable_joint_type="${steerable_wheel_steerable_joint_type}"
+    steerable_joint_lower_limit="${steerable_wheel_steerable_joint_lower_limit}"
+    steerable_joint_upper_limit="${steerable_wheel_steerable_joint_upper_limit}"
+    steerable_joint_velocity_limit="${steerable_wheel_steerable_joint_velocity_limit}"
+    steerable_joint_effort_limit="${steerable_wheel_steerable_joint_effort_limit}"
+    rotation_joint_type="${steerable_wheel_rotation_joint_type}"
+    rotation_joint_velocity_limit="${steerable_wheel_rotation_joint_velocity_limit}"
+    rotation_joint_effort_limit="${steerable_wheel_rotation_joint_effort_limit}"
+    max_contacts="${steerable_wheel_max_contacts}"
+    mu="${steerable_wheel_mu}"
+    mu2="${steerable_wheel_mu2}"
+    slip1="${steerable_wheel_slip1}"
+    slip2="${steerable_wheel_slip2}"
+    mesh_visual="${steerable_wheel_mesh_visual}"
+    mesh_visual_has_color="${steerable_wheel_mesh_visual_has_color}"
+    color="${steerable_wheel_color}"
+    scale="${steerable_wheel_scale}"
+    joint_parent_fr_wheel_fr="${base_body_half_wheelbase} 0 ${z_steerable_wheel} 0 0 0"/>
 
-  <link name="${robot_prefix}${rear_left_wheel_name}_gear_link">
-    <xacro:null_inertia/>
-  </link>
-
-  <joint name="${robot_prefix}${rear_left_wheel_name}_gear_joint" type="fixed">
-    <parent link="${robot_prefix}${base_name}_link"/>
-    <child link="${robot_prefix}${rear_left_wheel_name}_gear_link"/>
-    <origin rpy="0 0 0" xyz="${-base_body_half_wheelbase} ${base_body_half_track_width} ${z_wheel_gear}"/>
-  </joint>
-
-  <xacro:wheel
-    name="${rear_left_wheel_name}"
+  <xacro:steerable_wheel
+    name="${rear_left_steerable_wheel_name}"
     prefix="${robot_prefix}"
-    parent_frame="${robot_prefix}${rear_left_wheel_name}_gear_link"
-    mass="${wheel_mass}"
-    shape="${wheel_shape}"
-    joint_type="${wheel_joint_type}"
-    velocity_limit="${wheel_velocity_limit}"
-    effort_limit="${wheel_effort_limit}"
-    max_contacts="${wheel_max_contacts}"
-    mu="${wheel_mu}"
-    mu2="${wheel_mu2}"
-    slip1="${wheel_slip1}"
-    slip2="${wheel_slip2}"
-    mesh_visual="${wheel_mesh_visual}"
-    mesh_visual_has_color="${wheel_mesh_visual_has_color}"
-    color="${wheel_color}"
-    scale="${wheel_scale}"
-    joint_parent_fr_wheel_fr="0 0 ${z_wheel} 0 0 0"
-    fdir1_fr="${robot_prefix}${rear_left_wheel_name}_gear_link"
-    fdir1="1 0 0"/>
+    parent_frame="${robot_prefix}${base_name}_link"
+    mass="${steerable_wheel_mass}"
+    shape="${steerable_wheel_shape}"
+    steerable_joint_type="${steerable_wheel_steerable_joint_type}"
+    steerable_joint_lower_limit="${steerable_wheel_steerable_joint_lower_limit}"
+    steerable_joint_upper_limit="${steerable_wheel_steerable_joint_upper_limit}"
+    steerable_joint_velocity_limit="${steerable_wheel_steerable_joint_velocity_limit}"
+    steerable_joint_effort_limit="${steerable_wheel_steerable_joint_effort_limit}"
+    rotation_joint_type="${steerable_wheel_rotation_joint_type}"
+    rotation_joint_velocity_limit="${steerable_wheel_rotation_joint_velocity_limit}"
+    rotation_joint_effort_limit="${steerable_wheel_rotation_joint_effort_limit}"
+    max_contacts="${steerable_wheel_max_contacts}"
+    mu="${steerable_wheel_mu}"
+    mu2="${steerable_wheel_mu2}"
+    slip1="${steerable_wheel_slip1}"
+    slip2="${steerable_wheel_slip2}"
+    mesh_visual="${steerable_wheel_mesh_visual}"
+    mesh_visual_has_color="${steerable_wheel_mesh_visual_has_color}"
+    color="${steerable_wheel_color}"
+    scale="${steerable_wheel_scale}"
+    joint_parent_fr_wheel_fr="${-base_body_half_wheelbase} ${base_body_half_track_width} ${z_steerable_wheel} 0 0 0"/>
 
-  <link name="${robot_prefix}${rear_right_wheel_name}_gear_link">
-    <xacro:null_inertia/>
-  </link>
-
-  <joint name="${robot_prefix}${rear_right_wheel_name}_gear_joint" type="fixed">
-    <parent link="${robot_prefix}${base_name}_link"/>
-    <child link="${robot_prefix}${rear_right_wheel_name}_gear_link"/>
-    <origin rpy="0 0 0" xyz="${-base_body_half_wheelbase} ${-base_body_half_track_width} ${z_wheel_gear}"/>
-  </joint>
-
-  <xacro:wheel
-    name="${rear_right_wheel_name}"
+  <xacro:steerable_wheel
+    name="${rear_right_steerable_wheel_name}"
     prefix="${robot_prefix}"
-    parent_frame="${robot_prefix}${rear_right_wheel_name}_gear_link"
-    mass="${wheel_mass}"
-    shape="${wheel_shape}"
-    joint_type="${wheel_joint_type}"
-    velocity_limit="${wheel_velocity_limit}"
-    effort_limit="${wheel_effort_limit}"
-    max_contacts="${wheel_max_contacts}"
-    mu="${wheel_mu}"
-    mu2="${wheel_mu2}"
-    slip1="${wheel_slip1}"
-    slip2="${wheel_slip2}"
-    mesh_visual="${wheel_mesh_visual}"
-    mesh_visual_has_color="${wheel_mesh_visual_has_color}"
-    color="${wheel_color}"
-    scale="${wheel_scale}"
-    joint_parent_fr_wheel_fr="0 0 ${z_wheel} 0 0 0"
-    fdir1_fr="${robot_prefix}${rear_right_wheel_name}_gear_link"
-    fdir1="1 0 0"/>
+    parent_frame="${robot_prefix}${base_name}_link"
+    mass="${steerable_wheel_mass}"
+    shape="${steerable_wheel_shape}"
+    steerable_joint_type="${steerable_wheel_steerable_joint_type}"
+    steerable_joint_lower_limit="${steerable_wheel_steerable_joint_lower_limit}"
+    steerable_joint_upper_limit="${steerable_wheel_steerable_joint_upper_limit}"
+    steerable_joint_velocity_limit="${steerable_wheel_steerable_joint_velocity_limit}"
+    steerable_joint_effort_limit="${steerable_wheel_steerable_joint_effort_limit}"
+    rotation_joint_type="${steerable_wheel_rotation_joint_type}"
+    rotation_joint_velocity_limit="${steerable_wheel_rotation_joint_velocity_limit}"
+    rotation_joint_effort_limit="${steerable_wheel_rotation_joint_effort_limit}"
+    max_contacts="${steerable_wheel_max_contacts}"
+    mu="${steerable_wheel_mu}"
+    mu2="${steerable_wheel_mu2}"
+    slip1="${steerable_wheel_slip1}"
+    slip2="${steerable_wheel_slip2}"
+    mesh_visual="${steerable_wheel_mesh_visual}"
+    mesh_visual_has_color="${steerable_wheel_mesh_visual_has_color}"
+    color="${steerable_wheel_color}"
+    scale="${steerable_wheel_scale}"
+    joint_parent_fr_wheel_fr="${-base_body_half_wheelbase} ${-base_body_half_track_width} ${z_steerable_wheel} 0 0 0"/>
 
   <!-- ===================================================================== -->
   <!-- FORK -->
@@ -261,13 +239,15 @@ which is the company that manufactures the forklift robot.
   <xacro:property name="padding_x" value="${robot_size_x - base_body_size_x - fork_tine_size_x}"/>
 
   <xacro:property name="joint_base_fr_fork_fr_x"
-                  value="${(-base_body_size_x * 0.5) - padding_x - fork_base_size_x}"/>
+    value="${(-base_body_size_x * 0.5) - padding_x - fork_base_size_x}"/>
 
   <xacro:property name="joint_base_fr_fork_fr_z"
-                  value="${-base_body_ground_clearance + fork_tine_size_z + fork_clearance_under_fork}"/>
+    value="${-base_body_ground_clearance + fork_tine_size_z + fork_clearance_under_fork}"/>
+
+  <xacro:property name="fork_name" value="fork"/>
 
   <xacro:fork
-    name="fork"
+    name="${fork_name}"
     prefix="${robot_prefix}"
     parent_frame="${robot_prefix}base_link"
     use_inertia="${fork_use_inertia}"
@@ -297,11 +277,11 @@ which is the company that manufactures the forklift robot.
   <!-- ===================================================================== -->
 
   <!-- (t)op (p)latform -->
-  <xacro:property name="tp_mass"    value="1"/>
-  <xacro:property name="tp_size_x"  value="0.08"/>
-  <xacro:property name="tp_size_y"  value="0.08"/>
-  <xacro:property name="tp_size_z"  value="0.146"/>
-  <xacro:property name="tp_color"   value="0.1 0.1 0.1 1"/>
+  <xacro:property name="tp_mass" value="1"/>
+  <xacro:property name="tp_size_x" value="0.08"/>
+  <xacro:property name="tp_size_y" value="0.08"/>
+  <xacro:property name="tp_size_z" value="0.146"/>
+  <xacro:property name="tp_color" value="0.1 0.1 0.1 1"/>
 
   <xacro:link_r
     name="top_platform"
@@ -334,10 +314,10 @@ which is the company that manufactures the forklift robot.
   </xacro:if>
 
   <xacro:property name="front_lidar_cfg"
-                  value="${xacro.load_yaml(eut_rob_desc + '/config/sensors/lidars/robosense_helios_16p.yaml')}"/>
+    value="${xacro.load_yaml(eut_rob_desc + '/config/sensors/lidars/robosense_helios_16p.yaml')}"/>
 
   <xacro:property name="joint_base_fr_front_lidar_fr_x"
-                  value="${(0.5 * base_body_size_x) + (0.5 * front_lidar_cfg['shape']['size']['x']) - 0.028}"/>
+    value="${(0.5 * base_body_size_x) + (0.5 * front_lidar_cfg['shape']['size']['x']) - 0.028}"/>
 
   <xacro:property name="front_lidar_sim_cfg" value="${sim_cfg.get('front_lidar', dict()) if use_sim_mode else dict()}"/>
 
@@ -367,7 +347,7 @@ which is the company that manufactures the forklift robot.
   -->
 
   <xacro:property name="joint_front_lidar_fr_front_imu_fr"
-                  value="0 0 ${front_lidar_cfg['shape']['size']['z']} 0 0 0"/>
+    value="0 0 ${front_lidar_cfg['shape']['size']['z']} 0 0 0"/>
 
   <xacro:property name="front_imu_sim_cfg" value="${sim_cfg.get('front_imu', dict()) if use_sim_mode else dict()}"/>
 
@@ -393,16 +373,19 @@ which is the company that manufactures the forklift robot.
 
   <xacro:if value="${use_sim_mode}">
     <xacro:property name="base_vel_ctrl_sim_cfg"
-                    value="${sim_cfg.get('base_velocity_controller', dict())}"/>
+      value="${sim_cfg.get('base_velocity_controller', dict())}"/>
 
     <xacro:property name="base_odom_pub_sim_cfg"
-                    value="${sim_cfg.get('base_odometry_publisher', dict())}"/>
+      value="${sim_cfg.get('base_odometry_publisher', dict())}"/>
 
     <xacro:property name="fork_pos_ctrl_sim_cfg"
-                    value="${sim_cfg.get('fork_position_controller', dict())}"/>
+      value="${sim_cfg.get('fork_position_controller', dict())}"/>
 
-    <xacro:property name="fork_pos_pub_sim_cfg"
-                    value="${sim_cfg.get('fork_position_publisher', dict())}"/>
+    <xacro:property name="steerable_wheel_pos_ctrl_sim_cfg"
+      value="${sim_cfg.get('steerable_wheel_position_controller', dict())}"/>
+
+    <xacro:property name="joint_state_publisher_sim_cfg"
+      value="${sim_cfg.get('joint_state_publisher', dict())}"/>
 
     <gazebo>
       <!--
@@ -416,10 +399,10 @@ which is the company that manufactures the forklift robot.
       -->
       <xacro:if value="${base_vel_ctrl_sim_cfg.get('enabled', False)}">
         <xacro:property name="initial_linear"
-                        value="${base_vel_ctrl_sim_cfg.get('initial_linear', dict(x=0, y=0, z=0))}"/>
+          value="${base_vel_ctrl_sim_cfg.get('initial_linear', dict(x=0, y=0, z=0))}"/>
 
         <xacro:property name="initial_angular"
-                        value="${base_vel_ctrl_sim_cfg.get('initial_angular', dict(x=0, y=0, z=0))}"/>
+          value="${base_vel_ctrl_sim_cfg.get('initial_angular', dict(x=0, y=0, z=0))}"/>
 
         <!--
         Reference: https://gazebosim.org/api/gazebo/6/classignition_1_1gazebo_1_1systems_1_1VelocityControl.html
@@ -477,13 +460,13 @@ which is the company that manufactures the forklift robot.
 
         -->
         <xacro:property name="odom_publish_frequency"
-                        value="${base_odom_pub_sim_cfg.get('odom_publish_frequency', 50)}"/>
+          value="${base_odom_pub_sim_cfg.get('odom_publish_frequency', 50)}"/>
 
         <xacro:property name="offset"
-                        value="${base_odom_pub_sim_cfg.get('offset', dict(x=0, y=0, z=0, R=0, P=0, Y=0))}"/>
+          value="${base_odom_pub_sim_cfg.get('offset', dict(x=0, y=0, z=0, R=0, P=0, Y=0))}"/>
 
         <xacro:property name="gaussian_noise"
-                        value="${base_odom_pub_sim_cfg.get('gaussian_noise', 0)}"/>
+          value="${base_odom_pub_sim_cfg.get('gaussian_noise', 0)}"/>
 
         <plugin filename="gz-sim-odometry-publisher-system" name="gz::sim::systems::OdometryPublisher">
           <odom_frame>${robot_prefix}${odom_frame}</odom_frame>
@@ -547,21 +530,85 @@ which is the company that manufactures the forklift robot.
           -->
           <use_velocity_commands>true</use_velocity_commands>
           <cmd_max>${fork_pos_ctrl_sim_cfg.get('v_max', 0.5)}</cmd_max>
-          <topic>${robot_namespace}/fork_hardware_interface/cmd_pos</topic>
+          <topic>${robot_namespace}/joints/fork_root_joint/cmd_pos</topic>
           <!--
           Initial position of a joint.
           -->
           <initial_position>0</initial_position>
         </plugin>
       </xacro:if>
-      <xacro:if value="${fork_pos_pub_sim_cfg.get('enabled', False)}">
+      <xacro:if value="${steerable_wheel_pos_ctrl_sim_cfg.get('enabled', False)}">
+        <!--
+        The plugins to control the steerable wheels' rotation and steerable joints are defined if the joint types
+        are not fixed.
+        -->
+        <xacro:if value="${steerable_wheel_rotation_joint_type == 'continuous'}">
+          <plugin filename="gz-sim-joint-position-controller-system" name="gz::sim::systems::JointPositionController">
+            <joint_name>${robot_prefix}${front_steerable_wheel_name}_rotation_joint</joint_name>
+            <joint_index>0</joint_index>
+            <use_velocity_commands>true</use_velocity_commands>
+            <cmd_max>${steerable_wheel_pos_ctrl_sim_cfg.get('v_max', 0.5)}</cmd_max>
+            <topic>${robot_namespace}/joints/${robot_prefix}${front_steerable_wheel_name}_rotation_joint/cmd_pos</topic>
+            <initial_position>0</initial_position>
+          </plugin>
+          <plugin filename="gz-sim-joint-position-controller-system" name="gz::sim::systems::JointPositionController">
+            <joint_name>${robot_prefix}${rear_left_steerable_wheel_name}_rotation_joint</joint_name>
+            <joint_index>0</joint_index>
+            <use_velocity_commands>true</use_velocity_commands>
+            <cmd_max>${steerable_wheel_pos_ctrl_sim_cfg.get('v_max', 0.5)}</cmd_max>
+            <topic>${robot_namespace}/joints/${robot_prefix}${rear_left_steerable_wheel_name}_rotation_joint/cmd_pos</topic>
+            <initial_position>0</initial_position>
+          </plugin>
+          <plugin filename="gz-sim-joint-position-controller-system" name="gz::sim::systems::JointPositionController">
+            <joint_name>${robot_prefix}${rear_right_steerable_wheel_name}_rotation_joint</joint_name>
+            <joint_index>0</joint_index>
+            <use_velocity_commands>true</use_velocity_commands>
+            <cmd_max>${steerable_wheel_pos_ctrl_sim_cfg.get('v_max', 0.5)}</cmd_max>
+            <topic>${robot_namespace}/joints/${robot_prefix}${rear_right_steerable_wheel_name}_rotation_joint/cmd_pos</topic>
+            <initial_position>0</initial_position>
+          </plugin>
+        </xacro:if>
+        <xacro:if value="${steerable_wheel_steerable_joint_type == 'revolute'}">
+          <plugin filename="gz-sim-joint-position-controller-system" name="gz::sim::systems::JointPositionController">
+            <joint_name>${robot_prefix}${front_steerable_wheel_name}_steerable_joint</joint_name>
+            <joint_index>0</joint_index>
+            <use_velocity_commands>true</use_velocity_commands>
+            <cmd_max>${steerable_wheel_pos_ctrl_sim_cfg.get('v_max', 0.5)}</cmd_max>
+            <topic>${robot_namespace}/joints/${robot_prefix}${front_steerable_wheel_name}_steerable_joint/cmd_pos</topic>
+            <initial_position>0</initial_position>
+          </plugin>
+          <plugin filename="gz-sim-joint-position-controller-system" name="gz::sim::systems::JointPositionController">
+            <joint_name>${robot_prefix}${rear_left_steerable_wheel_name}_steerable_joint</joint_name>
+            <joint_index>0</joint_index>
+            <use_velocity_commands>true</use_velocity_commands>
+            <cmd_max>${steerable_wheel_pos_ctrl_sim_cfg.get('v_max', 0.5)}</cmd_max>
+            <topic>${robot_namespace}/joints/${robot_prefix}${rear_left_steerable_wheel_name}_steerable_joint/cmd_pos</topic>
+            <initial_position>0</initial_position>
+          </plugin>
+          <plugin filename="gz-sim-joint-position-controller-system" name="gz::sim::systems::JointPositionController">
+            <joint_name>${robot_prefix}${rear_right_steerable_wheel_name}_steerable_joint</joint_name>
+            <joint_index>0</joint_index>
+            <use_velocity_commands>true</use_velocity_commands>
+            <cmd_max>${steerable_wheel_pos_ctrl_sim_cfg.get('v_max', 0.5)}</cmd_max>
+            <topic>${robot_namespace}/joints/${robot_prefix}${rear_right_steerable_wheel_name}_steerable_joint/cmd_pos</topic>
+            <initial_position>0</initial_position>
+          </plugin>
+        </xacro:if>
+      </xacro:if>
+      <xacro:if value="${joint_state_publisher_sim_cfg.get('enabled', False)}">
         <!--
         Plugin 'JointStatePublisher' to publish the position of the fork joint.
         Reference: https://gazebosim.org/api/sim/7/classgz_1_1sim_1_1systems_1_1JointStatePublisher.html#details
         -->
         <plugin filename="gz-sim-joint-state-publisher-system" name="gz::sim::systems::JointStatePublisher">
-          <topic>${robot_namespace}/fork_hardware_interface/pos</topic>
-          <joint_name>${robot_prefix}fork_root_joint</joint_name>
+          <topic>${robot_namespace}/joint_states</topic>
+          <joint_name>${robot_prefix}${fork_name}_root_joint</joint_name>
+          <joint_name>${robot_prefix}${front_steerable_wheel_name}_steerable_joint</joint_name>
+          <joint_name>${robot_prefix}${front_steerable_wheel_name}_rotation_joint</joint_name>
+          <joint_name>${robot_prefix}${rear_left_steerable_wheel_name}_steerable_joint</joint_name>
+          <joint_name>${robot_prefix}${rear_left_steerable_wheel_name}_rotation_joint</joint_name>
+          <joint_name>${robot_prefix}${rear_right_steerable_wheel_name}_steerable_joint</joint_name>
+          <joint_name>${robot_prefix}${rear_right_steerable_wheel_name}_rotation_joint</joint_name>
         </plugin>
       </xacro:if>
     </gazebo>

@@ -14,7 +14,11 @@ fork_position_controller:
   enabled: True
   v_max: 0.3
 
-fork_position_publisher:
+steerable_wheel_position_controller:
+  enabled: True
+  v_max: 100.0 # By using this huge value we allow the motor to reach any desired position almost instantly.
+
+joint_state_publisher:
   enabled: True
 
 # Front lidar is a RoboSense Helios 16P

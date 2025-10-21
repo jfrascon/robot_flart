@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>xut_robot_flart</name>
+  <name>robot_flart</name>
   <version>2.0.0</version>
 
   <description>URDF descriptions for the robot model flart</description>
@@ -27,6 +27,9 @@
   <exec_depend>python3-jinja2</exec_depend>
   <exec_depend>python3-yaml</exec_depend>
   <exec_depend>robot_state_publisher</exec_depend>
+
+  <exec_depend>ros2_launch_helpers</exec_depend>
+
   <!--
   <exec_depend>ros2_control</exec_depend>
   <exec_depend>ros2_controllers</exec_depend>
