@@ -1,12 +1,14 @@
 import os
 from pathlib import Path
 
+import ros2_launch_helpers as rlh
 import yaml
 from ament_index_python.packages import get_package_share_directory
-from launch.actions import DeclareLaunchArgument, OpaqueFunction
+from launch.actions import DeclareLaunchArgument, LogInfo, OpaqueFunction
+from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
-from ros2_launch_helpers import set_robot_namespace, set_robot_prefix
+from launch_ros.parameter_descriptions import ParameterValue
 
 from launch import LaunchContext, LaunchDescription, LaunchDescriptionEntity
 
@@ -14,28 +16,34 @@ from launch import LaunchContext, LaunchDescription, LaunchDescriptionEntity
 def generate_launch_description():
     # ldes -> (l)aunch (d)escription (e)ntitie(s)
     ldes = [
-        DeclareLaunchArgument('robot_name', default_value='flart', description='The unique name for the robot'),
+        DeclareLaunchArgument(
+            'use_sim_time',
+            default_value='False',
+            choices=['True', 'true', 'False', 'false'],
+            description='Use simulation clock if true',
+        ),
         DeclareLaunchArgument('namespace', default_value='', description='Namespace for all resources'),
+        DeclareLaunchArgument('robot_name', default_value='flart', description='The unique name for the robot'),
+        # <parameters>
+        DeclareLaunchArgument(
+            'subscription_heartbeat', default_value='1000', description='Subscription heartbeat (default: 1000)'
+        ),
         DeclareLaunchArgument(
             'sim_cfg_file',
             default_value=os.path.join(get_package_share_directory('robot_flart'), 'config', 'simulation_default.yaml'),
-            description='Path to the simulation configuration file (default: flart/simulation_default.yaml)',
+            description='Path to the simulation configuration file (default: simulation_default.yaml)',
+        ),
+        # </parameters>
+        DeclareLaunchArgument(
+            'log_options', default_value=rlh.default_log_options_str(), description=rlh.LOG_OPTIONS_DESC
         ),
         DeclareLaunchArgument(
-            'respawn_rosgz_bridge',
-            default_value='False',
-            choices=['True', 'true', 'False', 'false'],
-            description='Whether to respawn the rosgz_bridge_node if it dies (default: False)',
+            'node_options', default_value=rlh.default_node_options_str(), description=rlh.NODE_OPTIONS_DESC
         ),
-        DeclareLaunchArgument(
-            'log_level_rosgz_bridge',
-            default_value='info',
-            choices=['debug', 'info', 'warn', 'error'],
-            description='Log level for the rosgz_bridge_node (default: info)',
-        ),
-        OpaqueFunction(function=set_robot_namespace, args=['namespace', 'robot_name']),
-        OpaqueFunction(function=set_robot_prefix, args=['robot_name']),
-        OpaqueFunction(function=launch_rosgz_bridge),
+        OpaqueFunction(function=rlh.set_robot_namespace, args=['namespace', 'robot_name']),
+        OpaqueFunction(function=rlh.set_robot_prefix, args=['robot_name']),
+        # rosgz_bridge node is only launched if 'use_sim_time' is true, otherwise it is not needed.
+        OpaqueFunction(function=launch_rosgz_bridge, condition=IfCondition(LaunchConfiguration('use_sim_time'))),
     ]
 
     return LaunchDescription(ldes)
@@ -47,18 +55,23 @@ def generate_launch_description():
 
 
 def launch_rosgz_bridge(ctx: LaunchContext) -> list[LaunchDescriptionEntity]:
-    # ldes = (l)aunch (d)escription (e)ntitie(s) to return.
+    # ldes := (l)aunch (d)escription (e)ntitie(s) to return.
     ldes: list[LaunchDescriptionEntity] = []
 
-    # If we are in simulation mode, get the simulation configuration file provided by the user (be aware, the user
-    # could pass an empty string), or the default one.
+    robot_namespace = LaunchConfiguration('robot_namespace').perform(ctx)
+    robot_prefix = LaunchConfiguration('robot_prefix').perform(ctx)
     sim_cfg_file = LaunchConfiguration('sim_cfg_file').perform(ctx)
 
-    if not isinstance(sim_cfg_file, str):
-        raise TypeError(f"Expected 'sim_cfg_file' to be of type 'str', but got '{type(sim_cfg_file)}'")
-
     if not sim_cfg_file:
-        raise ValueError('The provided simulation configuration file is an empty string')
+        ldes.append(
+            LogInfo(
+                msg=(
+                    f'[WARNING] [{robot_namespace}] No simulation configuration file provided, no plugins will be used'
+                )
+            )
+        )
+
+        return ldes
 
     sim_cfg_path = Path(sim_cfg_file)
 
@@ -102,9 +115,6 @@ def launch_rosgz_bridge(ctx: LaunchContext) -> list[LaunchDescriptionEntity]:
     #    and in those launch files needing to use those topics.
     # These topics do really make sense since they have the form:
     # <robot_namespace>/<sensor_or_controller_or_plugin>/<topic_base_name>
-
-    robot_namespace = LaunchConfiguration('robot_namespace').perform(ctx)
-    robot_prefix = LaunchConfiguration('robot_prefix').perform(ctx)
 
     # Obtain the configuration for each sensor/plugin from the simulation configuration file.
 
@@ -294,24 +304,45 @@ def launch_rosgz_bridge(ctx: LaunchContext) -> list[LaunchDescriptionEntity]:
             rosgz_bridge_channels, stream=f, sort_keys=False, default_flow_style=False, allow_unicode=True, width=120
         )
 
+    node_options = rlh.parse_cli_node_opts(LaunchConfiguration('node_options').perform(ctx))
+
     ldes.append(
         Node(
             package='ros_gz_bridge',
             executable='bridge_node',
-            name='rosgz_bridge',
+            name=str(node_options['name']) or 'rosgz_bridge',
             namespace=robot_namespace,
-            output='screen',
-            respawn=LaunchConfiguration('respawn_rosgz_bridge'),
-            respawn_delay=2.0,
             parameters=[
                 {
-                    'subscription_heartbeat': 1000,  # default value in 'ros_gz_bridge.cpp'
+                    'use_sim_time': True,  # If here we are in simulation mode.
+                    'subscription_heartbeat': ParameterValue(
+                        LaunchConfiguration('subscription_heartbeat'), value_type=int
+                    ),
                     'config_file': abs_rosgz_bridge_file,
+                    # We are building the full topics, with namespace and all, so we do not want the bridge
+                    # to expand them.
                     'expand_gz_topic_names': False,
+                    # The parameter `override_timestamps_with_wall_time` controls how the `header.stamp` field is set
+                    # in messages bridged from Gazebo to ROS 2.
+                    # - If set to 'true', the bridge will overwrite the original timestamp with the current system wall
+                    #   time, meaning the actual time according to the operating system clock (e.g., what you get with
+                    #   'date' in a terminal), at the moment the message is forwarded.
+                    #   This means the message will reflect the real-world time of the host machine, not the simulation
+                    #   time from Gazebo.
+                    # - If set to 'false', the bridge will preserve the original timestamp from the source message
+                    #   (e.g., Gazebo simulation time).
+                    #   This is recommended when you are also bridging the '/clock' topic from Gazebo to ROS 2 and
+                    #   using 'use_sim_time: true' in your ROS 2 nodes, so that all messages and nodes are synchronized
+                    #   to the same simulation time reference.
                     'override_timestamps_with_wall_time': False,
                 }
             ],
-            arguments=['--ros-args', '--log-level', LaunchConfiguration('log_level_rosgz_bridge')],
+            # remappings not needed here.
+            ros_arguments=rlh.parse_cli_log_opts(LaunchConfiguration('log_options').perform(ctx)),
+            output=node_options['output'],
+            emulate_tty=node_options['emulate_tty'],
+            respawn=node_options['respawn'],
+            respawn_delay=node_options['respawn_delay'],
         )
     )
 
