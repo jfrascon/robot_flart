@@ -1,20 +1,21 @@
-import os  # noqa: F401
+import os
+from typing import List
 
 import ros2_launch_helpers as rlh
-import yaml  # noqa: F401
 from ament_index_python.packages import get_package_share_directory
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, LogInfo, OpaqueFunction
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.substitutions import FindPackageShare
 
-from launch import LaunchDescription
+from launch import LaunchContext, LaunchDescription, LaunchDescriptionEntity
+from robot_flart import xacro_args as flart_xacro_args
 
 
 def generate_launch_description():
     # ldes => (l)aunch (d)escription (e)ntitie(s)
-    ldes = [
+    ldes: list[LaunchDescriptionEntity] = [
         DeclareLaunchArgument(
             'use_sim_time',
             default_value='False',
@@ -22,72 +23,55 @@ def generate_launch_description():
             description='Use simulation clock if true',
         ),
         DeclareLaunchArgument('namespace', default_value='', description='Namespace for all resources'),
-        DeclareLaunchArgument('robot_name', default_value='flart', description='The unique name for the robot'),
-        # <parameters>
-        # Parameters for robot_state_publisher (rsp)
-        DeclareLaunchArgument('odom_frame', default_value='odom', description='Odometry frame name of the robot'),
+        # Core version is the 'default' robot version; i.e, body + wheels + fork.
+        # Other versions (v0, v1, ...) extend the core version with additional features.
         DeclareLaunchArgument(
-            'rsp_use_visual_meshes',
-            default_value='True',
-            description='Whether to use visual meshes if True, or simple shapes if False (default: True)',
+            'robot_version', default_value='core', description='Robot version to launch (default: core)'
         ),
+        DeclareLaunchArgument('robot_name', default_value='flart_core', description='The unique name for the robot'),
+        ################################################################################################################
+        # Parameters
+        ################################################################################################################
         DeclareLaunchArgument(
-            'rsp_use_collision_meshes',
-            default_value='False',
-            description='Whether to use collision meshes if True, or simple shapes if False (default: False)',
+            'params_file',
+            default_value=os.path.join(get_package_share_directory('robot_flart'), 'config', 'example_flart_core.yaml'),
+            description='Base YAML with ros__parameters (Default: robot_flart/config/example_flart_core.yaml)',
         ),
-        DeclareLaunchArgument(
-            'rsp_publish_frequency',
-            default_value='20.0',
-            description='Frequency of publication for robot_state_publisher (default: 20.0)',
-        ),
-        DeclareLaunchArgument(
-            'sim_cfg_file',
-            default_value=os.path.join(get_package_share_directory('robot_flart'), 'config', 'simulation_default.yaml'),
-            description='Path to the simulation configuration file (default: simulation_default.yaml)',
-        ),
-        # Parameters for rosgz_bridge
-        DeclareLaunchArgument(
-            'rosgz_bridge_subscription_heartbeat',
-            default_value='1000',
-            description='Subscription heartbeat (default: 1000)',
-        ),
-        DeclareLaunchArgument(
-            'three_swerve_kinematics_params_file',
-            default_value=os.path.join(
-                get_package_share_directory('robot_flart'), 'config', 'three_swerve_kinematics.yaml'
-            ),
-            description=('Path to the three swerve kinematics parameters file (default: three_swerve_kinematics.yaml)'),
-        ),
-        # </parameters>
-        # <remappings>NOT USED</remappings>
-        # <log_options>
-        DeclareLaunchArgument(
-            'rsp_log_options', default_value=rlh.default_log_options_str(), description=rlh.LOG_OPTIONS_DESC
-        ),
-        DeclareLaunchArgument(
-            'rosgz_bridge_log_options', default_value=rlh.default_log_options_str(), description=rlh.LOG_OPTIONS_DESC
-        ),
-        DeclareLaunchArgument(
-            'three_swerve_kinematics_log_options',
-            default_value=rlh.default_log_options_str(),
-            description=rlh.LOG_OPTIONS_DESC,
-        ),
-        # </log_options>
-        # <node_options>
-        DeclareLaunchArgument(
-            'rsp_node_options', default_value=rlh.default_node_options_str(), description=rlh.NODE_OPTIONS_DESC
-        ),
-        DeclareLaunchArgument(
-            'rosgz_bridge_node_options', default_value=rlh.default_node_options_str(), description=rlh.NODE_OPTIONS_DESC
-        ),
-        DeclareLaunchArgument(
-            'three_swerve_kinematics_node_options',
-            default_value=rlh.default_node_options_str(),
-            description=rlh.NODE_OPTIONS_DESC,
-        ),
-        # </node_options>
-        # Launch de robot description. The rsp node works both in simulation and real mode.
+        # Declare launch arguments for '<xacro:arg>' items for the robot.
+        OpaqueFunction(function=flart_xacro_args.declare_launch_arguments),
+    ]
+    ####################################################################################################################
+    # Remappings, logging options and node options
+    ####################################################################################################################
+    ldes.extend(declare_topic_remappings())
+    ldes.extend(declare_node_options())
+    ldes.extend(declare_logging_options())
+    ####################################################################################################################
+    # Includes
+    ####################################################################################################################
+    ldes.extend(
+        [
+            # Launch de robot description. The rsp node works both in simulation and real mode.
+            OpaqueFunction(function=include_rsp),
+            # Launch rosgz_bridge nodes (core + extras) only in simulation.
+            OpaqueFunction(function=include_rosgz_bridge, condition=IfCondition(LaunchConfiguration('use_sim_time'))),
+            # Launch three swerve kinematics node to do the kinematics calculations, direct and inverse.
+            OpaqueFunction(function=include_three_swerve_kinematics),
+        ]
+    )
+
+    return LaunchDescription(ldes)
+
+
+################################################################################
+# Opaque functions
+################################################################################
+
+
+def include_rsp(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
+    robot_version = LaunchConfiguration('robot_version').perform(ctx).strip()
+
+    return [
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
                 PathJoinSubstitution([FindPackageShare('robot_flart'), 'launch', 'rsp.launch.py'])
@@ -95,33 +79,98 @@ def generate_launch_description():
             launch_arguments={
                 'use_sim_time': LaunchConfiguration('use_sim_time'),
                 'namespace': LaunchConfiguration('namespace'),
+                'robot_version': LaunchConfiguration('robot_version'),
                 'robot_name': LaunchConfiguration('robot_name'),
-                'odom_frame': LaunchConfiguration('odom_frame'),
-                'use_visual_meshes': LaunchConfiguration('rsp_use_visual_meshes'),
-                'use_collision_meshes': LaunchConfiguration('rsp_use_collision_meshes'),
-                'publish_frequency': LaunchConfiguration('rsp_publish_frequency'),
-                'sim_cfg_file': LaunchConfiguration('sim_cfg_file'),
-                'log_options': LaunchConfiguration('rsp_log_options'),
-                'node_options': LaunchConfiguration('rsp_node_options'),
+                'params_file': LaunchConfiguration('params_file'),
+                # Launch arguments 'publish_frequency' and 'ignore_timestamp' are not passed directly here, they must
+                # be provided in the launch configuration 'params_file'.
+                **flart_xacro_args.get_launch_configurations(robot_version),
+                'topic_remappings': LaunchConfiguration('rsp_topic_remappings'),
+                'node_options': LaunchConfiguration('rsp_options'),
+                'logging_options': LaunchConfiguration('rsp_logging_options'),
             }.items(),
-        ),
-        # Launch rosgz_bridge only in simulation, with all channels configured.
+        )
+    ]
+
+
+def include_rosgz_bridge(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
+    robot_version = LaunchConfiguration('robot_version').perform(ctx).strip()
+    available_robot_versions = flart_xacro_args.get_robot_versions()
+
+    ns = LaunchConfiguration('namespace').perform(ctx).strip()
+    robot_name = LaunchConfiguration('robot_name').perform(ctx).strip()
+    robot_ns = rlh.create_robot_namespace(ns, robot_name)
+    underscored_robot_ns = rlh.underscorify_namespace(robot_ns)
+
+    if robot_version not in available_robot_versions:
+        return [
+            LogInfo(
+                msg=f"[ERROR][{underscored_robot_ns}] Version '{robot_version}' for the 'flart' robot is not "
+                f'available.  Available versions: {", ".join(available_robot_versions)}'
+            )
+        ]
+
+    # Every version of the 'flart' robot uses the 'core_sim_file'.
+    core_sim_file = LaunchConfiguration('core_sim_file').perform(ctx).strip()
+
+    # If the 'core_sim_file' is an empty string, no simulation plugins will be loaded for the base and fork, so there is
+    # no need to create the channels of the rosgz_bridge that communicate ROS2 with GZ for those plugins.
+    # At this point, we do not know yet if the robot version uses 'extras_sim_file' or not, but we can
+    # 'decide partially' if we will launch the rosgz_bridge or not based on the value of 'core_sim_file' alone.
+    launch_rosgz_bridge = core_sim_file != ''
+
+    launch_arguments = {
+        'use_sim_time': LaunchConfiguration('use_sim_time'),
+        'namespace': ns,
+        'robot_name': robot_name,
+        'params_file': LaunchConfiguration('params_file'),
+        'core_sim_file': core_sim_file,
+        # No remappings for rosgz_bridges.
+        'node_options': LaunchConfiguration('rosgz_bridge_options'),
+        'logging_options': LaunchConfiguration('rosgz_bridge_logging_options'),
+    }
+
+    # Only non-core versions MAY use 'extras_sim_file'.
+    # If the robot version does not use the 'extras_sim_file' or the variable 'extras_sim_file' is an empty string,
+    # no extra simulation plugins will be loaded, so there is no need to create the channels of the rosgz_bridge that
+    # communicate ROS2 with GZ for those extra plugins.
+    # Therefore we have the following cases:
+    # 1. The robot version does not use 'extras_sim_file':
+    #    1.1 'core_sim_file' is empty     => do not launch rosgz_bridge.
+    #    1.2 'core_sim_file' is not empty => launch rosgz_bridge.
+    # 2. The robot version uses 'extras_sim_file' and 'extras_sim_file' is empty:
+    #    2.1 'core_sim_file' is empty     => do not launch rosgz_bridge.
+    #    2.2 'core_sim_file' is not empty => launch rosgz_bridge.
+    # 3. The robot version uses 'extras_sim_file' and 'extras_sim_file' is not empty: always launch rosgz_bridge.
+
+    if flart_xacro_args.has_xarg(robot_version, 'extras_sim_file'):
+        extras_sim_file = LaunchConfiguration('extras_sim_file').perform(ctx).strip()
+        launch_rosgz_bridge = launch_rosgz_bridge and (extras_sim_file != '')
+
+    if not launch_rosgz_bridge:
+        return [
+            LogInfo(
+                msg=(
+                    f'[{underscored_robot_ns}] Not launching rosgz_bridge node because no simulation '
+                    'plugins are enabled.'
+                )
+            )
+        ]
+
+    return [
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
-                PathJoinSubstitution([FindPackageShare('robot_flart'), 'launch', 'rosgz_bridge.launch.py'])
+                PathJoinSubstitution(
+                    [FindPackageShare('robot_flart'), 'launch', f'rosgz_bridge_{robot_version}.launch.py']
+                )
             ),
-            launch_arguments={
-                'use_sim_time': LaunchConfiguration('use_sim_time'),
-                'namespace': LaunchConfiguration('namespace'),
-                'robot_name': LaunchConfiguration('robot_name'),
-                'sim_cfg_file': LaunchConfiguration('sim_cfg_file'),
-                'subscription_heartbeat': LaunchConfiguration('rosgz_bridge_subscription_heartbeat'),
-                'log_options': LaunchConfiguration('rosgz_bridge_log_options'),
-                'node_options': LaunchConfiguration('rosgz_bridge_node_options'),
-            }.items(),
-            condition=IfCondition(LaunchConfiguration('use_sim_time')),
-        ),
-        # Launch three swerve kinematics node to do the kinematics calculations, direct and inverse.
+            launch_arguments=launch_arguments.items(),
+        )
+    ]
+
+
+def include_three_swerve_kinematics(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
+    return [
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
                 PathJoinSubstitution(
@@ -132,11 +181,61 @@ def generate_launch_description():
                 'use_sim_time': LaunchConfiguration('use_sim_time'),
                 'namespace': LaunchConfiguration('namespace'),
                 'robot_name': LaunchConfiguration('robot_name'),
-                'params_file': LaunchConfiguration('three_swerve_kinematics_params_file'),
-                'log_options': LaunchConfiguration('three_swerve_kinematics_log_options'),
+                'params_file': LaunchConfiguration('params_file'),
+                'topic_remappings': LaunchConfiguration('three_swerve_kinematics_node_topic_remappings'),
                 'node_options': LaunchConfiguration('three_swerve_kinematics_node_options'),
+                'logging_options': LaunchConfiguration('three_swerve_kinematics_node_logging_options'),
             }.items(),
+        )
+    ]
+
+
+################################################################################
+# Non-opaque functions
+################################################################################
+
+
+def declare_logging_options() -> List[LaunchDescriptionEntity]:
+    # Parameter names are : <binary_name>_logging_options
+    return [
+        DeclareLaunchArgument(
+            'rsp_logging_options', default_value=rlh.default_logging_options_str(), description=rlh.LOGGING_OPTIONS_DESC
+        ),
+        DeclareLaunchArgument(
+            'rosgz_bridge_logging_options',
+            default_value=rlh.default_logging_options_str(),
+            description=rlh.LOGGING_OPTIONS_DESC,
+        ),
+        DeclareLaunchArgument(
+            'three_swerve_kinematics_node_logging_options',
+            default_value=rlh.default_logging_options_str(),
+            description=rlh.LOGGING_OPTIONS_DESC,
         ),
     ]
 
-    return LaunchDescription(ldes)
+
+def declare_node_options() -> List[LaunchDescriptionEntity]:
+    # Parameter names are : <binary_name>_options
+    return [
+        DeclareLaunchArgument(
+            'rsp_options', default_value=rlh.default_node_options_str(), description=rlh.NODE_OPTIONS_DESC
+        ),
+        DeclareLaunchArgument(
+            'rosgz_bridge_options', default_value=rlh.default_node_options_str(), description=rlh.NODE_OPTIONS_DESC
+        ),
+        DeclareLaunchArgument(
+            'three_swerve_kinematics_node_options',
+            default_value=rlh.default_node_options_str(),
+            description=rlh.NODE_OPTIONS_DESC,
+        ),
+    ]
+
+
+def declare_topic_remappings() -> List[LaunchDescriptionEntity]:
+    # Parameter names are: <binary_name>_topic_remappings
+    return [
+        DeclareLaunchArgument('rsp_topic_remappings', default_value='', description=rlh.TOPIC_REMAPPINGS_DESC),
+        DeclareLaunchArgument(
+            'three_swerve_kinematics_node_topic_remappings', default_value='', description=rlh.TOPIC_REMAPPINGS_DESC
+        ),
+    ]

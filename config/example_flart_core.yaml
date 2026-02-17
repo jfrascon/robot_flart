@@ -1,0 +1,89 @@
+/**/robot_state_publisher:
+  ros__parameters:
+    publish_frequency: 20.0
+    ignore_timestamp: False # If True joint_state messages are accepted, no matter their timestamp
+    # frame_prefix is not accepted
+    # robot_description is set in the launch file
+
+# Since this parameter file uses variable expansion, it is meant to be use along with an instruction
+# ParameterFile(<params_file>, allow_substs=True) in a launch file, where the launch argument 'robot_prefix' is defined
+# prior to including this parameter file.
+/**/three_swerve_kinematics:
+  ros__parameters:
+    # use_sim_time IS automatically handled, no need to specify here.
+
+    initial_wheel_states_reception_period: 10.0 # seconds to wait for the initial JointState seed.
+
+    # Most of the values found here can be obtained either from the URDF or by measuring the real robot.
+    steerable_wheels:
+      # steerable_wheel_0 is located on the x-axis of the robot, either with positive or negative x coordinate,
+      # but with y=0.
+      steerable_wheel_0:
+        name: "$(var robot_prefix)front_steerable_wheel"
+        radius: 0.127
+        steerable_joint:
+          name: "$(var robot_prefix)front_steerable_wheel_steerable_joint"
+          parent_link_name: "$(var robot_prefix)base_link"
+          child_link_name: "$(var robot_prefix)front_steerable_wheel_steerable_link"
+          origin: { x: 0.46, y: 0.0, z: 0.067, R: 0.0, P: 0.0, Y: 0.0 }
+          # Note: If you want the wheel to be able to reach +-pi rad angle (+-180 degress), set limits to +-3.1416.
+          # pi = 3.141592654.... < 3.1416
+          limits: { lower: -3.1416, upper: 3.1416 } # rad
+        rotation_joint:
+          name: "$(var robot_prefix)front_steerable_wheel_rotation_joint"
+          parent_link_name: "$(var robot_prefix)front_steerable_wheel_steerable_link"
+          child_link_name: "$(var robot_prefix)front_steerable_wheel_rotation_link"
+          origin: { x: 0.0, y: 0.0, z: 0.0, R: 0.0, P: 0.0, Y: 0.0 }
+          limits: { lower: -50.0, upper: 50.0 } # rad/s
+
+      # steerable_wheel_1 is the one with steerable_joint.origin.y > 0.
+      # This wheel also has an opposite sign for steerable_joint.origin.x coordinate compared to
+      # steerable_wheel_0.steerable_joint.origin.x.
+      # If steerable_wheel_0.steerable_joint.origin.x > 0, then steerable_wheel_1.steerable_joint.origin.x < 0, and
+      # vice versa.
+      steerable_wheel_1:
+        name: "$(var robot_prefix)rear_left_steerable_wheel"
+        radius: 0.127
+        steerable_joint:
+          name: "$(var robot_prefix)rear_left_steerable_wheel_steerable_joint"
+          parent_link_name: "$(var robot_prefix)base_link"
+          child_link_name: "$(var robot_prefix)rear_left_steerable_wheel_steerable_link"
+          origin: { x: -0.46, y: 0.219, z: 0.067, R: 0.0, P: 0.0, Y: 0.0 }
+          # Note: If you want the wheel to be able to reach +-pi rad angle (+-180 degress), set limits to +-3.1416.
+          # pi = 3.141592654.... < 3.1416
+          limits: { lower: -3.1416, upper: 3.1416 } # rad
+        rotation_joint:
+          name: "$(var robot_prefix)rear_left_steerable_wheel_rotation_joint"
+          parent_link_name: "$(var robot_prefix)rear_left_steerable_wheel_steerable_link"
+          child_link_name: "$(var robot_prefix)rear_left_steerable_wheel_rotation_link"
+          origin: { x: 0.0, y: 0.0, z: 0.0, R: 0.0, P: 0.0, Y: 0.0 }
+          limits: { lower: -50.0, upper: 50.0 } # rad/s
+
+      # steerable_wheel_2 is the one with steerable_joint.origin.y < 0.
+      # This wheel also has an opposite sign for steerable_joint.origin.x coordinate compared to
+      # steerable_wheel_0.steerable_joint.origin.x.
+      # If steerable_wheel_0.steerable_joint.origin.x > 0, then steerable_wheel_2.steerable_joint.origin.x < 0, and
+      # vice versa.
+      steerable_wheel_2:
+        name: "$(var robot_prefix)rear_right_steerable_wheel"
+        radius: 0.127
+        steerable_joint:
+          name: "$(var robot_prefix)rear_right_steerable_wheel_steerable_joint"
+          parent_link_name: "$(var robot_prefix)base_link"
+          child_link_name: "$(var robot_prefix)rear_right_steerable_wheel_steerable_link"
+          origin: { x: -0.46, y: -0.219, z: 0.067, R: 0.0, P: 0.0, Y: 0.0 }
+          # Note: If you want the wheel to be able to reach +-pi rad angle (+-180 degress), set limits to +-3.1416.
+          # pi = 3.141592654.... < 3.1416
+          limits: { lower: -3.1416, upper: 3.1416 } # rad
+        rotation_joint:
+          name: "$(var robot_prefix)rear_right_steerable_wheel_rotation_joint"
+          parent_link_name: "$(var robot_prefix)rear_right_steerable_wheel_steerable_link"
+          child_link_name: "$(var robot_prefix)rear_right_steerable_wheel_rotation_link"
+          origin: { x: 0.0, y: 0.0, z: 0.0, R: 0.0, P: 0.0, Y: 0.0 }
+          limits: { lower: -50.0, upper: 50.0 } # rad/s
+
+/**/rosgz_bridge_core:
+  ros__parameters:
+    subscription_heartbeat: 1000
+    # config_file, expang_gz_topic_names and override_timestamps_with_wall_time are forced in the launch file.
+    # See the launch file 'rosgz_bridge_core.launch.py' for details.

@@ -2,50 +2,31 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>robot_flart</name>
-  <version>2.0.0</version>
-
+  <version>1.0.0</version>
   <description>URDF descriptions for the robot model flart</description>
-
   <maintainer email="todo@todo.com">Juan Fco Rascon</maintainer>
   <license>BSD-3-Clause</license>
 
-  <!--
-  <url type="website">...</url>
-  <url type="repository">...</url>
-  <url type="bugtracker">...</url>
-  -->
-
   <buildtool_depend>ament_cmake</buildtool_depend>
-  <buildtool_depend>ament_cmake_python</buildtool_depend>
 
-  <!-- Runtime dependencies (launch/*.py and tools rely on launch*, launch_ros, ament_index_python, PyYAML, Jinja2). -->
   <exec_depend>ament_index_python</exec_depend>
   <exec_depend>eut_robotics_description</exec_depend>
   <exec_depend>joint_state_broadcaster</exec_depend>
   <exec_depend>launch</exec_depend>
   <exec_depend>launch_ros</exec_depend>
+  <exec_depend>python3</exec_depend>
   <exec_depend>python3-jinja2</exec_depend>
   <exec_depend>python3-yaml</exec_depend>
   <exec_depend>robot_state_publisher</exec_depend>
-
   <exec_depend>ros2_launch_helpers</exec_depend>
-
-  <!--
-  <exec_depend>ros2_control</exec_depend>
-  <exec_depend>ros2_controllers</exec_depend>
-  <exec_depend>rqt_controller_manager</exec_depend>
-  <exec_depend>rqt_joint_trajectory_controller</exec_depend>
-  <exec_depend>topic_based_ros2_control</exec_depend>
-  -->
+  <exec_depend>python3-setuptools</exec_depend>
   <exec_depend>xacro</exec_depend>
 
-  <test_depend>ament_cmake_pytest</test_depend>
-  <test_depend>launch_testing_ament_cmake</test_depend>
-  <test_depend>launch_testing_ros</test_depend>
+  <test_depend>python3-pytest</test_depend>
   <test_depend>liburdfdom-tools</test_depend>
   <test_depend>xacro</test_depend>
 
   <export>
-    <build_type>ament_cmake</build_type>
+  <build_type>ament_python</build_type>
   </export>
 </package>
