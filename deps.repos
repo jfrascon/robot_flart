@@ -12,12 +12,12 @@ repositories:
     eut_robotics_description:
         type: git
         url: git@gitlab.local.eurecat.org:robotics-automation/eut_robotics_description.git
-        version: 4dbd7e56ab856048eb3dd3ccb336240bf8173028
+        version: 02b8c42afdcf07fed335d25b1219613889902194
         #exclude: [] # list of repos files inside repository_path to exclude (optional)
     ground_vehicle_kinematics:
         type: git
         url: https://github.com/jfrascon/xut_ground_vehicle_kinematics.git
-        version: 1277369b8125d5d213e828dd23b69709239e7ba9
+        version: b9d7de071b058ce4fca8622043f54a253586a0eb
         #exclude: [] # list of repos files inside repository_path to exclude (optional)
     ros2_launch_helpers
         type: git
