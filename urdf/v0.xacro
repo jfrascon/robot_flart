@@ -11,15 +11,15 @@ This xacro file defines the 'v0' version of the flart robot, which a combination
 -->
 <robot name="flart_v0" xmlns:xacro="http://www.ros.org/wiki/xacro" xmlns:gz="http://gazebosim.org/schema">
 
-  <xacro:property name="robot_flart_pkg_dir"      value="$(find robot_flart)"/>
-  <xacro:property name="eut_robotics_description" value="$(find eut_robotics_description)"/>
+  <xacro:property name="robot_flart_pkg_dir"           value="$(find robot_flart)"/>
+  <xacro:property name="robotics_description_pkg_dir"  value="$(find robotics_description)"/>
 
   <!-- ===================================================================== -->
   <!-- INCLUDES -->
   <!-- ===================================================================== -->
 
   <xacro:include filename="${robot_flart_pkg_dir}/urdf/core.xacro"/>
-  <xacro:include filename="${eut_robotics_description}/urdf/sensors/all_sensors_macro.xacro"/>
+  <xacro:include filename="${robotics_description_pkg_dir}/urdf/sensors/all_sensors_macro.xacro"/>
 
   <!-- ===================================================================== -->
   <!-- ARGS -->

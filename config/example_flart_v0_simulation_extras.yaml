@@ -94,7 +94,7 @@ rear_camera:
       far: 100.0
     update_rate: 30.0
     # For a list of official supported modes for the color camera, see the comments in
-    # eut_robotics_description/config/sensors/cameras/example_simulation_realsense_d435.yaml
+    # robotics_description/config/sensors/cameras/example_simulation_realsense_d435.yaml
     image:
       width: 1920
       height: 1080
@@ -157,7 +157,7 @@ rear_camera:
       near: 0.1
       far: 10.0
     # For a list of official supported modes for the infrared camera, see the comments in
-    # eut_robotics_description/config/sensors/cameras/example_simulation_realsense_d435.yaml
+    # robotics_description/config/sensors/cameras/example_simulation_realsense_d435.yaml
     update_rate: 30.0
     image:
       width: 1280
@@ -225,7 +225,7 @@ rear_camera:
       near: 0.1
       far: 10.0
     # For a list of official supported modes for the depth camera, see the comments in
-    # eut_robotics_description/config/sensors/cameras/example_simulation_realsense_d435.yaml
+    # robotics_description/config/sensors/cameras/example_simulation_realsense_d435.yaml
     update_rate: 30.0
     image:
       width: 1280

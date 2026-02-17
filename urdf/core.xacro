@@ -8,16 +8,16 @@ a forklift. No sensors or extra elements are included.
 -->
 <robot name="flart_core" xmlns:xacro="http://www.ros.org/wiki/xacro" xmlns:gz="http://gazebosim.org/schema">
 
-  <xacro:property name="robot_flart_pkg_dir"              value="$(find robot_flart)"/>
-  <xacro:property name="eut_robotics_description_pkg_dir" value="$(find eut_robotics_description)"/>
+  <xacro:property name="robot_flart_pkg_dir"          value="$(find robot_flart)"/>
+  <xacro:property name="robotics_description_pkg_dir" value="$(find robotics_description)"/>
 
   <!-- ===================================================================== -->
   <!-- INCLUDES -->
   <!-- ===================================================================== -->
 
-  <xacro:include filename="${eut_robotics_description_pkg_dir}/urdf/common/all_commons.xacro"/>
-  <xacro:include filename="${eut_robotics_description_pkg_dir}/urdf/wheels/steerable_wheel_macro.xacro"/>
-  <xacro:include filename="${eut_robotics_description_pkg_dir}/urdf/extras/fork_macro.xacro"/>
+  <xacro:include filename="${robotics_description_pkg_dir}/urdf/common/all_commons.xacro"/>
+  <xacro:include filename="${robotics_description_pkg_dir}/urdf/wheels/steerable_wheel_macro.xacro"/>
+  <xacro:include filename="${robotics_description_pkg_dir}/urdf/extras/fork_macro.xacro"/>
 
   <!-- ===================================================================== -->
   <!-- ARGS -->
@@ -166,7 +166,7 @@ a forklift. No sensors or extra elements are included.
   <xacro:property name="st_wheel_radius"  value="0.127"/>
   <xacro:property name="st_wheel_length"  value="0.082"/>
   <!--
-  eut_robotics_description/meshes/wheels/standard_wheels/wheel.dae is a cylinder with its axis aligned with the Z axis,
+  robotics_description/meshes/wheels/standard_wheels/wheel.dae is a cylinder with its axis aligned with the Z axis,
   centered at the origin, and with radius 0.15 (size_x = size_y = 2 * radius = 0.3) and length 0.1 (size_z = 0.1).
   Thefore:
   scale_x = desired_diameter / 0.3 = (2 * radius) / 0.3 = (2 * 0.127) / 0.3 = 0.846666667
@@ -182,11 +182,11 @@ a forklift. No sensors or extra elements are included.
   This is achieved by setting the mesh_origin = "0.0 0.0 0.0 (0.5 * pi) 0.0 0.0".
   -->
   <xacro:property name="st_wheel_mesh"
-                  value="${'eut_robotics_description/meshes/wheels/standard_wheels/wheel.dae' if st_wheel_use_v_mesh else ''}"/>
+                  value="${'robotics_description/meshes/wheels/standard_wheels/wheel.dae' if st_wheel_use_v_mesh else ''}"/>
   <xacro:property name="st_wheel_mesh_scale"  value="0.846666667 0.846666667 0.82"/>
   <xacro:property name="st_wheel_mesh_origin" value="0.0 0.0 0.0 ${0.5 * pi} 0.0 0.0"/>
   <!--
-  The 'eut_robotics_description/meshes/wheels/standard_wheels/wheel.dae' mesh has color information, therefore
+  The 'robotics_description/meshes/wheels/standard_wheels/wheel.dae' mesh has color information, therefore
   no color is needed.
   If use_v_mesh is False (meaning that the basic geometry is used instead of the mesh), then a color must be provided
   for the basic geometry.
@@ -243,7 +243,7 @@ a forklift. No sensors or extra elements are included.
   To access the mesh just use <package>/<path_to_mesh_within_package>.
   -->
   <xacro:property name="fork_tine_mesh"
-                  value="eut_robotics_description/meshes/extras/fork_tine/mesh_low_res.stl"/>
+                  value="robotics_description/meshes/extras/fork_tine/mesh_low_res.stl"/>
   <xacro:property name="fork_tine_mesh_scale"  value="1.0 1.0 1.0"/>
   <xacro:property name="fork_tine_mesh_origin" value="0 0 ${-0.5 * fork_tine_size_z} 0 0 0"/>
   <xacro:property name="fork_color"            value="0.1 0.1 0.1 1.0"/>
