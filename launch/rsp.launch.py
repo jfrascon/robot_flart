@@ -11,7 +11,7 @@ from launch_ros.actions import Node
 from launch_ros.descriptions import ParameterFile, ParameterValue
 
 from launch import LaunchContext, LaunchDescription, LaunchDescriptionEntity
-from robot_flart import xacro_args as flart_xacro_args
+from robot_flart import xargs_catalog_manager as flart_xargs
 
 
 def generate_launch_description():
@@ -35,7 +35,7 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'params_file',
             default_value=os.path.join(get_package_share_directory('robot_flart'), 'config', 'example_flart_core.yaml'),
-            description='Base YAML with ros__parameters (Default: robot_flart/config/example_flart_core.yaml)',
+            description='Base YAML with ros__parameters',
         ),
         # Parameters 'publish_frequency' and 'ignore_timestamp' passed to the launch file override those set
         # in the parameter file.
@@ -52,7 +52,7 @@ def generate_launch_description():
             '(Optional, default: "" )',
         ),
         # Declare description arguments to pass to the xacro file.
-        OpaqueFunction(function=flart_xacro_args.declare_launch_arguments),
+        OpaqueFunction(function=declare_launch_arguments_for_selected_version),
         ########################################################################
         # Remappings, node options and logging options
         ########################################################################
@@ -87,7 +87,7 @@ def launch_rsp(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
     robot_name = LaunchConfiguration('robot_name').perform(ctx).strip()
     robot_ns = rlh.create_robot_namespace(namespace, robot_name)
     underscored_robot_ns = rlh.underscorify_namespace(robot_ns)
-    available_robot_versions = flart_xacro_args.get_robot_versions()
+    available_robot_versions = flart_xargs.get_robot_versions()
 
     if robot_version not in available_robot_versions:
         return [
@@ -140,10 +140,10 @@ def launch_rsp(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
             core_sim_file = '""'  # This is the proper way to pass empty string to xacro command in a programmatic way.
 
         # If the robot version simulate extra devices apart from base and fork (like sensors, etc.), a field called
-        # 'extras_sim_file' must be defined for that robot version in the 'xacro_args' module.
+        # 'extras_sim_file' must be defined for that robot version in the xargs catalog.
         # If the robot version does not define the 'extras_sim_file' argument, or the value passed to that argument is
         # empty, then no extra elements are simulated.
-        if flart_xacro_args.has_xarg(robot_version, 'extras_sim_file'):
+        if 'extras_sim_file' in flart_xargs.get_resolved_xargs(robot_version):
             extras_sim_file = LaunchConfiguration('extras_sim_file').perform(ctx).strip()
 
             if not extras_sim_file:
@@ -188,7 +188,7 @@ def launch_rsp(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
     ]
 
     # Add to 'cmd' the value for the '<xacro:args>' items the given robot version uses.
-    for xarg_name in flart_xacro_args.get_xarg_names(robot_version):
+    for xarg_name in flart_xargs.get_resolved_xargs(robot_version).keys():
         # Every version of the 'flart' robot uses the 'core_sim_file', so the variable 'core_sim_file' is always added
         # to 'cmd'.
         # The variable 'core_sim_file' may or may not be an empty string.
@@ -261,3 +261,8 @@ def launch_rsp(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
             respawn_delay=node_options['respawn_delay'],
         )
     ]
+
+
+def declare_launch_arguments_for_selected_version(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
+    robot_version = LaunchConfiguration('robot_version').perform(ctx).strip()
+    return flart_xargs.declare_launch_arguments_for_robot_version(ctx, robot_version)

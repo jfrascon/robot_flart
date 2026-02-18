@@ -10,7 +10,7 @@ from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.substitutions import FindPackageShare
 
 from launch import LaunchContext, LaunchDescription, LaunchDescriptionEntity
-from robot_flart import xacro_args as flart_xacro_args
+from robot_flart import xargs_catalog_manager as flart_xargs
 
 
 def generate_launch_description():
@@ -35,10 +35,13 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'params_file',
             default_value=os.path.join(get_package_share_directory('robot_flart'), 'config', 'example_flart_core.yaml'),
-            description='Base YAML with ros__parameters (Default: robot_flart/config/example_flart_core.yaml)',
+            description='Base YAML with ros__parameters',
         ),
-        # Declare launch arguments for '<xacro:arg>' items for the robot.
-        OpaqueFunction(function=flart_xacro_args.declare_launch_arguments),
+        # Declare launch arguments that are used to set the xacro arguments (<xacro:arg>) in the selected xacro file
+        # (based on 'robot_version' launch argument).
+        # These xacro arguments (<xacro:arg>) are used to generate the robot description, and they
+        # used to generate the robot description. These launch arguments are generated dynamically based on the xacro
+        OpaqueFunction(function=declare_launch_arguments_for_selected_version),
     ]
     ####################################################################################################################
     # Remappings, logging options and node options
@@ -84,7 +87,7 @@ def include_rsp(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
                 'params_file': LaunchConfiguration('params_file'),
                 # Launch arguments 'publish_frequency' and 'ignore_timestamp' are not passed directly here, they must
                 # be provided in the launch configuration 'params_file'.
-                **flart_xacro_args.get_launch_configurations(robot_version),
+                **get_launch_configurations_from_resolved_xargs(robot_version),
                 'topic_remappings': LaunchConfiguration('rsp_topic_remappings'),
                 'node_options': LaunchConfiguration('rsp_options'),
                 'logging_options': LaunchConfiguration('rsp_logging_options'),
@@ -95,7 +98,7 @@ def include_rsp(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
 
 def include_rosgz_bridge(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
     robot_version = LaunchConfiguration('robot_version').perform(ctx).strip()
-    available_robot_versions = flart_xacro_args.get_robot_versions()
+    available_robot_versions = flart_xargs.get_robot_versions()
 
     ns = LaunchConfiguration('namespace').perform(ctx).strip()
     robot_name = LaunchConfiguration('robot_name').perform(ctx).strip()
@@ -143,7 +146,7 @@ def include_rosgz_bridge(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
     #    2.2 'core_sim_file' is not empty => launch rosgz_bridge.
     # 3. The robot version uses 'extras_sim_file' and 'extras_sim_file' is not empty: always launch rosgz_bridge.
 
-    if flart_xacro_args.has_xarg(robot_version, 'extras_sim_file'):
+    if 'extras_sim_file' in flart_xargs.get_resolved_xargs(robot_version):
         extras_sim_file = LaunchConfiguration('extras_sim_file').perform(ctx).strip()
         launch_rosgz_bridge = launch_rosgz_bridge and (extras_sim_file != '')
 
@@ -188,6 +191,17 @@ def include_three_swerve_kinematics(ctx: LaunchContext) -> List[LaunchDescriptio
             }.items(),
         )
     ]
+
+
+def declare_launch_arguments_for_selected_version(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
+    robot_version = LaunchConfiguration('robot_version').perform(ctx).strip()
+    return flart_xargs.declare_launch_arguments_for_robot_version(ctx, robot_version)
+
+
+def get_launch_configurations_from_resolved_xargs(robot_version: str) -> dict[str, LaunchConfiguration]:
+    return {
+        xarg_name: LaunchConfiguration(xarg_name) for xarg_name in flart_xargs.get_resolved_xargs(robot_version).keys()
+    }
 
 
 ################################################################################
