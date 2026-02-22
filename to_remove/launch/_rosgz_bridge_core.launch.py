@@ -9,20 +9,21 @@ from launch.actions import DeclareLaunchArgument, LogInfo, OpaqueFunction
 from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
-from launch_ros.parameter_descriptions import ParameterFile
+from launch_ros.descriptions import ParameterFile
 
 from launch import LaunchContext, LaunchDescription, LaunchDescriptionEntity
-from robot_flart import _rosgz_bridge_core_cfg_builder, _rosgz_bridge_v0_cfg_builder  # noqa: F401
+from robot_forklift_simple_3aw import _rosgz_bridge_core_cfg_builder
 
 
 def generate_launch_description():
     # ldes -> (l)aunch (d)escription (e)ntitie(s)
+    # Once the use_sim_time argument is added, the rest of the Actions are only added if use_sim_time is true.
     ldes = [
         DeclareLaunchArgument(
             'use_sim_time',
             default_value='False',
             choices=['True', 'true', 'False', 'false'],
-            description='Use simulation clock if true',
+            description='use simulation clock if true',
         ),
         DeclareLaunchArgument(
             'namespace',
@@ -32,7 +33,7 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             'robot_name',
-            default_value='flart',
+            default_value='fs3aw',
             description='The unique name for the robot',
             condition=IfCondition(LaunchConfiguration('use_sim_time')),
         ),
@@ -42,8 +43,10 @@ def generate_launch_description():
         # 'params_file' and 'subscription_heartbeat' are parameters for the rosgz_bridge node.
         DeclareLaunchArgument(
             'params_file',
-            default_value=os.path.join(get_package_share_directory('robot_flart'), 'config', 'example_flart_v0.yaml'),
-            description='Base YAML with ros__parameters (Default: example_flart_v0.yaml)',
+            default_value=os.path.join(
+                get_package_share_directory('robot_forklift_simple_3aw'), 'config', 'example_fs3aw_core.yaml'
+            ),
+            description='Base YAML with ros__parameters (Default: example_fs3aw_core.yaml)',
             condition=IfCondition(LaunchConfiguration('use_sim_time')),
         ),
         DeclareLaunchArgument(
@@ -56,28 +59,17 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'core_sim_file',
             default_value=os.path.join(
-                get_package_share_directory('robot_flart'), 'config', 'example_flart_core_simulation.yaml'
+                get_package_share_directory('robot_forklift_simple_3aw'), 'config', 'example_fs3aw_core_simulation.yaml'
             ),
             description=(
-                'Path to the simulation file for the base and fork of the flart robot '
-                '(Default: example_flart_core_simulation.yaml)'
+                "Path to the simulation file for the 'core' version of the fs3aw robot "
+                '(Default: example_fs3aw_core_simulation.yaml)'
             ),
             condition=IfCondition(LaunchConfiguration('use_sim_time')),
         ),
-        DeclareLaunchArgument(
-            'extras_sim_file',
-            default_value=os.path.join(
-                get_package_share_directory('robot_flart'), 'config', 'example_flart_v0_simulation_extras.yaml'
-            ),
-            description=(
-                "Path to the simulation file for the extra elements in the 'v0' version of the flart robot "
-                '(Default: example_flart_v0_simulation_extras.yaml)'
-            ),
-            condition=IfCondition(LaunchConfiguration('use_sim_time')),
-        ),
-        ########################################################################
+        ################################################################################
         # Node and logging options
-        ########################################################################
+        ################################################################################
         DeclareLaunchArgument(
             'node_options',
             default_value=rlh.default_node_options_str(),
@@ -90,9 +82,9 @@ def generate_launch_description():
             description=rlh.LOGGING_OPTIONS_DESC,
             condition=IfCondition(LaunchConfiguration('use_sim_time')),
         ),
-        #########################################################################
+        ################################################################################
         # Others
-        ########################################################################
+        ################################################################################
         # rosgz_bridge node is only launched if 'use_sim_time' is true, otherwise it is not needed.
         OpaqueFunction(function=launch_rosgz_bridge, condition=IfCondition(LaunchConfiguration('use_sim_time'))),
     ]
@@ -101,11 +93,11 @@ def generate_launch_description():
 
 
 ################################################################################
-# Opaque functions.
+# Opaque functions
 ################################################################################
 
 
-def launch_rosgz_bridge(ctx: LaunchContext) -> list[LaunchDescriptionEntity]:
+def launch_rosgz_bridge(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
     # ldes := (l)aunch (d)escription (e)ntitie(s) to return.
     ldes: List[LaunchDescriptionEntity] = []
 
@@ -115,32 +107,12 @@ def launch_rosgz_bridge(ctx: LaunchContext) -> list[LaunchDescriptionEntity]:
     underscored_robot_ns = rlh.underscorify_namespace(robot_ns)
 
     # Create the configuration for the rosgz_bridge_core for this robot.
-    rosgz_bridge_core_cfg, core_msg = _rosgz_bridge_core_cfg_builder.create_cfg(
+    rosgz_bridge_cfg, msg = _rosgz_bridge_core_cfg_builder.create_cfg(
         LaunchConfiguration('core_sim_file').perform(ctx).strip(), namespace, robot_name
     )
-    rosgz_bridge_extras_cfg, extras_msg = _rosgz_bridge_v0_cfg_builder.create_cfg(
-        LaunchConfiguration('extras_sim_file').perform(ctx).strip(), namespace, robot_name
-    )
 
-    if not rosgz_bridge_core_cfg and not rosgz_bridge_extras_cfg:
-        # If both configurations are empty, log both messages and do not launch the bridge.
-        return [
-            LogInfo(msg=f'[{underscored_robot_ns}] {core_msg}'),
-            LogInfo(msg=f'[{underscored_robot_ns}] {extras_msg}'),
-        ]
-    elif not rosgz_bridge_core_cfg:
-        # If only the core configuration is empty, log its message.
-        # The extras configuration is not empty, so we can proceed.
-        ldes.append(LogInfo(msg=f'[{underscored_robot_ns}] {core_msg}'))
-        rosgz_bridge_cfg = rosgz_bridge_extras_cfg
-    elif not rosgz_bridge_extras_cfg:
-        # If only the extras configuration is empty, log its message.
-        # The core configuration is not empty, so we can proceed.
-        ldes.append(LogInfo(msg=f'[{underscored_robot_ns}] {extras_msg}'))
-        rosgz_bridge_cfg = rosgz_bridge_core_cfg
-    else:
-        # Both configurations are not empty, combine them.
-        rosgz_bridge_cfg = rosgz_bridge_core_cfg + rosgz_bridge_extras_cfg
+    if not rosgz_bridge_cfg:
+        return [LogInfo(msg=msg)]
 
     # In ROS2-Humble, the only way to pass to the 'bridge_node' the channels is by using the parameter 'config_file'
     # that points to a YAML file with the channels definition.
@@ -170,23 +142,22 @@ def launch_rosgz_bridge(ctx: LaunchContext) -> list[LaunchDescriptionEntity]:
     # This parameter dictionary will be added to the parameters list after the parameter file, so its values
     # override any duplicated ones in the parameter file.
     parameters_dict: Dict[str, Any] = {
-        'use_sim_time': True,  # If here we are in simulation mode.
+        'use_sim_time': True,  # if here we are in simulation mode.
         'config_file': str(abs_path),
-        # We are building the full topics, with namespace and all, so we do not want the bridge
-        # to expand them.
+        # We are building the full topics, including namespace, so we do not need the bridge to expand the topic names.
         'expand_gz_topic_names': False,
-        # The parameter `override_timestamps_with_wall_time` controls how the `header.stamp` field is set
-        # in messages bridged from Gazebo to ROS 2.
-        # - If set to 'true', the bridge will overwrite the original timestamp with the current system wall
-        #   time, meaning the actual time according to the operating system clock (e.g., what you get with
-        #   'date' in a terminal), at the moment the message is forwarded.
-        #   This means the message will reflect the real-world time of the host machine, not the simulation
-        #   time from Gazebo.
-        # - If set to 'false', the bridge will preserve the original timestamp from the source message
+        # The parameter 'override_timestamps_with_wall_time' controls how the 'header.stamp' field is set in messages
+        # bridged from gazebo to ros 2.
+        # - If set to 'true', the bridge will overwrite the original timestamp with the current system wall time,
+        #   i.e., the time according to the operating system clock (e.g., what you get with `date` in a terminal),
+        #   at the moment the message is forwarded.
+        #   This means the message will reflect the real-world time of the host machine, not the simulation time from
+        #   Gazebo.
+        # - If set to 'False', the bridge will preserve the original timestamp from the source message
         #   (e.g., Gazebo simulation time).
-        #   This is recommended when you are also bridging the '/clock' topic from Gazebo to ROS 2 and
-        #   using 'use_sim_time: true' in your ROS 2 nodes, so that all messages and nodes are synchronized
-        #   to the same simulation time reference.
+        #   This is recommendation when you are also bridging the '/clock' topic from gazebo to ROS2 and using
+        #   'use_sim_time: True' in your ROS2 nodes, so that all messages and nodes are synchronized to the same
+        #   simulation time reference.
         'override_timestamps_with_wall_time': False,
     }
 
@@ -199,6 +170,7 @@ def launch_rosgz_bridge(ctx: LaunchContext) -> list[LaunchDescriptionEntity]:
 
     parameters.append(parameters_dict)
 
+    # node_options include 'name', 'output', 'emulate_tty', 'respawn', 'respawn_delay',
     node_options = rlh.process_node_options(LaunchConfiguration('node_options').perform(ctx))
     node_name = str(node_options['name']) or 'rosgz_bridge'
 
@@ -207,9 +179,10 @@ def launch_rosgz_bridge(ctx: LaunchContext) -> list[LaunchDescriptionEntity]:
             package='ros_gz_bridge',
             executable='bridge_node',
             name=node_name,
+            # Insert the node into the robot_ns.
             namespace=robot_ns,
             parameters=parameters,
-            # remappings not needed here.
+            # Topics remappings not needed here.
             ros_arguments=rlh.process_logging_options(LaunchConfiguration('logging_options').perform(ctx)),
             output=node_options['output'],
             emulate_tty=node_options['emulate_tty'],

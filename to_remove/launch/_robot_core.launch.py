@@ -10,13 +10,13 @@ from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.substitutions import FindPackageShare
 
 from launch import LaunchContext, LaunchDescription, LaunchDescriptionEntity
-from robot_flart import xargs_catalog_manager
+from robot_forklift_simple_3aw import xargs_catalog_manager
 
-_ROBOT_VERSION = 'v0'
+_ROBOT_VERSION = 'core'
 
 
 def generate_launch_description():
-    """Build the launch description for the FLART v0 robot profile."""
+    """Build the launch description for the FLART core robot profile."""
     ldes: list[LaunchDescriptionEntity] = [
         DeclareLaunchArgument(
             'use_sim_time',
@@ -25,18 +25,17 @@ def generate_launch_description():
             description='Use simulation clock if true',
         ),
         DeclareLaunchArgument('namespace', default_value='', description='Namespace for all resources'),
-        DeclareLaunchArgument('robot_name', default_value='flart_v0', description='The unique name for the robot'),
+        DeclareLaunchArgument('robot_name', default_value='fs3aw_core', description='The unique name for the robot'),
         DeclareLaunchArgument(
             'params_file',
-            default_value=os.path.join(get_package_share_directory('robot_flart'), 'config', 'example_flart_v0.yaml'),
-            description='Base YAML with ros__parameters',
-        ),
-        OpaqueFunction(
-            function=xargs_catalog_manager.declare_launch_arguments_for_robot_version,
-            kwargs={'robot_version': _ROBOT_VERSION},
+            default_value=os.path.join(
+                get_package_share_directory('robot_forklift_simple_3aw'), 'config', 'example_fs3aw_core.yaml'
+            ),
+            description='Base YAML with ros__parameters for the nodes launched by this file',
         ),
     ]
 
+    ldes.extend(xargs_catalog_manager.declare_launch_arguments_for_robot_version(_ROBOT_VERSION))
     ldes.extend(declare_topic_remappings())
     ldes.extend(declare_node_options())
     ldes.extend(declare_logging_options())
@@ -54,16 +53,15 @@ def generate_launch_description():
 
 
 def include_rsp(_ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
-    """Include the shared RSP launch file configured for the v0 profile."""
+    """Include the core-specific RSP launch file."""
     return [
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
-                PathJoinSubstitution([FindPackageShare('robot_flart'), 'launch', 'rsp.launch.py'])
+                PathJoinSubstitution([FindPackageShare('robot_forklift_simple_3aw'), 'launch', 'rsp_core.launch.py'])
             ),
             launch_arguments={
                 'use_sim_time': LaunchConfiguration('use_sim_time'),
                 'namespace': LaunchConfiguration('namespace'),
-                'robot_version': _ROBOT_VERSION,
                 'robot_name': LaunchConfiguration('robot_name'),
                 'params_file': LaunchConfiguration('params_file'),
                 'topic_remappings': LaunchConfiguration('rsp_topic_remappings'),
@@ -76,17 +74,16 @@ def include_rsp(_ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
 
 
 def include_rosgz_bridge(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
-    """Include the v0 rosgz bridge launch when core and extras simulation plugins are enabled."""
+    """Include the core rosgz bridge launch when core simulation plugins are enabled."""
     ns = LaunchConfiguration('namespace').perform(ctx).strip()
     robot_name = LaunchConfiguration('robot_name').perform(ctx).strip()
     robot_ns = rlh.create_robot_namespace(ns, robot_name)
     underscored_robot_ns = rlh.underscorify_namespace(robot_ns)
 
-    # The v0 profile requires both simulation files (`core` and `extras`) to launch the bridge stack.
+    # The core profile uses only `core_sim_file` to decide whether simulation bridges are needed.
     core_sim_file = LaunchConfiguration('core_sim_file').perform(ctx).strip()
-    extras_sim_file = LaunchConfiguration('extras_sim_file').perform(ctx).strip()
 
-    if not core_sim_file or not extras_sim_file:
+    if not core_sim_file:
         return [
             LogInfo(
                 msg=(
@@ -99,7 +96,9 @@ def include_rosgz_bridge(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
     return [
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
-                PathJoinSubstitution([FindPackageShare('robot_flart'), 'launch', 'rosgz_bridge_v0.launch.py'])
+                PathJoinSubstitution(
+                    [FindPackageShare('robot_forklift_simple_3aw'), 'launch', 'rosgz_bridge_core.launch.py']
+                )
             ),
             launch_arguments={
                 'use_sim_time': LaunchConfiguration('use_sim_time'),
@@ -107,7 +106,6 @@ def include_rosgz_bridge(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
                 'robot_name': robot_name,
                 'params_file': LaunchConfiguration('params_file'),
                 'core_sim_file': core_sim_file,
-                'extras_sim_file': extras_sim_file,
                 'node_options': LaunchConfiguration('rosgz_bridge_options'),
                 'logging_options': LaunchConfiguration('rosgz_bridge_logging_options'),
             }.items(),

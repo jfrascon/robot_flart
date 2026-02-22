@@ -5,9 +5,6 @@
     # frame_prefix is not accepted
     # robot_description is set in the launch file
 
-# Since this parameter file uses variable expansion, it is meant to be use along with an instruction
-# ParameterFile(<params_file>, allow_substs=True) in a launch file, where the launch argument 'robot_prefix' is defined
-# prior to including this parameter file.
 /**/three_swerve_kinematics:
   ros__parameters:
     # use_sim_time IS automatically handled, no need to specify here.
@@ -82,8 +79,8 @@
           origin: { x: 0.0, y: 0.0, z: 0.0, R: 0.0, P: 0.0, Y: 0.0 }
           limits: { lower: -50.0, upper: 50.0 } # rad/s
 
-/**/rosgz_bridge_core:
+/**/rosgz_bridge:
   ros__parameters:
     subscription_heartbeat: 1000
-    # config_file, expang_gz_topic_names and override_timestamps_with_wall_time are forced in the launch file.
-    # See the launch file 'rosgz_bridge_core.launch.py' for details.
+    # config_file, expand_gz_topic_names and override_timestamps_with_wall_time are forced in the launch file.
+    # See the launch file 'rosgz_bridge.launch.py' for details.

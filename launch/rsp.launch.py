@@ -1,61 +1,47 @@
 import os
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 
 import ros2_launch_helpers as rlh
 from ament_index_python.packages import get_package_share_directory
-from launch.actions import DeclareLaunchArgument, LogInfo, OpaqueFunction
+from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.substitutions import Command, FindExecutable, LaunchConfiguration
 from launch.utilities.type_utils import normalize_typed_substitution, perform_typed_substitution
 from launch_ros.actions import Node
 from launch_ros.descriptions import ParameterFile, ParameterValue
 
 from launch import LaunchContext, LaunchDescription, LaunchDescriptionEntity
-from robot_flart import xargs_catalog_manager as flart_xargs
+from robot_forklift_simple_3aw import xargs_catalog_manager
 
 
-def generate_launch_description():
-    # ldes => (l)aunch (d)escription (e)ntitie(s)
-
-    ldes = [
+def generate_launch_description() -> LaunchDescription:
+    """Build the launch description for robot_state_publisher across fs3aw versions."""
+    ldes: List[LaunchDescriptionEntity] = [
         DeclareLaunchArgument(
             'use_sim_time',
             default_value='False',
             choices=['True', 'true', 'False', 'false'],
             description='Use simulation clock if true',
         ),
-        DeclareLaunchArgument('namespace', default_value='', description='namespace (Optional, default: "")'),
-        DeclareLaunchArgument(
-            'robot_version', default_value='core', description='Robot version to launch (default: core)'
-        ),
-        DeclareLaunchArgument('robot_name', default_value='flart_core', description='The unique name for the robot'),
-        ########################################################################
-        # Parameters
-        ########################################################################
+        DeclareLaunchArgument('namespace', default_value='', description='Namespace for all resources'),
+        DeclareLaunchArgument('robot_version', default_value='core', description='Robot version to launch'),
+        OpaqueFunction(function=_validate_selected_robot_version),
+        DeclareLaunchArgument('robot_name', default_value='fs3aw', description='The unique name for the robot'),
         DeclareLaunchArgument(
             'params_file',
-            default_value=os.path.join(get_package_share_directory('robot_flart'), 'config', 'example_flart_core.yaml'),
-            description='Base YAML with ros__parameters',
-        ),
-        # Parameters 'publish_frequency' and 'ignore_timestamp' passed to the launch file override those set
-        # in the parameter file.
-        DeclareLaunchArgument(
-            'publish_frequency',
             default_value='',
-            description='Frequency of publication for robot_state_publisher (Optional, default: "")',
+            description='Path to params file. If empty, use default for selected robot_version.',
+        ),
+        DeclareLaunchArgument(
+            'publish_frequency', default_value='', description='Frequency of publication for robot_state_publisher'
         ),
         DeclareLaunchArgument(
             'ignore_timestamp',
             default_value='',
             choices=['True', 'true', 'False', 'false', ''],
-            description='If True, joint_state messages are accepted, no matter their timestamp '
-            '(Optional, default: "" )',
+            description='If True, joint_state messages are accepted, no matter their timestamp',
         ),
-        # Declare description arguments to pass to the xacro file.
-        OpaqueFunction(function=declare_launch_arguments_for_selected_version),
-        ########################################################################
-        # Remappings, node options and logging options
-        ########################################################################
+        OpaqueFunction(function=_declare_xargs_launch_arguments_for_selected_version),
         DeclareLaunchArgument('topic_remappings', default_value='', description=rlh.TOPIC_REMAPPINGS_DESC),
         DeclareLaunchArgument(
             'node_options', default_value=rlh.default_node_options_str(), description=rlh.NODE_OPTIONS_DESC
@@ -63,119 +49,39 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'logging_options', default_value=rlh.default_logging_options_str(), description=rlh.LOGGING_OPTIONS_DESC
         ),
-        #########################################################################
-        # Others
-        ########################################################################
-        OpaqueFunction(function=launch_rsp),
+        OpaqueFunction(function=_launch_rsp),
     ]
 
     return LaunchDescription(ldes)
 
 
-################################################################################
-# Non-opaque functions
-################################################################################
+def _build_xacro_command(ctx: LaunchContext) -> Tuple[List[Any], List[str]]:
+    """Build the xacro command list and collect textual diagnostics for the selected version.
 
-################################################################################
-# Opaque functions
-################################################################################
+    Raises:
+        FileNotFoundError: If the selected xacro file does not exist.
+    """
 
-
-def launch_rsp(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
-    namespace = LaunchConfiguration('namespace').perform(ctx).strip()
     robot_version = LaunchConfiguration('robot_version').perform(ctx).strip()
+    namespace = LaunchConfiguration('namespace').perform(ctx).strip()
     robot_name = LaunchConfiguration('robot_name').perform(ctx).strip()
     robot_ns = rlh.create_robot_namespace(namespace, robot_name)
     underscored_robot_ns = rlh.underscorify_namespace(robot_ns)
-    available_robot_versions = flart_xargs.get_robot_versions()
 
-    if robot_version not in available_robot_versions:
-        return [
-            LogInfo(
-                msg=f"[ERROR][{underscored_robot_ns}] Version '{robot_version}' for the 'flart' robot is not "
-                f'available.  Available versions: {", ".join(available_robot_versions)}'
-            )
-        ]
-
-    xacro_file = os.path.join(get_package_share_directory('robot_flart'), 'urdf', f'{robot_version}.xacro')
+    xacro_file = os.path.join(
+        get_package_share_directory('robot_forklift_simple_3aw'), 'urdf', f'{robot_version}.xacro'
+    )
 
     if not Path(xacro_file).is_file():
-        return [LogInfo(msg=f"[ERROR][{underscored_robot_ns}] File '{xacro_file}' not found")]
-
-    # ldes => (l)aunch (d)escription (e)ntitie(s)
-    ldes: List[LaunchDescriptionEntity] = []
+        raise FileNotFoundError(f"[ERROR][{underscored_robot_ns}] File '{xacro_file}' not found")
 
     use_sim_time = perform_typed_substitution(
         ctx, normalize_typed_substitution(LaunchConfiguration('use_sim_time'), bool), bool
     )
 
-    # If the application is running in real mode (use_sim_time = False), do not use simulation files.
-    if not use_sim_time:
-        # Propery way to pass empty string to xacro command in a programmatic way is '""', in CLI we would use "".
-        core_sim_file = '""'
-        extras_sim_file = '""'
-    else:
-        # The <xacro:arg> 'core_sim_file' is part of the 'core' version of the flart robot.
-        # Every version of the flart robot beyond 'core' (v0, v1, ...) includes the core version and adds additional
-        # features, like sensors, etc., therefore, the <xacro:arg> 'core_sim_file' is also part of those versions.
-        core_sim_file = LaunchConfiguration('core_sim_file').perform(ctx).strip()
+    msgs: List[str] = []
 
-        if not core_sim_file:
-            ldes.append(
-                LogInfo(
-                    msg=f"[WARNING][{underscored_robot_ns}] File 'core_sim_file' not provided. "
-                    'No simulation plugins will be loaded for the base and fork'
-                )
-            )
-
-            core_sim_file = '""'  # This is the proper way to pass empty string to xacro command in a programmatic way.
-        elif not Path(core_sim_file).is_file():
-            ldes.append(
-                LogInfo(
-                    msg=f"[WARNING][{underscored_robot_ns}] File 'core_sim_file' not found. "
-                    'No simulation plugins will be loaded for the base and fork'
-                )
-            )
-
-            core_sim_file = '""'  # This is the proper way to pass empty string to xacro command in a programmatic way.
-
-        # If the robot version simulate extra devices apart from base and fork (like sensors, etc.), a field called
-        # 'extras_sim_file' must be defined for that robot version in the xargs catalog.
-        # If the robot version does not define the 'extras_sim_file' argument, or the value passed to that argument is
-        # empty, then no extra elements are simulated.
-        if 'extras_sim_file' in flart_xargs.get_resolved_xargs(robot_version):
-            extras_sim_file = LaunchConfiguration('extras_sim_file').perform(ctx).strip()
-
-            if not extras_sim_file:
-                ldes.append(
-                    LogInfo(
-                        msg=f"[WARNING][{underscored_robot_ns}] File 'extras_sim_file' not provided "
-                        f'No extra simulation plugins will be loaded'
-                    )
-                )
-
-                extras_sim_file = '""'  # This is the proper way to pass empty str to xacro cmd in a programmatic way.
-            elif not Path(extras_sim_file).is_file():
-                ldes.append(
-                    LogInfo(
-                        msg=f"[WARNING][{underscored_robot_ns}] File 'extras_sim_file' not found. "
-                        'No simulation plugins will be loaded for the extra devices'
-                    )
-                )
-
-                extras_sim_file = '""'  # This is the proper way to pass empty str to xacro cmd in a programmatic way.
-        else:
-            ldes.append(
-                LogInfo(
-                    msg=f"[WARNING][{underscored_robot_ns}] Version '{robot_version}' of the 'flart' robot does not "
-                    'define extra simulation file'
-                )
-            )
-
-            extras_sim_file = '""'  # This is the proper way to pass empty str to xacro cmd in a programmatic way.
-
-    # Build xacro command to expand the xacro file of the robot with the given arguments.
-    cmd = [
+    cmd: List[Any] = [
         FindExecutable(name='xacro'),
         ' ',
         xacro_file,
@@ -187,66 +93,152 @@ def launch_rsp(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
         LaunchConfiguration('robot_name'),
     ]
 
-    # Add to 'cmd' the value for the '<xacro:args>' items the given robot version uses.
-    for xarg_name in flart_xargs.get_resolved_xargs(robot_version).keys():
-        # Every version of the 'flart' robot uses the 'core_sim_file', so the variable 'core_sim_file' is always added
-        # to 'cmd'.
-        # The variable 'core_sim_file' may or may not be an empty string.
-        # If the variable 'core_sim_file' is an empty string, no simulation plugins will be loaded for the base and
-        # fork.
-        if xarg_name == 'core_sim_file':
-            value = core_sim_file
-        # If the robot version does not use the 'extras_sim_file', the variable 'extras_sim_file' is not added to 'cmd'.
-        # If the robot version uses extras_sim_file, the variable 'extras_sim_file' may or may not be an empty string.
-        # If the variable 'extras_sim_file' is an empty string, no extra simulation plugins will be loaded.
-        elif xarg_name == 'extras_sim_file':
-            value = extras_sim_file
+    for xarg_name in xargs_catalog_manager.get_resolved_xargs(robot_version).keys():
+        # Get the value of the LaunchConfiguration for the xarg. The value might be a user-given value or the default
+        # value from the catalog.
+        raw_value = LaunchConfiguration(xarg_name).perform(ctx).strip()
+
+        # The 'sim_file' xarg needs special handling because it is only relevant when 'use_sim_time' is true, and
+        # specific warnings are logged when the file is missing or invalid in that mode.
+        # For the remaining xargs, the value is only quoted when it contains whitespace.
+        if xarg_name == 'sim_file':
+            # If 'use_sim_time' is false, the value of 'sim_file' is ignored and set to an empty string, as the
+            # simulation configuration is not relevant when not using simulation time. No warning is logged in
+            # this case, as it is not an error to not provide a simulation file when not using simulation time.
+            if not use_sim_time:
+                value = '""'
+            # If 'use_sim_time' is true, the value of 'sim_file' is validated. If it is missing or not found, a warning
+            # is logged and the value is set to an empty string, meaning no simulation plugins are loaded. If valid, its
+            # path is used as the value.
+            elif not raw_value:
+                msgs.append(
+                    f"[WARNING][{underscored_robot_ns}] File 'sim_file' not provided. "
+                    'No simulation plugins will be loaded'
+                )
+                value = '""'
+            # Handling the case where the file is provided but not found separately to provide a more specific warning
+            # message, as it is a common mistake to provide an incorrect path to the simulation file.
+            elif not Path(raw_value).is_file():
+                msgs.append(
+                    f"[WARNING][{underscored_robot_ns}] File 'sim_file' not found. No simulation plugins will be loaded"
+                )
+                value = '""'
+            # If 'use_sim_time' is true and the file is provided and found, its path is used for 'sim_file'.
+            # The value is quoted only when it contains whitespace to keep xacro tokenization correct.
+            else:
+                value = _quote_if_needed(raw_value)
+        # For the remaining xargs, quote only when whitespace is present so xacro parses one token.
         else:
-            raw_value = LaunchConfiguration(xarg_name).perform(ctx).strip()
-            # If raw_value contains spaces or tabs, we need to quote it to avoid errors when the command xacro
-            # is parsing the value.
-            # ispace() checks for spaces, tabs, new lines, etc.
-            value = f'"{raw_value}"' if any(ch.isspace() for ch in raw_value) else raw_value
+            value = _quote_if_needed(raw_value)
 
         cmd.extend([' ', f'{xarg_name}:=', value])
 
-    parameters = []
+    return cmd, msgs
 
-    params_file = LaunchConfiguration('params_file').perform(ctx).strip()
 
-    # Add parameter file only if it's not empty.
+def _declare_xargs_launch_arguments_for_selected_version(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
+    """Declare xargs launch arguments for the selected robot version."""
+    robot_version = LaunchConfiguration('robot_version').perform(ctx).strip()
+    return xargs_catalog_manager.declare_launch_arguments_for_robot_version(robot_version)
+
+
+def _get_default_params_file_for_robot_version(robot_version: str) -> str:
+    """Return default params YAML path for a robot version using naming convention."""
+
+    config_dir = Path(get_package_share_directory('robot_forklift_simple_3aw')).joinpath('config')
+    candidate = config_dir.joinpath(f'example_{robot_version}.yaml')
+
+    if candidate.is_file():
+        return str(candidate)
+
+    return str(config_dir.joinpath('example_core.yaml'))
+
+
+def _get_parameters(ctx: LaunchContext) -> Tuple[List[Any], List[str]]:
+    """Build the parameter list for robot_state_publisher.
+
+    The function also builds the xacro command and returns textual diagnostics generated while
+    validating simulation inputs.
+
+    The parameter file (if provided) is inserted first, and then launch-argument parameters
+    are appended so they take precedence over same-name entries coming from the YAML file.
+
+    Raises:
+        FileNotFoundError: Propagated if the selected xacro file does not exist.
+        ValueError: If `publish_frequency` is provided but is not a real number.
+    """
+    robot_version = LaunchConfiguration('robot_version').perform(ctx).strip()
+    namespace = LaunchConfiguration('namespace').perform(ctx).strip()
+    robot_name = LaunchConfiguration('robot_name').perform(ctx).strip()
+    robot_ns = rlh.create_robot_namespace(namespace, robot_name)
+    underscored_robot_ns = rlh.underscorify_namespace(robot_ns)
+
+    cmd, msgs = _build_xacro_command(ctx=ctx)
+
+    parameters: List[Any] = []
+    input_params_file = LaunchConfiguration('params_file').perform(ctx).strip()
+    params_file = input_params_file or _get_default_params_file_for_robot_version(robot_version)
+
     if params_file:
-        parameters.append(ParameterFile(params_file, allow_substs=True))
+        parameters.append(ParameterFile(params_file, allow_substs=False))
 
-    # Create a dictionary of parameters to be passed after the parameter file, so thay have precedence over
-    # those defined in the parameter file.
+    use_sim_time = perform_typed_substitution(
+        ctx, normalize_typed_substitution(LaunchConfiguration('use_sim_time'), bool), bool
+    )
+
     parameters_dict: Dict[str, Any] = {
         'use_sim_time': use_sim_time,
         'robot_description': ParameterValue(Command(cmd), value_type=str),
-        # "DO NOT CHANGE THE VALUE OF 'frame_prefix', LEAVE IT AS AN EMPTY STRING. THE 'namespace' AND 'robot_name'
-        # ARE PASSED TO THE XACRO FILE, AND THE XACRO FILE USES THEM TO CREATE THE PROPER FRAME PREFIXES.
+        # This field is intentionally kept empty.
+        # Frame prefixes are generated directly inside the xacro using namespace and robot_name.
         'frame_prefix': '',
-        'use_robot_description_topic': False,  # We directly pass the robot_description parameter.
+        # Robot description is obtained by processing the xacro file for the selected robot version with the
+        # appropriate xargs.
+        'use_robot_description_topic': False,
     }
 
-    # If parameters 'publish_frequency' and 'ignore_timestamp' are set through the launch file, they override those set
-    # in the parameter file.
     publish_frequency = LaunchConfiguration('publish_frequency').perform(ctx).strip()
 
     if publish_frequency:
-        parameters_dict['publish_frequency'] = float(publish_frequency)
+        try:
+            parameters_dict['publish_frequency'] = float(publish_frequency)
+        except ValueError as exc:
+            raise ValueError(
+                f"[ERROR][{underscored_robot_ns}] Invalid 'publish_frequency' value "
+                f"'{publish_frequency}'. Expected a real number."
+            ) from exc
 
     ignore_timestamp = LaunchConfiguration('ignore_timestamp').perform(ctx).strip()
 
     if ignore_timestamp:
-        parameters_dict['ignore_timestamp'] = bool(ignore_timestamp)
+        # Transform to bool. The parameter `ignore_timestamp` can only have the values 'True', 'true', 'False', 'false'
+        # or '', so if it is not empty, it can be treated as a valid boolean value.
+        ignore_timestamp = perform_typed_substitution(
+            ctx, normalize_typed_substitution(LaunchConfiguration('ignore_timestamp'), bool), bool
+        )
+        parameters_dict['ignore_timestamp'] = ignore_timestamp
 
     parameters.append(parameters_dict)
+
+    return parameters, msgs
+
+
+def _launch_rsp(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
+    """Launch robot_state_publisher for the selected fs3aw robot version."""
+
+    namespace = LaunchConfiguration('namespace').perform(ctx).strip()
+    robot_name = LaunchConfiguration('robot_name').perform(ctx).strip()
+    robot_ns = rlh.create_robot_namespace(namespace, robot_name)
+
+    ldes: List[LaunchDescriptionEntity] = []
+
+    parameters, msgs = _get_parameters(ctx=ctx)
+    ldes.extend(rlh.to_log_info_entities(msgs))
 
     node_options = rlh.process_node_options(LaunchConfiguration('node_options').perform(ctx))
     node_name = str(node_options['name']) or 'robot_state_publisher'
 
-    return [
+    ldes.append(
         Node(
             package='robot_state_publisher',
             executable='robot_state_publisher',
@@ -260,9 +252,25 @@ def launch_rsp(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
             respawn=node_options['respawn'],
             respawn_delay=node_options['respawn_delay'],
         )
-    ]
+    )
+
+    return ldes
 
 
-def declare_launch_arguments_for_selected_version(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
+def _quote_if_needed(raw_value: str) -> str:
+    """Quote values containing whitespace so xacro parses them as one token."""
+    return f'"{raw_value}"' if any(ch.isspace() for ch in raw_value) else raw_value
+
+
+def _validate_selected_robot_version(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
+    """Fail fast if selected robot version is not supported by the xargs catalog."""
     robot_version = LaunchConfiguration('robot_version').perform(ctx).strip()
-    return flart_xargs.declare_launch_arguments_for_robot_version(ctx, robot_version)
+    available_robot_versions = xargs_catalog_manager.get_robot_versions()
+
+    if robot_version in available_robot_versions:
+        return []
+
+    raise ValueError(
+        f"Version '{robot_version}' for the 'fs3aw' robot is not available. "
+        f'Available versions: {", ".join(available_robot_versions)}'
+    )
