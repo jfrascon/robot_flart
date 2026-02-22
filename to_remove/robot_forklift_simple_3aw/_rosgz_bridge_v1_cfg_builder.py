@@ -8,9 +8,9 @@ import ros2_launch_helpers as rlh
 __all__ = ['create_cfg']
 
 
-def create_cfg(extras_sim_file: str, namespace: str, robot_name: str) -> Tuple[List[Dict[str, Any]], str]:
-    """Create the ROS <-> GZ bridge channels configuration for the extra elements defined in the version 'v0' of the
-      'flart' robot.
+def create_cfg(sim_file: str, namespace: str, robot_name: str) -> Tuple[List[Dict[str, Any]], str]:
+    """Create the ROS <-> GZ bridge channels configuration for the extra elements defined in the version 'v1' of the
+      'fs3aw' robot.
 
     - Processes the simulation configuration file and builds channel entries based on enabled sections.
     - Returns a tuple (cfg_list, msg).
@@ -24,16 +24,16 @@ def create_cfg(extras_sim_file: str, namespace: str, robot_name: str) -> Tuple[L
     # Read the simulation file and return the content. If it is not possible to grab the content, return None and the
     # error message to the caller.
     try:
-        extras_sim_file, extra_sim_cfg = rlh.read_yaml_mapping(extras_sim_file)
+        sim_file, extra_sim_cfg = rlh.read_yaml_mapping(sim_file)
     except Exception as e:
         return ([], f'[{underscored_robot_ns}] {e}')
 
     # If the extra_sim_cfg is empty, no plugins are enabled, so return an appropriate message.
     if not extra_sim_cfg:
-        return ([], f"[{underscored_robot_ns}] Simulation file '{extras_sim_file}' is a YAML mapping but has no keys")
+        return ([], f"[{underscored_robot_ns}] Simulation file '{sim_file}' is a YAML mapping but has no keys")
 
-    # When working in simulation, the topics used by GZ plugins installed in the xacro file where the 'v0' version of
-    # the 'flart' robot is defined are fixed, they do not admit to be passed as parameters to the plugins.
+    # When working in simulation, the topics used by GZ plugins installed in the xacro file where the 'v1' version of
+    # the 'fs3aw' robot is defined are fixed, they do not admit to be passed as parameters to the plugins.
     # Consequently, the topics used in this rosgz bridge to transfer messages to/from GZ and ROS must match those used
     # in the robot description.
     # This is a convention adopted that has several advanteges:
@@ -70,7 +70,7 @@ def create_cfg(extras_sim_file: str, namespace: str, robot_name: str) -> Tuple[L
         return (
             [],
             f'[{underscored_robot_ns}] No plugins enabled in the simulation configuration for the extra elements '
-            "of the 'v0' version of the 'flart' robot.",
+            "of the 'v1' version of the 'fs3aw' robot.",
         )
 
     channels: List[Dict[str, Any]] = []

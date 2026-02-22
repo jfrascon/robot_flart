@@ -1,19 +1,18 @@
-"""Xargs specification for FLART v0 version."""
+"""Xargs specification for fs3aw v1 version."""
 
 import os
 
 from ament_index_python.packages import get_package_share_directory
 
 XARGS = {
-    'version': 'v0',
+    'version': 'v1',
     'extends': 'core',
     'args': {
-        'extras_sim_file': {
+        'sim_file': {
             'default_value': os.path.join(
-                get_package_share_directory('robot_flart'), 'config', 'example_flart_v0_simulation_extras.yaml'
+                get_package_share_directory('robot_forklift_simple_3aw'), 'config', 'example_v1_simulation.yaml'
             ),
-            'description': "Path to simulation configuration for the 'extra' elements defined in the 'v0' version of "
-            "the 'flart' robot",
+            'description': "Path to simulation configuration for the 'v1' version of the 'fs3aw' robot",
         },
         'top_platform_use_visual': {
             'default_value': 'True',
@@ -31,8 +30,8 @@ XARGS = {
             'choices': ['True', 'true', 'False', 'false'],
         },
         'top_platform_color': {
-            'default_value': '',
-            'description': "Optional color override 'r g b a'; empty keeps mesh color.",
+            'default_value': '0.0 0.0 1.0 1.0',
+            'description': "Optional color override 'r g b a'; default matches the base color.",
         },
         'top_lidar_use_visual': {
             'default_value': 'True',
