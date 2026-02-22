@@ -1,32 +1,40 @@
 <?xml version="1.0"?>
 <!--
-The word 'flart' is obtained from the combination of the words 'forklift' and 'artisteril', being 'artisteril' the
+The word 'fs3aw' is obtained from the combination of the words 'forklift' and 'artisteril', being 'artisteril' the
 company that manufactures the forklift robot.
-(f)ork(l)ift + (art)isteril -> flart
+(f)ork(l)ift + (art)isteril -> fs3aw
 
-This xacro file defines the 'v0' version of the flart robot, which a combination of the 'core' version plus:
+This xacro file defines the 'v1' version of the fs3aw robot, which a combination of the 'core' version plus:
   - A top 3D LiDAR (RoboSense Helios 16P)
   - A top IMU (UM7)
   - A rear RGBD camera (Intel RealSense D435)
 -->
-<robot name="flart_v0" xmlns:xacro="http://www.ros.org/wiki/xacro" xmlns:gz="http://gazebosim.org/schema">
+<robot name="fs3aw_v1" xmlns:xacro="http://www.ros.org/wiki/xacro" xmlns:gz="http://gazebosim.org/schema">
 
-  <xacro:property name="robot_flart_pkg_dir"           value="$(find robot_flart)"/>
+  <xacro:property name="robot_forklift_simple_3aw_pkg_dir"           value="$(find robot_forklift_simple_3aw)"/>
   <xacro:property name="robotics_description_pkg_dir"  value="$(find robotics_description)"/>
 
   <!-- ===================================================================== -->
   <!-- INCLUDES -->
   <!-- ===================================================================== -->
 
-  <xacro:include filename="${robot_flart_pkg_dir}/urdf/core.xacro"/>
+  <xacro:include filename="${robot_forklift_simple_3aw_pkg_dir}/urdf/core.xacro"/>
+  <!--
+  Properties imported from core.xacro and used in this file:
+  - sim_cfg
+  - use_sim_mode
+  - robot_prefix
+  - robot_namespace
+  - base_name
+  - fork_name
+  - body_size_x
+  - body_size_z
+  -->
   <xacro:include filename="${robotics_description_pkg_dir}/urdf/sensors/all_sensors_macro.xacro"/>
 
   <!-- ===================================================================== -->
   <!-- ARGS -->
   <!-- ===================================================================== -->
-  <xacro:arg name="extras_sim_file"
-             default="${robot_flart_pkg_dir}/config/example_flart_v0_simulation_extras.yaml"/>
-
   <xacro:arg name="top_platform_use_visual"        default="True"/>
   <xacro:arg name="top_platform_use_collision"     default="True"/>
   <xacro:arg name="top_platform_use_inertial"      default="True"/>
@@ -67,8 +75,6 @@ This xacro file defines the 'v0' version of the flart robot, which a combination
   <!-- ===================================================================== -->
 
   <!-- Create properties from args for easy manipulation. -->
-
-  <xacro:property name="extras_sim_file"                value="$(arg extras_sim_file)"/>
 
   <!-- Top platform -->
   <xacro:property name="top_platform_use_visual"        value="$(arg top_platform_use_visual)"/>
@@ -115,27 +121,6 @@ This xacro file defines the 'v0' version of the flart robot, which a combination
   <!-- See macro realsense_d435_macro.xacro to check properties. -->
   <xacro:property name="rear_rgbd_size_y"             value="0.090"/>
 
-
-  <!--
-  If use_sim_mode is False (working in a real deployment), do not load the simulation configuration from the
-  simulation file 'extras_sim_file'.
-  If use_sim_mode is True (working in simulation mode), and a configuration file is provided, load the simulation
-  configuration from the file. If no configuration file is provided, use an empty configuration, so no gz plugins are
-  loaded.
-  -->
-  <xacro:if value="${use_sim_mode}">
-    <xacro:if value="${extras_sim_file != ''}">
-      <xacro:property name="extras_sim_cfg" value="${xacro.load_yaml(extras_sim_file)}"/>
-    </xacro:if>
-    <xacro:if value="${extras_sim_file == ''}">
-      <xacro:property name="extras_sim_cfg" value="${dict()}"/>
-    </xacro:if>
-  </xacro:if>
-  <xacro:unless value="${use_sim_mode}">
-    <xacro:property name="extras_sim_cfg" value="${dict()}"/>
-  </xacro:unless>
-
-
   <!-- ===================================================================== -->
   <!-- TOP PLATFORM -->
   <!-- ===================================================================== -->
@@ -146,22 +131,22 @@ This xacro file defines the 'v0' version of the flart robot, which a combination
                   value="${top_platform_size_x} ${top_platform_size_y} ${top_platform_size_z}"/>
 
   <link name="${robot_prefix}top_platform_link">
-    <xacro:if value="${body_use_visual}">
+    <xacro:if value="${top_platform_use_visual}">
       <xacro:visual_box size="${top_platform_size}"
                         shape_origin="${top_plaftorm_origin}"
                         color="${robot_prefix}top_platform_color ${top_platform_color}"/>
 
     </xacro:if>
 
-    <xacro:if value="${body_use_collision}">
+    <xacro:if value="${top_platform_use_collision}">
       <xacro:collision_box size="${top_platform_size}" shape_origin="${top_plaftorm_origin}"/>
     </xacro:if>
 
-    <xacro:if value="${body_use_inertial}">
+    <xacro:if value="${top_platform_use_inertial}">
       <xacro:solid_box_inertia mass="${top_platform_mass}" size="${top_platform_size}" origin="${top_plaftorm_origin}"/>
     </xacro:if>
 
-    <xacro:unless value="${body_use_inertial}">
+    <xacro:unless value="${top_platform_use_inertial}">
       <xacro:null_inertia/>
     </xacro:unless>
   </link>
@@ -180,14 +165,14 @@ This xacro file defines the 'v0' version of the flart robot, which a combination
   <!--
   <xacro:property name="joint_parent_fr_front_lidar_fr_x" value="${(0.5 * body_size_x) + front_lidar_radius - 0.028}"/>
   -->
-  <xacro:property name="top_lidar_sim_cfg" value="${extras_sim_cfg.get('top_lidar', dict())}"/>
+  <xacro:property name="top_lidar_sim_cfg" value="${sim_cfg.get('top_lidar', dict())}"/>
 
   <!--
   If use_sim_mode is True and the top_lidar_sim_cfg has the 'enabled' field set to True, then the top lidar
   simulation is enabled.
 
-  If use_sim_mode is False or the extras_sim_file is not provided or no configuration for the top lidar is found in the
-  extras_sim_file or no 'enabled' field is found in the top lidar configuration or if the 'enabled' field is set to
+  If use_sim_mode is False or no configuration for the top lidar is found in the
+  simulation file or no 'enabled' field is found in the top lidar configuration or if the 'enabled' field is set to
   False, then the top lidar simulation is disabled.
 
   set_props_plugin_lidar_3d_ring will set the following properties:
@@ -247,14 +232,14 @@ This xacro file defines the 'v0' version of the flart robot, which a combination
   <!-- TOP IMU: UM7 -->
   <!-- ===================================================================== -->
 
-  <xacro:property name="top_imu_sim_cfg" value="${extras_sim_cfg.get('top_imu', dict())}"/>
+  <xacro:property name="top_imu_sim_cfg" value="${sim_cfg.get('top_imu', dict())}"/>
 
   <!--
   If use_sim_mode is True and the top_imu_sim_cfg has the 'enabled' field set to True, then the top imu simulation is
   enabled.
 
-  If use_sim_mode is False or the extras_sim_file is not provided or no configuration for the top imu is found in the
-  extras_sim_file or no 'enabled' field is found in the top imu configuration or if the 'enabled' field is set to
+  If use_sim_mode is False or no configuration for the top imu is found in the
+  simulation file or no 'enabled' field is found in the top imu configuration or if the 'enabled' field is set to
   False, then the top imu simulation is disabled.
   -->
   <xacro:set_props_plugin_imu prop_prefix="top_imu"
@@ -297,7 +282,7 @@ This xacro file defines the 'v0' version of the flart robot, which a combination
   <!-- REAR CAMERA: REALSENSE D435 -->
   <!-- ===================================================================== -->
 
-  <xacro:property name="rear_camera_sim_cfg" value="${extras_sim_cfg.get('rear_camera', dict())}"/>
+  <xacro:property name="rear_camera_sim_cfg" value="${sim_cfg.get('rear_camera', dict())}"/>
 
   <xacro:set_props_plugin_camera_all prop_prefix="rear_cam_c"
                                      camera_sim_cfg="${rear_camera_sim_cfg.get('color_camera', dict())}"

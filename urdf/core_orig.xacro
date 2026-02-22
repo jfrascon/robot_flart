@@ -38,7 +38,12 @@ a forklift. No sensors or extra elements are included.
   <xacro:arg name="sim_file"
              default="${robot_forklift_simple_3aw_pkg_dir}/config/example_core_simulation.yaml"/>
 
+  <xacro:arg name="body_use_visual"        default="True"/>
+  <xacro:arg name="body_use_collision"     default="True"/>
   <xacro:arg name="body_use_inertial"      default="True"/>
+
+  <xacro:arg name="body_use_v_mesh"        default="True"/>
+  <xacro:arg name="body_use_c_mesh"        default="False"/> <!-- use basic geometry instead by default -->
 
   <xacro:arg name="st_wheel_use_visual"    default="True"/>
   <!-- Wheels always use collision elements. Read the steerable_wheel macro for more details. -->
@@ -92,27 +97,32 @@ a forklift. No sensors or extra elements are included.
     <xacro:property name="sim_cfg" value="${dict()}"/>
   </xacro:unless>
 
+  <xacro:property name="body_use_visual"       value="$(arg body_use_visual)"/>
+  <xacro:property name="body_use_v_mesh"       value="$(arg body_use_v_mesh)"/>
+  <xacro:property name="body_use_collision"    value="$(arg body_use_collision)"/>
+  <xacro:property name="body_use_c_mesh"       value="$(arg body_use_c_mesh)"/>
   <xacro:property name="body_use_inertial"     value="$(arg body_use_inertial)"/>
 
   <!--
-  Base model overview:
-  - The base is composed of the chassis body and three steerable wheels (one front, two rear).
-  - The chassis mesh is used for visual and collision representation.
-  - Dynamics are intentionally simplified: the chassis link uses null inertia, and the effective base mass/inertia are
-    concentrated in an internal ballast link.
-
-  Ballast model:
-  - The ballast is a simple box located at the bottom of the chassis to keep the center of mass low and improve
-    numerical stability.
-  - This ballast represents the bulk mass of the real platform (including internal components not modeled in detail).
-  - The ballast has no visual or collision geometry because it is fully inside the chassis; only its inertial properties
-    are used.
-  - This is a deliberate reduced-order dynamic model aimed at stable and practical simulation, not a full
-    mass-distribution reconstruction of the real vehicle.
-  -->
-  <xacro:property name="mass"                  value="500"/>
-  <xacro:property name="body_size_x"           value="1.531"/>
-  <xacro:property name="body_size_y"           value="0.774"/>
+  base = body + wheels.
+  In this case, the base is rectangular with 3 wheels, one in the front and two in the back.
+  Body is the hull/chassis of the robot.
+  Ballast to adjust the center of mass of the group (body + ballast)
+  The ballast is modeled as a box of the same size as the body in the X and Y directions, but with a height equal to
+  'ballast_height_ratio * body_size_z'.
+  'ballast_height_ratio', in the range [0, 1], represents the proportion of the body's height that the ballast occupies.
+  It should be a small value, e.g., 0.1 (10% of the base height), so that the center of mass of the group (body+ballast)
+  is lowered.
+  The ballast mass is equal to 'ballast_mass_ratio * body_mass'.
+  'ballast_mass_ratio', in the range [0, 1], represents the proportion of the body's mass that the ballast has.
+  It should be a large value, e.g., 0.9 (90% of the total mass), so that the center of mass of the group (body+ballast)
+  is lowered.
+  The ballast is positioned at the bottom of the body.
+  The ballas does not need visual or collision elements since it is inside the body.
+   -->
+  <xacro:property name="mass_body_ballast"     value="500"/>
+  <xacro:property name="body_size_x"           value="1.531034"/>
+  <xacro:property name="body_size_y"           value="0.774138"/>
   <xacro:property name="body_size_z"           value="1.64"/>
   <xacro:property name="body_size"             value="${body_size_x} ${body_size_y} ${body_size_z}"/>
   <xacro:property name="body_wheelbase"        value="0.92"/>
@@ -120,7 +130,9 @@ a forklift. No sensors or extra elements are included.
   <xacro:property name="body_track_width"      value="0.438"/>
   <xacro:property name="body_half_track_width" value="${0.5 * body_track_width}"/>
   <xacro:property name="body_ground_clearance" value="0.06"/>
-  <xacro:property name="ballast_size_z"        value="0.1"/>
+  <xacro:property name="ballast_mass_ratio"    value="0.95"/>
+  <xacro:property name="ballast_height_ratio"  value="0.1"/>
+  <xacro:property name="ballast_size_z"        value="${ballast_height_ratio * body_size_z}"/>
 
   <!--
   The frame of the mesh is located at its geometric center (See MeshLab), so it coincides with the frame of a box
@@ -132,8 +144,10 @@ a forklift. No sensors or extra elements are included.
   The mesh has no color information.
   To access the mesh just use <package>/<path_to_mesh_within_package>.
   -->
-  <xacro:property name="body_mesh"  value="robot_forklift_simple_3aw/meshes/forklift_simple_3aw_base.stl"/>
-  <xacro:property name="body_color" value="0.0 0.0 1.0 1.0"/>
+  <xacro:property name="body_mesh"        value="robot_forklift_simple_3aw/meshes/mesh.stl"/>
+  <xacro:property name="body_origin"      value="0 0 ${0.5 * body_size_z} 0 0 0"/>
+  <xacro:property name="body_scale"       value="1.0 1.0 1.0"/>
+  <xacro:property name="body_color"       value="0.0 0.0 1.0 1.0"/>
 
   <xacro:property name="st_wheel_use_visual"   value="$(arg st_wheel_use_visual)"/>
   <xacro:property name="st_wheel_use_v_mesh"   value="$(arg st_wheel_use_v_mesh)"/>
@@ -208,11 +222,14 @@ a forklift. No sensors or extra elements are included.
   fork_size_x for model fork_simple_0 is the same as tine_size_x.
   Check 'robotics_description/meshes/extras/fork_simple/forklift_simple.svg' -->
 
-  <xacro:property name="fork_size_x"      value="1.20"/>
+  <xacro:property name="fork_size_x" value="1.20"/>
   <xacro:property name="fork_tine_size_z" value="0.06"/>
 
   <!-- Color for the fork in the forklift_simple_3aw model -->
   <xacro:property name="fork_color"       value="0.1 0.1 0.1 1.0"/>
+
+  <!-- Extra x-offset used to align the fork mesh with the target overall robot length. -->
+  <!-- <xacro:property name="fork_base_size_x" value="0.035"/> -->
 
   <!--
   For prismatic joints, setting the rest position exactly at a limit can cause lock-up because of numerical precision
@@ -262,37 +279,45 @@ a forklift. No sensors or extra elements are included.
 
   <link name="${robot_prefix}${base_name}_link">
     <!--
-    Visual and collision are always enabled for the base body.
-    The ballast is inside the body, so it has no visual or collision elements.
-    -->
-    <visual>
-      <geometry>
-        <mesh filename="package://${body_mesh}" scale="1.0 1.0 1.0"/>
-      </geometry>
+    Check if a visual element must be used for the body.
+    Only the boby can be visualized; the ballast is inside the body and is not visualized.
+     -->
+    <xacro:if value="${body_use_visual}">
+      <xacro:property name="body_v_mesh" value="${body_mesh if body_use_v_mesh else ''}"/>
       <!--
-      The stl has its frame located at its geometric center.
-      By using rpy="0 0 0" and xyz="0 0 0.5*body_size_z", the link `${robot_prefix}${base_name}_link` is located at the
-      center of the bottom face of the mesh
-       -->
-      <origin rpy="0 0 0" xyz="0 0 ${0.5 * body_size_z}"/>
-      <material name="${robot_prefix}${base_name}_color">
-        <color rgba="${body_color}"/>
-      </material>
-    </visual>
+      The link is located at the center of the bottom face of the body, so the visual part is completely above the link.
+      -->
+      <xacro:visual_box mesh="${body_v_mesh}"
+                        scale="${body_scale}"
+                        mesh_origin="${body_origin}"
+                        size="${body_size}"
+                        shape_origin="${body_origin}"
+                        color="${robot_prefix}${base_name}_color ${body_color}"/>
+    </xacro:if>
 
-    <collision>
-      <geometry>
-        <mesh filename="package://${body_mesh}" scale="1.0 1.0 1.0"/>
-      </geometry>
+    <xacro:if value="${body_use_collision}">
+      <xacro:property name="body_c_mesh" value="${body_mesh if body_use_c_mesh else ''}"/>
       <!--
-      The stl has its frame located at its geometric center.
-      By using rpy="0 0 0" and xyz="0 0 0.5*body_size_z", the link `${robot_prefix}${base_name}_link` is located at the
-      center of the bottom face of the mesh
-       -->
-      <origin rpy="0 0 0" xyz="0 0 ${0.5 * body_size_z}"/>
-    </collision>
+      The link is located at the center of the bottom face of the body, so the collision part is completely above the
+      link.
+      -->
+      <xacro:collision_box mesh="${body_c_mesh}"
+                           scale="${body_scale}"
+                           mesh_origin="${body_origin}"
+                           size="${body_size}"
+                           shape_origin="${body_origin}"/>
+    </xacro:if>
 
-    <xacro:null_inertia/>
+    <xacro:if value="${body_use_inertial}">
+      <!-- Place the CoM half length up above the root link. -->
+      <xacro:solid_box_inertia mass="${(1.0 - ballast_mass_ratio) * mass_body_ballast}"
+                               size="${body_size}"
+                               origin="${body_origin}"/>
+    </xacro:if>
+
+    <xacro:unless value="${body_use_inertial}">
+        <xacro:null_inertia/>
+    </xacro:unless>
   </link>
 
   <joint name="${robot_prefix}${base_name}_joint" type="fixed">
@@ -306,15 +331,19 @@ a forklift. No sensors or extra elements are included.
   </joint>
 
   <!--
-  The ballast is modeled as a box of size `body_size_x x body_size_y x ballast_size_z`, with its frame at the center of
-  the bottom face. This makes the ballast-link frame coincide with the body-link frame.
-  No visual or collision geometry is defined for the ballast because it is fully contained inside the body.
-  The ballast inertia is enabled only when `body_use_inertial` is enabled.
+  Conceptually, the ballast is a box with dimensions 'body_size_x' x 'body_size_y' x 'ballast_size_z', with the frame
+  located at the center of its bottom face. Therefore, the frame of the ballast link coincides with the frame of the
+  body link.
+  The visual element is not shown since it is inside the body.
+  The collision element is not defined since it is inside the body, so the collision element of the body takes care of
+  collisions.
+  The inertial element is defined only if the body has an inertial element, so both body and ballast have or not have
+  inertial elements.
   -->
   <link name="${robot_prefix}${base_name}_ballast_link">
     <xacro:if value="${body_use_inertial}">
-      <xacro:solid_box_inertia mass="${mass}"
-                               size="${body_size_x} ${body_size_y} ${ballast_size_z}"
+      <xacro:solid_box_inertia mass="${ballast_mass_ratio * mass_body_ballast}"
+                               size="${body_size}"
                                origin="0.0 0.0 ${0.5 * ballast_size_z} 0.0 0.0 0.0"/>
     </xacro:if>
 
@@ -336,17 +365,6 @@ a forklift. No sensors or extra elements are included.
   <!-- z-coordinate of each steerable wheel w.r.t it parent frame -->
   <xacro:property name="z_st_wheel" value="${-body_ground_clearance + st_wheel_radius}"/>
 
-  <!--
-  The steerable_wheel macro creates:
-  - Links:
-    * ${prefix}${name}_steerable_link
-    * ${prefix}${name}_rotation_link
-  - Joints:
-    * ${prefix}${name}_steerable_joint (revolute|fixed):
-      parent=${parent_frame}, child=${prefix}${name}_steerable_link
-    * ${prefix}${name}_rotation_joint (continuous|fixed):
-      parent=${prefix}${name}_steerable_link, child=${prefix}${name}_rotation_link
-  -->
   <xacro:steerable_wheel name="${front_st_wheel_name}"
                          prefix="${robot_prefix}"
                          parent_frame="${robot_prefix}${base_name}_link"
@@ -421,34 +439,38 @@ a forklift. No sensors or extra elements are included.
   <!-- ===================================================================== -->
 
   <!--
-  padding_x is the horizontal distance from the rear face of the base body to the rearmost point of the fork model.
-  With the simplified fork model:
-    robot_size_x = body_size_x + padding_x + fork_size_x
-    padding_x = robot_size_x - body_size_x - fork_size_x
+  padding_x, is the empty space between the front face of the base and the back face of the fork base.
+  (Note: the tines start at the back face of the fork base)
+  robot_size_x = body_size_x + padding_x + tine_size_x.
+  padding_x = robot_size_x - body_size_x - tine_size_x.
   -->
 
-  <xacro:property name="padding_x"               value="${robot_size_x - body_size_x - fork_size_x}"/>
-  <xacro:property name="joint_base_fr_fork_fr_x" value="${(-body_size_x * 0.5) - padding_x}"/>
-  <xacro:property name="joint_base_fr_fork_fr_z" value="${-body_ground_clearance + fork_tines_rest_clearance}"/>
+  <xacro:property name="padding_x" value="${robot_size_x - body_size_x - fork_size_x}"/>
+  <!--
+  The term -fork_base_size_x is an additional placement offset for fork_simple_0.
+  -->
+  <xacro:property name="joint_base_fr_fork_fr_x" value="${(-body_size_x * 0.5) - padding_x - fork_base_size_x}"/>
+
+  <xacro:property name="joint_base_fr_fork_fr_z"
+                  value="${-body_ground_clearance + fork_tine_size_z + fork_tines_rest_clearance}"/>
 
   <!--
-  The fork_simple_0 macro (through fork_simple) creates:
+  The fork_simple_0 macro creates the following links and joints:
   - Links:
-    * ${prefix}${name}_root_link
-    * ${prefix}${name}_link
-    * ${prefix}${name}_left_tine_link
-    * ${prefix}${name}_right_tine_link
+    * ${prefix}${name}_link = ${robot_prefix}${fork_name}_link
+    * ${prefix}${name}_left_tine_link = ${robot_prefix}${fork_name}_left_tine_link
+    * ${prefix}${name}_right_tine_link = ${robot_prefix}${fork_name}_right_tine_link
+    * ${prefix}${name}_root_link = ${robot_prefix}${fork_name}_root_link
   - Joints:
-    * ${prefix}${name}_root_joint (prismatic):
-      parent=${parent_frame}, child=${prefix}${name}_root_link
-    * ${prefix}${name}_joint (fixed):
-      parent=${prefix}${name}_root_link, child=${prefix}${name}_link
-    * ${prefix}${name}_left_tine_joint (fixed):
-      parent=${prefix}${name}_link,
-      child=${prefix}${name}_left_tine_link
-    * ${prefix}${name}_right_tine_joint (fixed):
-      parent=${prefix}${name}_link, child=${prefix}${name}_right_tine_link
-  -->
+    * ${prefix}${name}_joint = ${robot_prefix}${fork_name}_joint, joining
+      ${robot_prefix}${fork_name}_root_link and ${robot_prefix}${fork_name}_link.
+    * ${prefix}${name}_left_tine_joint = ${robot_prefix}${fork_name}_left_tine_joint, joining the links
+      ${robot_prefix}${fork_name}_link and ${robot_prefix}${fork_name}_left_tine_link.
+    * ${prefix}${name}_right_tine_joint = ${robot_prefix}${fork_name}_right_tine_joint, joining the links
+      ${robot_prefix}${fork_name}_link and ${robot_prefix}${fork_name}_right_tine_link.
+    * ${prefix}${name}_root_joint = ${robot_prefix}${fork_name}_root_joint, joining the links
+      ${robot_prefix}${base_name}_link and ${robot_prefix}${fork_name}_root_link.
+      -->
   <xacro:fork_simple_0 name="${fork_name}"
                        prefix="${robot_prefix}"
                        parent_frame="${robot_prefix}${base_name}_link"
@@ -470,7 +492,7 @@ a forklift. No sensors or extra elements are included.
     + Control the rotation joints of the wheels in velocity.
   - Receive joint states from the non-fixed joints.
 
-  These plugins simulate the behavior used by the application to communicate with the real robot.
+  This plugins simulate the behaviour the application uses to communicate with the real robot.
   -->
 
   <xacro:if value="${use_sim_mode}">
