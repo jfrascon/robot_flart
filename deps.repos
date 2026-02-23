@@ -12,14 +12,14 @@ repositories:
     robotics_description:
         type: git
         url: https://github.com/jfrascon/robotics_description.git
-        version: eebc1ea500c029137e219e293d885c2ad6583f4a
+        version: e87fa40fda275013a8dfe81bdbb0c0a2c5965e7c
         #exclude: [] # list of repos files inside repository_path to exclude (optional)
     ground_vehicle_kinematics:
         type: git
         url: https://github.com/jfrascon/ground_vehicle_kinematics.git
         version: b9d7de071b058ce4fca8622043f54a253586a0eb
         #exclude: [] # list of repos files inside repository_path to exclude (optional)
-    ros2_launch_helpers
+    ros2_launch_helpers:
         type: git
         url: https://github.com/jfrascon/ros2_launch_helpers.git
         version: main
