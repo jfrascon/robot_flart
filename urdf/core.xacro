@@ -1,10 +1,8 @@
 <?xml version="1.0"?>
 <!--
-The word 'fs3aw' is obtained from the combination of the words 'forklift' and 'artisteril', being 'artisteril' the
-company that manufactures the forklift robot.
-(f)ork(l)ift + (art)isteril -> fs3aw
-This xacro file defines the 'core' version of the fs3aw robot, just the rectangular base with 3 steerable wheels and a
-a forklift. No sensors or extra elements are included.
+The word 'fs3aw' is obtained from the combination of the words '(f)orklift', '(s)imple' and '(3) (a)ctive (w)heels'.
+This xacro file defines the 'core' version of the fs3aw robot, a base with 3 steerable wheels and a simple forklift.
+No sensors or extra elements are included.
 -->
 <robot name="fs3aw_core" xmlns:xacro="http://www.ros.org/wiki/xacro" xmlns:gz="http://gazebosim.org/schema">
 
@@ -23,13 +21,13 @@ a forklift. No sensors or extra elements are included.
   <!-- ARGS -->
   <!-- ===================================================================== -->
   <!--
-  When the xacro file is used in a real deployment, use_sim_mode should be set to False, so no simulation
-  plugins are loaded.
+  When the xacro file is used in a real deployment, use_sim_mode should be set to False, wich provokes that no
+  simulation plugins are loaded.
   When the xacro file is used in simulation, use_sim_mode should be set to True, so the simulation plugins are loaded.
   -->
-  <xacro:arg name="use_sim_mode"           default="False"/>
-  <xacro:arg name="namespace"              default=""/>
-  <xacro:arg name="robot_name"             default="fs3aw"/>
+  <xacro:arg name="use_sim_mode" default="False"/>
+  <xacro:arg name="namespace"    default=""/>
+  <xacro:arg name="robot_name"   default="fs3aw"/>
   <!--
   File containing the simulation configuration for the platform.
   base = body + wheels.
@@ -38,22 +36,68 @@ a forklift. No sensors or extra elements are included.
   <xacro:arg name="sim_file"
              default="${robot_forklift_simple_3aw_pkg_dir}/config/example_core_simulation.yaml"/>
 
+  <!--
+  Args for body
+  The default values for the body correspond to the default mesh (mass, size, and inertia are consistent with that
+  mesh). If the user changes the body mesh, they should also update the corresponding body parameters to
+  maintain a consistent model. However, we cannot enforce this consistency in the xargs, so we provide the parameters
+  independently and document their relationship in the description. The user is responsible for ensuring that the
+  parameters are consistent with the chosen mesh.
+  If the user scales body_mesh through body_scale, body_size must represent the final scaled dimensions.
+  -->
   <xacro:arg name="body_use_inertial"      default="True"/>
+  <xacro:arg name="mass"                   default="500"/>
+  <xacro:arg name="body_size"              default="1.531 0.774 1.64"/>
+  <xacro:arg name="ballast_size_z"         default="0.1"/>
+  <xacro:arg name="body_ground_clearance"  default="0.06"/>
+  <xacro:arg name="dist_to_wheels"         default="0.50"/>
+  <xacro:arg name="alpha_deg"              default="154"/>
+  <xacro:arg name="body_mesh"              default="robot_forklift_simple_3aw/meshes/forklift_simple_3aw_base.stl"/>
+  <xacro:arg name="body_scale"             default="1.0 1.0 1.0"/>
+  <xacro:arg name="body_color"             default="0.0 0.0 1.0 1.0"/>
 
-  <xacro:arg name="st_wheel_use_visual"    default="True"/>
   <!-- Wheels always use collision elements. Read the steerable_wheel macro for more details. -->
   <xacro:arg name="st_wheel_use_inertial"  default="True"/>
-
-  <xacro:arg name="st_wheel_use_v_mesh"    default="False"/> <!-- use basic geometry instead by default -->
+  <xacro:arg name="st_wheel_mass"          default="10.0"/>
+  <xacro:arg name="st_wheel_radius"        default="0.127"/>
+  <xacro:arg name="st_wheel_thickness"     default="0.082"/>
+  <xacro:arg name="st_wheel_color"         default="0.1 0.1 0.1 1.0"/>
+  <!--
+  Note: If you want the wheel to be able to reach +-pi rad angle (+-180 degress), set limits to +-3.1416.
+  pi = 3.141592654.... < 3.1416
+  -->
+  <xacro:arg name="st_wheel_steerable_limits"      default="-3.1416 3.1416 100.0 100000.0"/>
+  <xacro:arg name="st_wheel_rotation_joint_limits" default="100.0 100000.0"/>
+  <xacro:arg name="st_wheel_max_contacts"          default="1"/>
+  <xacro:arg name="st_wheel_mu"                    default="0.05"/>
+  <xacro:arg name="st_wheel_mu2"                   default="0.5"/>
+  <xacro:arg name="st_wheel_slip1"                 default="0.005"/>
+  <xacro:arg name="st_wheel_slip2"                 default="0.0005"/>
 
   <!--
   Usually, forks are attached to the robot, on the front or the back side. The fork usually is a heavy body.
-  Attaching the fork with a considerable mass to the robot base, will affect the robot's center of mass, which will
-  affect the robot's dynamics and stability in simulation, producing oscillations or even making the robot to tip over.
-  Since simulation is used for kinematic behavior instead of dynamic behavior, the inertia of the
-  fork, so even though it is attached to the robot, the robot will move as it has no fork attached.
+  Attaching the fork with a considerable mass to the robot base, at the front or back, will affect the base's center
+  of mass, which will affect the robot's dynamics and stability in simulation, producing oscillations or even making the
+  robot to tip over.
+  Since simulation is used for kinematic behavior instead of dynamic behavior, the inertia of the fork, so even though
+  it is attached to the robot, the robot will move as it has no fork attached.
   -->
-  <xacro:arg name="fork_use_inertial" default="False"/>
+  <xacro:arg name="fork_use_inertial"   default="False"/>
+  <xacro:arg name="fork_color"          default="0.1 0.1 0.1 1.0"/>
+  <xacro:arg name="fork_lower_limit"    default="-0.01"/>
+  <xacro:arg name="fork_upper_limit"    default="0.8"/>
+  <xacro:arg name="fork_velocity_limit" default="0.5"/>
+  <xacro:arg name="fork_effort_limit"   default="20000.0"/>
+  <!--
+  Frame convention for the fork root frame (as generated by `fork_simple_stl_generator.py`):
+  - Origin: rear face of the tine union, centered in Y, on the bottom plane.
+  - +X: from the rear union plate toward the tine tips.
+  - +Y: side where the left tine is built (right tine is mirrored to -Y).
+  - +Z: upward.
+  Therefore, `joint_parent_fr_root_fr` must be set consistently with this convention when integrating the fork
+  with the base.
+  -->
+  <xacro:arg name="fork_tines_rest_clearance" default="0.03"/>
 
   <!-- ===================================================================== -->
   <!-- DEFINITION OF PROPERTIES -->
@@ -96,7 +140,7 @@ a forklift. No sensors or extra elements are included.
 
   <!--
   Base model overview:
-  - The base is composed of the chassis body and three steerable wheels (one front, two rear).
+  - The base is composed of the chassis body and three steerable wheels (one longitudinal on the x-axis, plus left and right).
   - The chassis mesh is used for visual and collision representation.
   - Dynamics are intentionally simplified: the chassis link uses null inertia, and the effective base mass/inertia are
     concentrated in an internal ballast link.
@@ -110,17 +154,33 @@ a forklift. No sensors or extra elements are included.
   - This is a deliberate reduced-order dynamic model aimed at stable and practical simulation, not a full
     mass-distribution reconstruction of the real vehicle.
   -->
-  <xacro:property name="mass"                  value="500"/>
-  <xacro:property name="body_size_x"           value="1.531"/>
-  <xacro:property name="body_size_y"           value="0.774"/>
-  <xacro:property name="body_size_z"           value="1.64"/>
-  <xacro:property name="body_size"             value="${body_size_x} ${body_size_y} ${body_size_z}"/>
-  <xacro:property name="body_wheelbase"        value="0.92"/>
-  <xacro:property name="body_half_wheelbase"   value="${0.5 * body_wheelbase}"/>
-  <xacro:property name="body_track_width"      value="0.438"/>
-  <xacro:property name="body_half_track_width" value="${0.5 * body_track_width}"/>
-  <xacro:property name="body_ground_clearance" value="0.06"/>
-  <xacro:property name="ballast_size_z"        value="0.1"/>
+  <xacro:property name="mass"                  value="$(arg mass)"/>
+  <xacro:property name="body_size"             value="$(arg body_size)"/>
+  <xacro:property name="body_size_values"      value="${body_size.split()}"/>
+
+  <!--
+  The property 'body_size_values' is a list of the three components of 'body_size', which are expected to be separated
+  by spaces.
+  -->
+  <xacro:if value="${len(body_size_values) != 3}">
+    ${xacro.fatal("xacro arg body_size must contain exactly 3 values: x y z")}
+  </xacro:if>
+
+  <xacro:property name="body_size_x"           value="${float(body_size_values[0])}"/>
+  <xacro:property name="body_size_y"           value="${float(body_size_values[1])}"/>
+  <xacro:property name="body_size_z"           value="${float(body_size_values[2])}"/>
+  <xacro:property name="body_ground_clearance" value="$(arg body_ground_clearance)"/>
+  <xacro:property name="ballast_size_z"        value="$(arg ballast_size_z)"/>
+  <xacro:property name="dist_to_wheels"        value="$(arg dist_to_wheels)"/>
+  <xacro:property name="alpha_deg"             value="$(arg alpha_deg)"/>
+
+  <xacro:if value="${float(dist_to_wheels) &lt;= 0.0}">
+    ${xacro.fatal("xacro arg dist_to_wheels must be > 0")}
+  </xacro:if>
+
+  <xacro:if value="${float(alpha_deg) &lt;= 0.0 or float(alpha_deg) >= 180.0}">
+    ${xacro.fatal("xacro arg alpha_deg must be in range (0, 180) degrees")}
+  </xacro:if>
 
   <!--
   The frame of the mesh is located at its geometric center (See MeshLab), so it coincides with the frame of a box
@@ -128,15 +188,14 @@ a forklift. No sensors or extra elements are included.
   Therefore, just one origin is needed no matter if a mesh or a box shape is used for the visual element.
   The frame of the body, '${robot_prefix}${base_name}_link', is located at the center of the bottom face of the mesh or
   box shape.
-  Scale is 1 1 1.
+  Scale is configured with `body_scale`.
   The mesh has no color information.
   To access the mesh just use <package>/<path_to_mesh_within_package>.
   -->
-  <xacro:property name="body_mesh"  value="robot_forklift_simple_3aw/meshes/forklift_simple_3aw_base.stl"/>
-  <xacro:property name="body_color" value="0.0 0.0 1.0 1.0"/>
+  <xacro:property name="body_mesh"  value="$(arg body_mesh)"/>
+  <xacro:property name="body_scale" value="$(arg body_scale)"/>
+  <xacro:property name="body_color" value="$(arg body_color)"/>
 
-  <xacro:property name="st_wheel_use_visual"   value="$(arg st_wheel_use_visual)"/>
-  <xacro:property name="st_wheel_use_v_mesh"   value="$(arg st_wheel_use_v_mesh)"/>
   <!--
   Wheel always use collision elements, which means 'st_wheel_use_collision' is always True.
   Wheel always use a basic geometry for collision, which means 'st_wheel_use_c_mesh' is always False.
@@ -144,36 +203,13 @@ a forklift. No sensors or extra elements are included.
   -->
   <xacro:property name="st_wheel_use_inertial" value="$(arg st_wheel_use_inertial)"/>
 
-  <xacro:property name="st_wheel_mass"    value="10.0"/>
-  <xacro:property name="st_wheel_radius"  value="0.127"/>
-  <xacro:property name="st_wheel_length"  value="0.082"/>
-  <!--
-  robotics_description/meshes/wheels/standard_wheels/wheel.dae is a cylinder with its axis aligned with the Z axis,
-  centered at the origin, and with radius 0.15 (size_x = size_y = 2 * radius = 0.3) and length 0.1 (size_z = 0.1).
-  Thefore:
-  scale_x = desired_diameter / 0.3 = (2 * radius) / 0.3 = (2 * 0.127) / 0.3 = 0.846666667
-  scale_y = desired_diameter / 0.3 = (2 * radius) / 0.3 = (2 * 0.127) / 0.3 = 0.846666667
-  scale_z = desired_length / 0.1 = 0.082 / 0.1 = 0.82
-
-  The mesh 'standard_wheels/wheel.dae' has the form of a cylinder with its axis aligned with the Z axis, i.e., a
-  cylinder lied on the ground with one of its circular flat faces touching the ground.
-  According to the steerable_wheel macro, the visual and collision elements of the wheel are cylinders with their axis
-  aligned with the Y axis, i.e., a cylinder standing on the ground with its curved surface touching the ground.
-  Therefore, to use the mesh 'standard_wheels/wheel.dae' for the visual and collision elements of the wheel, it is necessary to
-  rotate the mesh 90 degrees (0.5 * pi radians) around the X axis (roll).
-  This is achieved by setting the mesh_origin = "0.0 0.0 0.0 (0.5 * pi) 0.0 0.0".
-  -->
-  <xacro:property name="st_wheel_mesh"
-                  value="${'robotics_description/meshes/wheels/standard_wheels/wheel.dae' if st_wheel_use_v_mesh else ''}"/>
-  <xacro:property name="st_wheel_mesh_scale"  value="0.846666667 0.846666667 0.82"/>
-  <xacro:property name="st_wheel_mesh_origin" value="0.0 0.0 0.0 ${0.5 * pi} 0.0 0.0"/>
-  <!--
-  The 'robotics_description/meshes/wheels/standard_wheels/wheel.dae' mesh has color information, therefore
-  no color is needed.
-  If use_v_mesh is False (meaning that the basic geometry is used instead of the mesh), then a color must be provided
-  for the basic geometry.
-  -->
-  <xacro:property name="st_wheel_color"                value="${'' if st_wheel_use_v_mesh else '0.1 0.1 0.1 1.0'}"/>
+  <xacro:property name="st_wheel_mass"                 value="$(arg st_wheel_mass)"/>
+  <xacro:property name="st_wheel_radius"               value="$(arg st_wheel_radius)"/>
+  <xacro:property name="st_wheel_thickness"            value="$(arg st_wheel_thickness)"/>
+  <xacro:property name="st_wheel_mesh"                 value=""/>
+  <xacro:property name="st_wheel_mesh_scale"           value="1.0 1.0 1.0"/>
+  <xacro:property name="st_wheel_mesh_origin"          value="0.0 0.0 0.0 0.0 0.0 0.0"/>
+  <xacro:property name="st_wheel_color"                value="$(arg st_wheel_color)"/>
   <xacro:property name="st_wheel_steerable_joint_type" value="revolute"/>
   <!--
   With this limits the steerable joint can rotate from [-pi, pi] radians.
@@ -193,14 +229,14 @@ a forklift. No sensors or extra elements are included.
   with the control.
   Read the macro 'steerable_wheel_macro.xacro' for more details about these limit parameters.
   -->
-  <xacro:property name="st_wheel_steerable_limits"                value="${-pi} ${pi} 100.0 100000.0"/>
+  <xacro:property name="st_wheel_steerable_limits"                value="$(arg st_wheel_steerable_limits)"/>
   <xacro:property name="st_wheel_rotation_joint_type"             value="continuous"/>
-  <xacro:property name="st_wheel_rotation_joint_limits"           value="100.0 100000.0"/>
-  <xacro:property name="st_wheel_max_contacts"                    value="1"/>
-  <xacro:property name="st_wheel_mu"                              value="0.05"/>
-  <xacro:property name="st_wheel_mu2"                             value="0.5"/>
-  <xacro:property name="st_wheel_slip1"                           value="0.005"/>
-  <xacro:property name="st_wheel_slip2"                           value="0.0005"/>
+  <xacro:property name="st_wheel_rotation_joint_limits"           value="$(arg st_wheel_rotation_joint_limits)"/>
+  <xacro:property name="st_wheel_max_contacts"                    value="$(arg st_wheel_max_contacts)"/>
+  <xacro:property name="st_wheel_mu"                              value="$(arg st_wheel_mu)"/>
+  <xacro:property name="st_wheel_mu2"                             value="$(arg st_wheel_mu2)"/>
+  <xacro:property name="st_wheel_slip1"                           value="$(arg st_wheel_slip1)"/>
+  <xacro:property name="st_wheel_slip2"                           value="$(arg st_wheel_slip2)"/>
 
   <xacro:property name="fork_use_inertial"                        value="$(arg fork_use_inertial)"/>
 
@@ -212,7 +248,7 @@ a forklift. No sensors or extra elements are included.
   <xacro:property name="fork_tine_size_z" value="0.06"/>
 
   <!-- Color for the fork in the forklift_simple_3aw model -->
-  <xacro:property name="fork_color"       value="0.1 0.1 0.1 1.0"/>
+  <xacro:property name="fork_color"       value="$(arg fork_color)"/>
 
   <!--
   For prismatic joints, setting the rest position exactly at a limit can cause lock-up because of numerical precision
@@ -228,27 +264,27 @@ a forklift. No sensors or extra elements are included.
   needed.
   -->
 
-  <xacro:property name="fork_lower_limit"     value="-0.01"/>
-  <xacro:property name="fork_upper_limit"     value="0.8"/>
+  <xacro:property name="fork_lower_limit"     value="$(arg fork_lower_limit)"/>
+  <xacro:property name="fork_upper_limit"     value="$(arg fork_upper_limit)"/>
   <!--
   The velocity limit of 0.5 m/s is based on typical lift speeds of industrial forklifts, which commonly operate in the
   range of [0.4, 0.6] m/s under load.
   -->
-  <xacro:property name="fork_velocity_limit"              value="0.5"/>
-  <xacro:property name="fork_effort_limit"                value="20000.0"/> <!-- why 20000? its big, no other reason -->
+  <xacro:property name="fork_velocity_limit"              value="$(arg fork_velocity_limit)"/>
+  <xacro:property name="fork_effort_limit"                value="$(arg fork_effort_limit)"/> <!-- why 20000? its big, no other reason -->
   <!-- Distance from the ground to the bottom face of the tines. -->
-  <xacro:property name="fork_tines_rest_clearance"        value="0.03"/>
+  <xacro:property name="fork_tines_rest_clearance"        value="$(arg fork_tines_rest_clearance)"/>
 
   <xacro:property name="robot_size_x" value="2.733"/>
   <xacro:property name="robot_size_y" value="0.774"/>
   <xacro:property name="robot_size_z" value="1.7004688"/>
 
   <!-- Names for components -->
-  <xacro:property name="base_name"                value="base"/>
-  <xacro:property name="front_st_wheel_name"      value="front_steerable_wheel"/>      <!-- Alternative: fsw -->
-  <xacro:property name="rear_left_st_wheel_name"  value="rear_left_steerable_wheel"/>  <!-- Alternative: rlsw -->
-  <xacro:property name="rear_right_st_wheel_name" value="rear_right_steerable_wheel"/> <!-- Alternative: rrsw -->
-  <xacro:property name="fork_name"                value="fork"/>
+  <xacro:property name="base_name"                  value="base"/>
+  <xacro:property name="longitudinal_st_wheel_name" value="longitudinal_steerable_wheel"/>
+  <xacro:property name="left_st_wheel_name"         value="left_steerable_wheel"/>
+  <xacro:property name="right_st_wheel_name"        value="right_steerable_wheel"/>
+  <xacro:property name="fork_name"                  value="fork"/>
 
   <!-- ===================================================================== -->
   <!-- Definition of links and joints for the rectangular base -->
@@ -267,7 +303,7 @@ a forklift. No sensors or extra elements are included.
     -->
     <visual>
       <geometry>
-        <mesh filename="package://${body_mesh}" scale="1.0 1.0 1.0"/>
+        <mesh filename="package://${body_mesh}" scale="${body_scale}"/>
       </geometry>
       <!--
       The stl has its frame located at its geometric center.
@@ -282,7 +318,7 @@ a forklift. No sensors or extra elements are included.
 
     <collision>
       <geometry>
-        <mesh filename="package://${body_mesh}" scale="1.0 1.0 1.0"/>
+        <mesh filename="package://${body_mesh}" scale="${body_scale}"/>
       </geometry>
       <!--
       The stl has its frame located at its geometric center.
@@ -335,6 +371,33 @@ a forklift. No sensors or extra elements are included.
 
   <!-- z-coordinate of each steerable wheel w.r.t it parent frame -->
   <xacro:property name="z_st_wheel" value="${-body_ground_clearance + st_wheel_radius}"/>
+  <xacro:property name="d" value="${float(dist_to_wheels)}"/>
+  <xacro:property name="alpha" value="${radians(float(alpha_deg))}"/>
+  <!--
+  Wheel planar coordinates from polar form:
+  - Left wheel uses angle +alpha:
+      x_left = d*cos(+alpha)
+      y_left = d*sin(+alpha)
+  - Right wheel uses angle -alpha:
+      x_right = d*cos(-alpha)
+      y_right = d*sin(-alpha)
+  Using trigonometric parity:
+  - cos(-alpha) = cos(alpha) -> x_right = x_left
+  - sin(-alpha) = -sin(alpha) -> y_right = -y_left
+  -->
+  <xacro:property name="x_st_wheel_left"         value="${d * cos(alpha)}"/>
+  <xacro:property name="y_st_wheel_left"         value="${d * sin(alpha)}"/>
+  <xacro:property name="x_st_wheel_right"        value="${x_st_wheel_left}"/>
+  <xacro:property name="y_st_wheel_right"        value="${-y_st_wheel_left}"/>
+  <!--
+  The longitudinal wheel is located on the x-axis, so its y coordinate is 0.
+  The x coordinate of the longitudinal wheel depends on the angle alpha:
+- If alpha >= 90 degrees, the longitudinal wheel is located in front of the robot, so its x coordinate is positive and
+  equal to d.
+- If alpha < 90 degrees, the longitudinal wheel is located at the back of the robot, so its x coordinate is negative and
+  equal to -d.
+  -->
+  <xacro:property name="x_st_wheel_longitudinal" value="${d if float(alpha_deg) >= 90.0 else -d}"/>
 
   <!--
   The steerable_wheel macro creates:
@@ -347,17 +410,17 @@ a forklift. No sensors or extra elements are included.
     * ${prefix}${name}_rotation_joint (continuous|fixed):
       parent=${prefix}${name}_steerable_link, child=${prefix}${name}_rotation_link
   -->
-  <xacro:steerable_wheel name="${front_st_wheel_name}"
+  <xacro:steerable_wheel name="${longitudinal_st_wheel_name}"
                          prefix="${robot_prefix}"
                          parent_frame="${robot_prefix}${base_name}_link"
-                         use_visual="${st_wheel_use_visual}"
+                         use_visual="True"
                          use_inertial="${st_wheel_use_inertial}"
                          v_mesh="${st_wheel_mesh}"
                          v_mesh_scale="${st_wheel_mesh_scale}"
                          v_mesh_origin="${st_wheel_mesh_origin}"
                          color="${st_wheel_color}"
                          radius="${st_wheel_radius}"
-                         length="${st_wheel_length}"
+                         length="${st_wheel_thickness}"
                          mass="${st_wheel_mass}"
                          steerable_joint_type="${st_wheel_steerable_joint_type}"
                          steerable_joint_steerable_limits="${st_wheel_steerable_limits}"
@@ -368,19 +431,19 @@ a forklift. No sensors or extra elements are included.
                          mu2="${st_wheel_mu2}"
                          slip1="${st_wheel_slip1}"
                          slip2="${st_wheel_slip2}"
-                         joint_parent_fr_wheel_fr="${body_half_wheelbase} 0.0 ${z_st_wheel} 0.0 0.0 0.0"/>
+                         joint_parent_fr_wheel_fr="${x_st_wheel_longitudinal} 0.0 ${z_st_wheel} 0.0 0.0 0.0"/>
 
-  <xacro:steerable_wheel name="${rear_left_st_wheel_name}"
+  <xacro:steerable_wheel name="${left_st_wheel_name}"
                          prefix="${robot_prefix}"
                          parent_frame="${robot_prefix}${base_name}_link"
-                         use_visual="${st_wheel_use_visual}"
+                         use_visual="True"
                          use_inertial="${st_wheel_use_inertial}"
                          v_mesh="${st_wheel_mesh}"
                          v_mesh_scale="${st_wheel_mesh_scale}"
                          v_mesh_origin="${st_wheel_mesh_origin}"
                          color="${st_wheel_color}"
                          radius="${st_wheel_radius}"
-                         length="${st_wheel_length}"
+                         length="${st_wheel_thickness}"
                          mass="${st_wheel_mass}"
                          steerable_joint_type="${st_wheel_steerable_joint_type}"
                          steerable_joint_steerable_limits="${st_wheel_steerable_limits}"
@@ -391,19 +454,19 @@ a forklift. No sensors or extra elements are included.
                          mu2="${st_wheel_mu2}"
                          slip1="${st_wheel_slip1}"
                          slip2="${st_wheel_slip2}"
-                         joint_parent_fr_wheel_fr="${-body_half_wheelbase} ${body_half_track_width} ${z_st_wheel} 0.0 0.0 0.0"/>
+                         joint_parent_fr_wheel_fr="${x_st_wheel_left} ${y_st_wheel_left} ${z_st_wheel} 0.0 0.0 0.0"/>
 
-  <xacro:steerable_wheel name="${rear_right_st_wheel_name}"
+  <xacro:steerable_wheel name="${right_st_wheel_name}"
                          prefix="${robot_prefix}"
                          parent_frame="${robot_prefix}${base_name}_link"
-                         use_visual="${st_wheel_use_visual}"
+                         use_visual="True"
                          use_inertial="${st_wheel_use_inertial}"
                          v_mesh="${st_wheel_mesh}"
                          v_mesh_scale="${st_wheel_mesh_scale}"
                          v_mesh_origin="${st_wheel_mesh_origin}"
                          color="${st_wheel_color}"
                          radius="${st_wheel_radius}"
-                         length="${st_wheel_length}"
+                         length="${st_wheel_thickness}"
                          mass="${st_wheel_mass}"
                          steerable_joint_type="${st_wheel_steerable_joint_type}"
                          steerable_joint_steerable_limits="${st_wheel_steerable_limits}"
@@ -414,7 +477,7 @@ a forklift. No sensors or extra elements are included.
                          mu2="${st_wheel_mu2}"
                          slip1="${st_wheel_slip1}"
                          slip2="${st_wheel_slip2}"
-                         joint_parent_fr_wheel_fr="${-body_half_wheelbase} ${-body_half_track_width} ${z_st_wheel} 0.0 0.0 0.0"/>
+                         joint_parent_fr_wheel_fr="${x_st_wheel_right} ${y_st_wheel_right} ${z_st_wheel} 0.0 0.0 0.0"/>
 
   <!-- ===================================================================== -->
   <!-- FORK -->
@@ -629,13 +692,13 @@ a forklift. No sensors or extra elements are included.
       <xacro:if value="${steerable_wheel_steerable_joint_controller_sim_cfg.get('enabled', False)}">
         <!-- Plugins to control the steerable joint of the steerable wheels. -->
         <plugin filename="gz-sim-joint-position-controller-system" name="gz::sim::systems::JointPositionController">
-          <joint_name>${robot_prefix}${front_st_wheel_name}_steerable_joint</joint_name>
+          <joint_name>${robot_prefix}${longitudinal_st_wheel_name}_steerable_joint</joint_name>
           <use_actuator_msg>true</use_actuator_msg>
           <!--
           It is assumed that the ThreeSwerveKinematicsSolverRos is used to compute the wheel commands.
           Therefore, index 0 in the position array in the actuator message corresponds to the steerable wheel located
           on the x-axis of the robot frame, either with positive x-coordinate or negative x-coordinate.
-          Therefore, position at index 0 controls the orientation of the front steerable wheel in this robot.
+          Therefore, position at index 0 controls the orientation of the longitudinal steerable wheel in this robot.
           -->
           <actuator_number>0</actuator_number>
           <!--
@@ -650,14 +713,14 @@ a forklift. No sensors or extra elements are included.
           <initial_position>0</initial_position>
         </plugin>
         <plugin filename="gz-sim-joint-position-controller-system" name="gz::sim::systems::JointPositionController">
-          <joint_name>${robot_prefix}${rear_left_st_wheel_name}_steerable_joint</joint_name>
+          <joint_name>${robot_prefix}${left_st_wheel_name}_steerable_joint</joint_name>
           <use_actuator_msg>true</use_actuator_msg>
           <!--
           It is assumed that the ThreeSwerveKinematicsSolverRos is used to compute the wheel commands.
           Therefore, index 1 in the position array in the actuator message corresponds to the steerable wheel located
           opposite to steerable wheel 0, w.r.t the robot frame; i.e, if steerable wheel 0 is at positive x-coordinate,
           then steerable wheel 1 is at negative x-coordinate, and vice versa, and with positive y-coordinate.
-          Therefore, position at index 1 controls the orientation of the rear left steerable wheel in this robot.
+          Therefore, position at index 1 controls the orientation of the left steerable wheel in this robot.
           -->
           <actuator_number>1</actuator_number>
           <!--
@@ -672,14 +735,14 @@ a forklift. No sensors or extra elements are included.
           <initial_position>0</initial_position>
         </plugin>
         <plugin filename="gz-sim-joint-position-controller-system" name="gz::sim::systems::JointPositionController">
-          <joint_name>${robot_prefix}${rear_right_st_wheel_name}_steerable_joint</joint_name>
+          <joint_name>${robot_prefix}${right_st_wheel_name}_steerable_joint</joint_name>
           <use_actuator_msg>true</use_actuator_msg>
           <!--
           It is assumed that the ThreeSwerveKinematicsSolverRos is used to compute the wheel commands.
           Therefore, index 2 in the position array in the actuator message corresponds to the steerable wheel located
           opposite to steerable wheel 0, w.r.t the robot frame; i.e, if steerable wheel 0 is at positive x-coordinate,
           then steerable wheel 1 is at negative x-coordinate, and vice versa, and with negative y-coordinate.
-          Therefore, position at index 1 controls the orientation of the rear right steerable wheel in this robot.
+          Therefore, position at index 2 controls the orientation of the right steerable wheel in this robot.
           -->
           <actuator_number>2</actuator_number>
           <!--
@@ -697,7 +760,7 @@ a forklift. No sensors or extra elements are included.
       <xacro:if value="${steerable_wheel_rotation_joint_controller_sim_cfg.get('enabled', False)}">
         <!-- Plugin to control the rotation joint of the steerable wheels. -->
         <plugin filename="gz-sim-joint-controller-system" name="gz::sim::systems::JointController">
-          <joint_name>${robot_prefix}${front_st_wheel_name}_rotation_joint</joint_name>
+          <joint_name>${robot_prefix}${longitudinal_st_wheel_name}_rotation_joint</joint_name>
           <!--
           use_force_commands: True to enable the controller implementation using force commands. If this parameter is
           not set or is false, the controller will use velocity commands internally.
@@ -708,7 +771,7 @@ a forklift. No sensors or extra elements are included.
           It is assumed that the ThreeSwerveKinematicsSolverRos is used to compute the wheel commands.
           Therefore, index 0 in the velocity array in the actuator message corresponds to the steerable wheel located
           on the x-axis of the robot frame, either with positive x-coordinate or negative x-coordinate.
-          Therefore, velocity at index 0 controls the velocity of the front steerable wheel in this robot.
+          Therefore, velocity at index 0 controls the velocity of the longitudinal steerable wheel in this robot.
           -->
           <actuator_number>0</actuator_number>
           <topic>${robot_namespace}/joint_commands/base</topic>
@@ -719,7 +782,7 @@ a forklift. No sensors or extra elements are included.
           <initial_velocity>0.0</initial_velocity>
         </plugin>
         <plugin filename="gz-sim-joint-controller-system" name="gz::sim::systems::JointController">
-          <joint_name>${robot_prefix}${rear_left_st_wheel_name}_rotation_joint</joint_name>
+          <joint_name>${robot_prefix}${left_st_wheel_name}_rotation_joint</joint_name>
           <use_force_commands>false</use_force_commands>
           <use_actuator_msg>true</use_actuator_msg>
           <!--
@@ -727,14 +790,14 @@ a forklift. No sensors or extra elements are included.
           Therefore, index 1 in the velocity array in the actuator message corresponds to the steerable wheel located
           opposite to steerable wheel 0, w.r.t the robot frame; i.e, if steerable wheel 0 is at positive x-coordinate,
           then steerable wheel 1 is at negative x-coordinate, and vice versa, and with positive y-coordinate.
-          Therefore, velocity at index 1 controls the velocity of the rear left steerable wheel in this robot.
+          Therefore, velocity at index 1 controls the velocity of the left steerable wheel in this robot.
           -->
           <actuator_number>1</actuator_number>
           <topic>${robot_namespace}/joint_commands/base</topic>
           <initial_velocity>0.0</initial_velocity>
         </plugin>
         <plugin filename="gz-sim-joint-controller-system" name="gz::sim::systems::JointController">
-          <joint_name>${robot_prefix}${rear_right_st_wheel_name}_rotation_joint</joint_name>
+          <joint_name>${robot_prefix}${right_st_wheel_name}_rotation_joint</joint_name>
           <use_force_commands>false</use_force_commands>
           <use_actuator_msg>true</use_actuator_msg>
           <!--
@@ -742,7 +805,7 @@ a forklift. No sensors or extra elements are included.
           Therefore, index 2 in the velocity array in the actuator message corresponds to the steerable wheel located
           opposite to steerable wheel 0, w.r.t the robot frame; i.e, if steerable wheel 0 is at positive x-coordinate,
           then steerable wheel 2 is at negative x-coordinate, and vice versa, and with negative y-coordinate.
-          Therefore, velocity at index 2 controls the velocity of the rear right steerable wheel in this robot.
+          Therefore, velocity at index 2 controls the velocity of the right steerable wheel in this robot.
           -->
           <actuator_number>2</actuator_number>
           <topic>${robot_namespace}/joint_commands/base</topic>
@@ -788,12 +851,12 @@ a forklift. No sensors or extra elements are included.
         <plugin filename="gz-sim-joint-state-publisher-system" name="gz::sim::systems::JointStatePublisher">
           <topic>${robot_namespace}/joint_states</topic>
           <joint_name>${robot_prefix}${fork_name}_root_joint</joint_name>
-          <joint_name>${robot_prefix}${front_st_wheel_name}_steerable_joint</joint_name>
-          <joint_name>${robot_prefix}${front_st_wheel_name}_rotation_joint</joint_name>
-          <joint_name>${robot_prefix}${rear_left_st_wheel_name}_steerable_joint</joint_name>
-          <joint_name>${robot_prefix}${rear_left_st_wheel_name}_rotation_joint</joint_name>
-          <joint_name>${robot_prefix}${rear_right_st_wheel_name}_steerable_joint</joint_name>
-          <joint_name>${robot_prefix}${rear_right_st_wheel_name}_rotation_joint</joint_name>
+          <joint_name>${robot_prefix}${longitudinal_st_wheel_name}_steerable_joint</joint_name>
+          <joint_name>${robot_prefix}${longitudinal_st_wheel_name}_rotation_joint</joint_name>
+          <joint_name>${robot_prefix}${left_st_wheel_name}_steerable_joint</joint_name>
+          <joint_name>${robot_prefix}${left_st_wheel_name}_rotation_joint</joint_name>
+          <joint_name>${robot_prefix}${right_st_wheel_name}_steerable_joint</joint_name>
+          <joint_name>${robot_prefix}${right_st_wheel_name}_rotation_joint</joint_name>
         </plugin>
       </xacro:if>
     </gazebo>

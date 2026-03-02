@@ -16,20 +16,20 @@
       # steerable_wheel_0 is located on the x-axis of the robot, either with positive or negative x coordinate,
       # but with y=0.
       steerable_wheel_0:
-        name: "$(var robot_prefix)front_steerable_wheel"
-        radius: 0.127
+        name: "$(var robot_prefix)longitudinal_steerable_wheel"
+        radius: $(var st_wheel_radius)
         steerable_joint:
-          name: "$(var robot_prefix)front_steerable_wheel_steerable_joint"
+          name: "$(var robot_prefix)longitudinal_steerable_wheel_steerable_joint"
           parent_link_name: "$(var robot_prefix)base_link"
-          child_link_name: "$(var robot_prefix)front_steerable_wheel_steerable_link"
-          origin: { x: 0.46, y: 0.0, z: 0.067, R: 0.0, P: 0.0, Y: 0.0 }
+          child_link_name: "$(var robot_prefix)longitudinal_steerable_wheel_steerable_link"
+          origin: { x: 0.5, y: 0.0, z: 0.067, R: 0.0, P: 0.0, Y: 0.0 }
           # Note: If you want the wheel to be able to reach +-pi rad angle (+-180 degress), set limits to +-3.1416.
           # pi = 3.141592654.... < 3.1416
           limits: { lower: -3.1416, upper: 3.1416 } # rad
         rotation_joint:
-          name: "$(var robot_prefix)front_steerable_wheel_rotation_joint"
-          parent_link_name: "$(var robot_prefix)front_steerable_wheel_steerable_link"
-          child_link_name: "$(var robot_prefix)front_steerable_wheel_rotation_link"
+          name: "$(var robot_prefix)longitudinal_steerable_wheel_rotation_joint"
+          parent_link_name: "$(var robot_prefix)longitudinal_steerable_wheel_steerable_link"
+          child_link_name: "$(var robot_prefix)longitudinal_steerable_wheel_rotation_link"
           origin: { x: 0.0, y: 0.0, z: 0.0, R: 0.0, P: 0.0, Y: 0.0 }
           limits: { lower: -50.0, upper: 50.0 } # rad/s
 
@@ -39,20 +39,20 @@
       # If steerable_wheel_0.steerable_joint.origin.x > 0, then steerable_wheel_1.steerable_joint.origin.x < 0, and
       # vice versa.
       steerable_wheel_1:
-        name: "$(var robot_prefix)rear_left_steerable_wheel"
-        radius: 0.127
+        name: "$(var robot_prefix)left_steerable_wheel"
+        radius: $(var st_wheel_radius)
         steerable_joint:
-          name: "$(var robot_prefix)rear_left_steerable_wheel_steerable_joint"
+          name: "$(var robot_prefix)left_steerable_wheel_steerable_joint"
           parent_link_name: "$(var robot_prefix)base_link"
-          child_link_name: "$(var robot_prefix)rear_left_steerable_wheel_steerable_link"
-          origin: { x: -0.46, y: 0.219, z: 0.067, R: 0.0, P: 0.0, Y: 0.0 }
+          child_link_name: "$(var robot_prefix)left_steerable_wheel_steerable_link"
+          origin: { x: -0.449397, y: 0.219186, z: 0.067, R: 0.0, P: 0.0, Y: 0.0 }
           # Note: If you want the wheel to be able to reach +-pi rad angle (+-180 degress), set limits to +-3.1416.
           # pi = 3.141592654.... < 3.1416
           limits: { lower: -3.1416, upper: 3.1416 } # rad
         rotation_joint:
-          name: "$(var robot_prefix)rear_left_steerable_wheel_rotation_joint"
-          parent_link_name: "$(var robot_prefix)rear_left_steerable_wheel_steerable_link"
-          child_link_name: "$(var robot_prefix)rear_left_steerable_wheel_rotation_link"
+          name: "$(var robot_prefix)left_steerable_wheel_rotation_joint"
+          parent_link_name: "$(var robot_prefix)left_steerable_wheel_steerable_link"
+          child_link_name: "$(var robot_prefix)left_steerable_wheel_rotation_link"
           origin: { x: 0.0, y: 0.0, z: 0.0, R: 0.0, P: 0.0, Y: 0.0 }
           limits: { lower: -50.0, upper: 50.0 } # rad/s
 
@@ -62,20 +62,20 @@
       # If steerable_wheel_0.steerable_joint.origin.x > 0, then steerable_wheel_2.steerable_joint.origin.x < 0, and
       # vice versa.
       steerable_wheel_2:
-        name: "$(var robot_prefix)rear_right_steerable_wheel"
-        radius: 0.127
+        name: "$(var robot_prefix)right_steerable_wheel"
+        radius: $(var st_wheel_radius)
         steerable_joint:
-          name: "$(var robot_prefix)rear_right_steerable_wheel_steerable_joint"
+          name: "$(var robot_prefix)right_steerable_wheel_steerable_joint"
           parent_link_name: "$(var robot_prefix)base_link"
-          child_link_name: "$(var robot_prefix)rear_right_steerable_wheel_steerable_link"
-          origin: { x: -0.46, y: -0.219, z: 0.067, R: 0.0, P: 0.0, Y: 0.0 }
+          child_link_name: "$(var robot_prefix)right_steerable_wheel_steerable_link"
+          origin: { x: -0.449397, y: -0.219186, z: 0.067, R: 0.0, P: 0.0, Y: 0.0 }
           # Note: If you want the wheel to be able to reach +-pi rad angle (+-180 degress), set limits to +-3.1416.
           # pi = 3.141592654.... < 3.1416
           limits: { lower: -3.1416, upper: 3.1416 } # rad
         rotation_joint:
-          name: "$(var robot_prefix)rear_right_steerable_wheel_rotation_joint"
-          parent_link_name: "$(var robot_prefix)rear_right_steerable_wheel_steerable_link"
-          child_link_name: "$(var robot_prefix)rear_right_steerable_wheel_rotation_link"
+          name: "$(var robot_prefix)right_steerable_wheel_rotation_joint"
+          parent_link_name: "$(var robot_prefix)right_steerable_wheel_steerable_link"
+          child_link_name: "$(var robot_prefix)right_steerable_wheel_rotation_link"
           origin: { x: 0.0, y: 0.0, z: 0.0, R: 0.0, P: 0.0, Y: 0.0 }
           limits: { lower: -50.0, upper: 50.0 } # rad/s
 
