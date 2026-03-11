@@ -280,11 +280,16 @@ No sensors or extra elements are included.
   <xacro:property name="robot_size_z" value="1.7004688"/>
 
   <!-- Names for components -->
-  <xacro:property name="base_name"                  value="base"/>
-  <xacro:property name="longitudinal_st_wheel_name" value="longitudinal_steerable_wheel"/>
-  <xacro:property name="left_st_wheel_name"         value="left_steerable_wheel"/>
-  <xacro:property name="right_st_wheel_name"        value="right_steerable_wheel"/>
-  <xacro:property name="fork_name"                  value="fork"/>
+  <xacro:property name="base_name"                value="base"/>
+  <xacro:property name="steerable_wheel_1_name"   value="steerable_wheel_1"/>
+  <xacro:property name="steerable_wheel_2_name"   value="steerable_wheel_2"/>
+  <xacro:property name="steerable_wheel_3_name"   value="steerable_wheel_3"/>
+  <xacro:property name="fork_name"                value="fork"/>
+  <!-- Wheel numbering aligned with ground_vehicle_kinematics:
+       steerable_wheel_1 -> wheel on the robot X axis (x > 0 or x < 0 depending on geometry)
+       steerable_wheel_2 -> left wheel
+       steerable_wheel_3 -> right wheel
+       Reference: package://ground_vehicle_kinematics/doc/kinematics_en.pdf -->
 
   <!-- ===================================================================== -->
   <!-- Definition of links and joints for the rectangular base -->
@@ -410,7 +415,7 @@ No sensors or extra elements are included.
     * ${prefix}${name}_rotation_joint (continuous|fixed):
       parent=${prefix}${name}_steerable_link, child=${prefix}${name}_rotation_link
   -->
-  <xacro:steerable_wheel name="${longitudinal_st_wheel_name}"
+  <xacro:steerable_wheel name="${steerable_wheel_1_name}"
                          prefix="${robot_prefix}"
                          parent_frame="${robot_prefix}${base_name}_link"
                          use_visual="True"
@@ -433,7 +438,7 @@ No sensors or extra elements are included.
                          slip2="${st_wheel_slip2}"
                          joint_parent_fr_wheel_fr="${x_st_wheel_longitudinal} 0.0 ${z_st_wheel} 0.0 0.0 0.0"/>
 
-  <xacro:steerable_wheel name="${left_st_wheel_name}"
+  <xacro:steerable_wheel name="${steerable_wheel_2_name}"
                          prefix="${robot_prefix}"
                          parent_frame="${robot_prefix}${base_name}_link"
                          use_visual="True"
@@ -456,7 +461,7 @@ No sensors or extra elements are included.
                          slip2="${st_wheel_slip2}"
                          joint_parent_fr_wheel_fr="${x_st_wheel_left} ${y_st_wheel_left} ${z_st_wheel} 0.0 0.0 0.0"/>
 
-  <xacro:steerable_wheel name="${right_st_wheel_name}"
+  <xacro:steerable_wheel name="${steerable_wheel_3_name}"
                          prefix="${robot_prefix}"
                          parent_frame="${robot_prefix}${base_name}_link"
                          use_visual="True"
@@ -692,13 +697,13 @@ No sensors or extra elements are included.
       <xacro:if value="${steerable_wheel_steerable_joint_controller_sim_cfg.get('enabled', False)}">
         <!-- Plugins to control the steerable joint of the steerable wheels. -->
         <plugin filename="gz-sim-joint-position-controller-system" name="gz::sim::systems::JointPositionController">
-          <joint_name>${robot_prefix}${longitudinal_st_wheel_name}_steerable_joint</joint_name>
+          <joint_name>${robot_prefix}${steerable_wheel_1_name}_steerable_joint</joint_name>
           <use_actuator_msg>true</use_actuator_msg>
           <!--
           It is assumed that the ThreeSwerveKinematicsSolverRos is used to compute the wheel commands.
           Therefore, index 0 in the position array in the actuator message corresponds to the steerable wheel located
           on the x-axis of the robot frame, either with positive x-coordinate or negative x-coordinate.
-          Therefore, position at index 0 controls the orientation of the longitudinal steerable wheel in this robot.
+          Therefore, position at index 0 controls the orientation of steerable_wheel_1 in this robot.
           -->
           <actuator_number>0</actuator_number>
           <!--
@@ -713,14 +718,14 @@ No sensors or extra elements are included.
           <initial_position>0</initial_position>
         </plugin>
         <plugin filename="gz-sim-joint-position-controller-system" name="gz::sim::systems::JointPositionController">
-          <joint_name>${robot_prefix}${left_st_wheel_name}_steerable_joint</joint_name>
+          <joint_name>${robot_prefix}${steerable_wheel_2_name}_steerable_joint</joint_name>
           <use_actuator_msg>true</use_actuator_msg>
           <!--
           It is assumed that the ThreeSwerveKinematicsSolverRos is used to compute the wheel commands.
           Therefore, index 1 in the position array in the actuator message corresponds to the steerable wheel located
           opposite to steerable wheel 0, w.r.t the robot frame; i.e, if steerable wheel 0 is at positive x-coordinate,
           then steerable wheel 1 is at negative x-coordinate, and vice versa, and with positive y-coordinate.
-          Therefore, position at index 1 controls the orientation of the left steerable wheel in this robot.
+          Therefore, position at index 1 controls the orientation of steerable_wheel_2 in this robot.
           -->
           <actuator_number>1</actuator_number>
           <!--
@@ -735,14 +740,14 @@ No sensors or extra elements are included.
           <initial_position>0</initial_position>
         </plugin>
         <plugin filename="gz-sim-joint-position-controller-system" name="gz::sim::systems::JointPositionController">
-          <joint_name>${robot_prefix}${right_st_wheel_name}_steerable_joint</joint_name>
+          <joint_name>${robot_prefix}${steerable_wheel_3_name}_steerable_joint</joint_name>
           <use_actuator_msg>true</use_actuator_msg>
           <!--
           It is assumed that the ThreeSwerveKinematicsSolverRos is used to compute the wheel commands.
           Therefore, index 2 in the position array in the actuator message corresponds to the steerable wheel located
           opposite to steerable wheel 0, w.r.t the robot frame; i.e, if steerable wheel 0 is at positive x-coordinate,
           then steerable wheel 1 is at negative x-coordinate, and vice versa, and with negative y-coordinate.
-          Therefore, position at index 2 controls the orientation of the right steerable wheel in this robot.
+          Therefore, position at index 2 controls the orientation of steerable_wheel_3 in this robot.
           -->
           <actuator_number>2</actuator_number>
           <!--
@@ -760,7 +765,7 @@ No sensors or extra elements are included.
       <xacro:if value="${steerable_wheel_rotation_joint_controller_sim_cfg.get('enabled', False)}">
         <!-- Plugin to control the rotation joint of the steerable wheels. -->
         <plugin filename="gz-sim-joint-controller-system" name="gz::sim::systems::JointController">
-          <joint_name>${robot_prefix}${longitudinal_st_wheel_name}_rotation_joint</joint_name>
+          <joint_name>${robot_prefix}${steerable_wheel_1_name}_rotation_joint</joint_name>
           <!--
           use_force_commands: True to enable the controller implementation using force commands. If this parameter is
           not set or is false, the controller will use velocity commands internally.
@@ -771,7 +776,7 @@ No sensors or extra elements are included.
           It is assumed that the ThreeSwerveKinematicsSolverRos is used to compute the wheel commands.
           Therefore, index 0 in the velocity array in the actuator message corresponds to the steerable wheel located
           on the x-axis of the robot frame, either with positive x-coordinate or negative x-coordinate.
-          Therefore, velocity at index 0 controls the velocity of the longitudinal steerable wheel in this robot.
+          Therefore, velocity at index 0 controls the velocity of steerable_wheel_1 in this robot.
           -->
           <actuator_number>0</actuator_number>
           <topic>${robot_namespace}/joint_commands/base</topic>
@@ -782,7 +787,7 @@ No sensors or extra elements are included.
           <initial_velocity>0.0</initial_velocity>
         </plugin>
         <plugin filename="gz-sim-joint-controller-system" name="gz::sim::systems::JointController">
-          <joint_name>${robot_prefix}${left_st_wheel_name}_rotation_joint</joint_name>
+          <joint_name>${robot_prefix}${steerable_wheel_2_name}_rotation_joint</joint_name>
           <use_force_commands>false</use_force_commands>
           <use_actuator_msg>true</use_actuator_msg>
           <!--
@@ -790,14 +795,14 @@ No sensors or extra elements are included.
           Therefore, index 1 in the velocity array in the actuator message corresponds to the steerable wheel located
           opposite to steerable wheel 0, w.r.t the robot frame; i.e, if steerable wheel 0 is at positive x-coordinate,
           then steerable wheel 1 is at negative x-coordinate, and vice versa, and with positive y-coordinate.
-          Therefore, velocity at index 1 controls the velocity of the left steerable wheel in this robot.
+          Therefore, velocity at index 1 controls the velocity of steerable_wheel_2 in this robot.
           -->
           <actuator_number>1</actuator_number>
           <topic>${robot_namespace}/joint_commands/base</topic>
           <initial_velocity>0.0</initial_velocity>
         </plugin>
         <plugin filename="gz-sim-joint-controller-system" name="gz::sim::systems::JointController">
-          <joint_name>${robot_prefix}${right_st_wheel_name}_rotation_joint</joint_name>
+          <joint_name>${robot_prefix}${steerable_wheel_3_name}_rotation_joint</joint_name>
           <use_force_commands>false</use_force_commands>
           <use_actuator_msg>true</use_actuator_msg>
           <!--
@@ -805,7 +810,7 @@ No sensors or extra elements are included.
           Therefore, index 2 in the velocity array in the actuator message corresponds to the steerable wheel located
           opposite to steerable wheel 0, w.r.t the robot frame; i.e, if steerable wheel 0 is at positive x-coordinate,
           then steerable wheel 2 is at negative x-coordinate, and vice versa, and with negative y-coordinate.
-          Therefore, velocity at index 2 controls the velocity of the right steerable wheel in this robot.
+          Therefore, velocity at index 2 controls the velocity of steerable_wheel_3 in this robot.
           -->
           <actuator_number>2</actuator_number>
           <topic>${robot_namespace}/joint_commands/base</topic>
@@ -851,12 +856,12 @@ No sensors or extra elements are included.
         <plugin filename="gz-sim-joint-state-publisher-system" name="gz::sim::systems::JointStatePublisher">
           <topic>${robot_namespace}/joint_states</topic>
           <joint_name>${robot_prefix}${fork_name}_root_joint</joint_name>
-          <joint_name>${robot_prefix}${longitudinal_st_wheel_name}_steerable_joint</joint_name>
-          <joint_name>${robot_prefix}${longitudinal_st_wheel_name}_rotation_joint</joint_name>
-          <joint_name>${robot_prefix}${left_st_wheel_name}_steerable_joint</joint_name>
-          <joint_name>${robot_prefix}${left_st_wheel_name}_rotation_joint</joint_name>
-          <joint_name>${robot_prefix}${right_st_wheel_name}_steerable_joint</joint_name>
-          <joint_name>${robot_prefix}${right_st_wheel_name}_rotation_joint</joint_name>
+          <joint_name>${robot_prefix}${steerable_wheel_1_name}_steerable_joint</joint_name>
+          <joint_name>${robot_prefix}${steerable_wheel_1_name}_rotation_joint</joint_name>
+          <joint_name>${robot_prefix}${steerable_wheel_2_name}_steerable_joint</joint_name>
+          <joint_name>${robot_prefix}${steerable_wheel_2_name}_rotation_joint</joint_name>
+          <joint_name>${robot_prefix}${steerable_wheel_3_name}_steerable_joint</joint_name>
+          <joint_name>${robot_prefix}${steerable_wheel_3_name}_rotation_joint</joint_name>
         </plugin>
       </xacro:if>
     </gazebo>
