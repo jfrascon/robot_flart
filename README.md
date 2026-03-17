@@ -1,3 +1,3 @@
-# robot_forklift_simple_3aw
+# robot_forklift_simple_3sw
 
-This package contains the URDF description of the fs3aw robot.
+This package contains the URDF description of the fs3sw robot.

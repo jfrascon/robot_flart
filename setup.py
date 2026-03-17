@@ -3,7 +3,7 @@ from glob import glob
 
 from setuptools import find_packages, setup
 
-package_name = 'robot_forklift_simple_3aw'
+package_name = 'robot_forklift_simple_3sw'
 
 
 def _glob_files(pattern):
@@ -27,7 +27,7 @@ setup(
     zip_safe=True,
     maintainer='Juan Francisco Rascon Crespo',
     maintainer_email='jfracon@gmail.com',
-    description='Deployment package for the robot fs3aw',
+    description='Deployment package for the robot fs3sw',
     license='Apache-2.0',
     extras_require={'test': ['pytest']},
     entry_points={'console_scripts': []},
