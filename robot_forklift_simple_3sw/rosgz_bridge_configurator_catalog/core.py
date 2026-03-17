@@ -6,7 +6,7 @@ __all__ = ['create_cfg']
 
 
 def create_cfg(sim_file: str, namespace: str, robot_name: str) -> Tuple[List[Dict[str, Any]], List[str]]:
-    """Create the ROS <-> GZ bridge channels configuration for the core fs3aw profile.
+    """Create the ROS <-> GZ bridge channels configuration for the core fs3sw profile.
 
     - Processes the simulation configuration file and builds channel entries based on enabled sections.
     - Returns (channels, messages). On success, messages is empty. On errors, channels is empty and

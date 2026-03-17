@@ -11,11 +11,11 @@ from launch_ros.actions import Node
 from launch_ros.descriptions import ParameterFile, ParameterValue
 
 from launch import LaunchContext, LaunchDescription, LaunchDescriptionEntity
-from robot_forklift_simple_3aw import xargs_catalog_manager
+from robot_forklift_simple_3sw import xargs_catalog_manager
 
 
 def generate_launch_description() -> LaunchDescription:
-    """Build the launch description for robot_state_publisher across fs3aw versions."""
+    """Build the launch description for robot_state_publisher across fs3sw versions."""
     ldes: List[LaunchDescriptionEntity] = [
         DeclareLaunchArgument(
             'use_sim_time',
@@ -25,8 +25,8 @@ def generate_launch_description() -> LaunchDescription:
         ),
         DeclareLaunchArgument('namespace', default_value='', description='Namespace for all resources'),
         DeclareLaunchArgument('robot_version', default_value='core', description='Robot version to launch'),
-        OpaqueFunction(function=_validate_selected_robot_version),
-        DeclareLaunchArgument('robot_name', default_value='fs3aw', description='The unique name for the robot'),
+        OpaqueFunction(function=_validate_robot_version),
+        DeclareLaunchArgument('robot_name', default_value='fs3sw', description='The unique name for the robot'),
         DeclareLaunchArgument(
             'params_file',
             default_value='',
@@ -69,7 +69,7 @@ def _build_xacro_command(ctx: LaunchContext) -> Tuple[List[Any], List[str]]:
     underscored_robot_ns = rlh.underscorify_namespace(robot_ns)
 
     xacro_file = os.path.join(
-        get_package_share_directory('robot_forklift_simple_3aw'), 'urdf', f'{robot_version}.xacro'
+        get_package_share_directory('robot_forklift_simple_3sw'), 'urdf', f'{robot_version}.xacro'
     )
 
     if not Path(xacro_file).is_file():
@@ -145,7 +145,7 @@ def _declare_xargs_launch_arguments_for_selected_version(ctx: LaunchContext) -> 
 def _get_default_params_file_for_robot_version(robot_version: str) -> str:
     """Return default params YAML path for a robot version using naming convention."""
 
-    config_dir = Path(get_package_share_directory('robot_forklift_simple_3aw')).joinpath('config')
+    config_dir = Path(get_package_share_directory('robot_forklift_simple_3sw')).joinpath('config')
     candidate = config_dir.joinpath(f'example_{robot_version}.yaml')
 
     if candidate.is_file():
@@ -224,7 +224,7 @@ def _get_parameters(ctx: LaunchContext) -> Tuple[List[Any], List[str]]:
 
 
 def _launch_rsp(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
-    """Launch robot_state_publisher for the selected fs3aw robot version."""
+    """Launch robot_state_publisher for the selected fs3sw robot version."""
 
     namespace = LaunchConfiguration('namespace').perform(ctx).strip()
     robot_name = LaunchConfiguration('robot_name').perform(ctx).strip()
@@ -262,7 +262,7 @@ def _quote_if_needed(raw_value: str) -> str:
     return f'"{raw_value}"' if any(ch.isspace() for ch in raw_value) else raw_value
 
 
-def _validate_selected_robot_version(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
+def _validate_robot_version(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
     """Fail fast if selected robot version is not supported by the xargs catalog."""
     robot_version = LaunchConfiguration('robot_version').perform(ctx).strip()
     available_robot_versions = xargs_catalog_manager.get_robot_versions()
@@ -271,6 +271,6 @@ def _validate_selected_robot_version(ctx: LaunchContext) -> List[LaunchDescripti
         return []
 
     raise ValueError(
-        f"Version '{robot_version}' for the 'fs3aw' robot is not available. "
+        f"Version '{robot_version}' for the 'fs3sw' robot is not available. "
         f'Available versions: {", ".join(available_robot_versions)}'
     )

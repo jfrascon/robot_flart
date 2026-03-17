@@ -1,4 +1,4 @@
-"""Xargs specification for fs3aw core version."""
+"""Xargs specification for fs3sw core version."""
 
 import os
 
@@ -19,7 +19,7 @@ XARGS = {
     'args': {
         'sim_file': {
             'default_value': os.path.join(
-                get_package_share_directory('robot_forklift_simple_3aw'), 'config', 'example_core_simulation.yaml'
+                get_package_share_directory('robot_forklift_simple_3sw'), 'config', 'example_core_simulation.yaml'
             ),
             'description': 'Path to simulation configuration for base+fork',
         },
@@ -47,44 +47,41 @@ XARGS = {
             'description': 'Wheel layout angle in degrees, used in xacro as radians(alpha_deg).',
         },
         'body_mesh': {
-            'default_value': 'robot_forklift_simple_3aw/meshes/forklift_simple_3aw_base.stl',
+            'default_value': 'robot_forklift_simple_3sw/meshes/forklift_simple_3aw_base.stl',
             'description': 'Body mesh path within package format <pkg>/<path>.',
         },
         'body_scale': {'default_value': '1.0 1.0 1.0', 'description': "Body mesh scale as 'sx sy sz'."},
         'body_color': {'default_value': '0.0 0.0 1.0 1.0', 'description': "Body color as 'r g b a'."},
-        'st_wheel_use_inertial': {
+        's_wheel_use_inertial': {
             'default_value': 'True',
             'description': 'Use inertial element for wheels. If False, a null inertia will be used',
             'choices': ['True', 'true', 'False', 'false'],
         },
-        'st_wheel_mass': {'default_value': '10.0', 'description': 'Steerable wheel mass (kg).'},
-        'st_wheel_radius': {'default_value': '0.127', 'description': 'Steerable wheel radius (m).'},
-        'st_wheel_thickness': {'default_value': '0.082', 'description': 'Steerable wheel thickness (m).'},
-        'st_wheel_color': {'default_value': '0.1 0.1 0.1 1.0', 'description': "Steerable wheel color as 'r g b a'."},
+        's_wheel_mass': {'default_value': '10.0', 'description': 'Steerable wheel mass (kg).'},
+        's_wheel_radius': {'default_value': '0.127', 'description': 'Steerable wheel radius (m).'},
+        's_wheel_thickness': {'default_value': '0.082', 'description': 'Steerable wheel thickness (m).'},
+        's_wheel_color': {'default_value': '0.1 0.1 0.1 1.0', 'description': "Steerable wheel color as 'r g b a'."},
         # Note: If you want the wheel to be able to reach +-pi rad angle (+-180 degress), set limits to +-3.1416.
         # pi = 3.141592654.... < 3.1416
-        'st_wheel_steerable_limits': {
+        's_wheel_steerable_limits': {
             'default_value': '-3.1416 3.1416 100.0 100000.0',
             'description': "Steerable joint limits as 'lower upper velocity effort'.",
         },
-        'st_wheel_rotation_joint_limits': {
+        's_wheel_rotation_joint_limits': {
             'default_value': '100.0 100000.0',
             'description': "Wheel rotation joint limits as 'velocity effort'.",
         },
-        'st_wheel_max_contacts': {'default_value': '1', 'description': 'Maximum contact points for wheel collision.'},
-        'st_wheel_mu': {
+        's_wheel_max_contacts': {'default_value': '1', 'description': 'Maximum contact points for wheel collision.'},
+        's_wheel_mu': {
             'default_value': '0.05',
             'description': 'Primary friction coefficient for wheel-ground contact.',
         },
-        'st_wheel_mu2': {
+        's_wheel_mu2': {
             'default_value': '0.5',
             'description': 'Secondary friction coefficient for wheel-ground contact.',
         },
-        'st_wheel_slip1': {
-            'default_value': '0.005',
-            'description': 'Primary slip compliance for wheel-ground contact.',
-        },
-        'st_wheel_slip2': {
+        's_wheel_slip1': {'default_value': '0.005', 'description': 'Primary slip compliance for wheel-ground contact.'},
+        's_wheel_slip2': {
             'default_value': '0.0005',
             'description': 'Secondary slip compliance for wheel-ground contact.',
         },

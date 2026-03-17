@@ -28,7 +28,7 @@ def generate_launch_description() -> LaunchDescription:
             'robot_version', default_value='core', description='Robot version to launch bridge for (core, v1, ...)'
         ),
         DeclareLaunchArgument('namespace', default_value='', description='Namespace for all resources'),
-        DeclareLaunchArgument('robot_name', default_value='fs3aw', description='The unique name for the robot'),
+        DeclareLaunchArgument('robot_name', default_value='fs3sw', description='The unique name for the robot'),
         ########################################################################
         # Parameters
         ########################################################################
@@ -55,10 +55,7 @@ def generate_launch_description() -> LaunchDescription:
         ),
         GroupAction(
             condition=IfCondition(LaunchConfiguration('use_sim_time')),
-            actions=[
-                OpaqueFunction(function=_validate_selected_robot_version),
-                OpaqueFunction(function=_launch_rosgz_bridge),
-            ],
+            actions=[OpaqueFunction(function=_validate_robot_version), OpaqueFunction(function=_launch_rosgz_bridge)],
         ),
     ]
 
@@ -68,10 +65,10 @@ def generate_launch_description() -> LaunchDescription:
 def _get_available_rosgz_bridge_configurators() -> List[str]:
     """
     Return available rosgz_bridge configurators by listing modules in
-    `robot_forklift_simple_3aw.rosgz_bridge_configurator_catalog`.
+    `robot_forklift_simple_3sw.rosgz_bridge_configurator_catalog`.
     """
     try:
-        package = import_module('robot_forklift_simple_3aw.rosgz_bridge_configurator_catalog')
+        package = import_module('robot_forklift_simple_3sw.rosgz_bridge_configurator_catalog')
     except ModuleNotFoundError:
         return []
 
@@ -88,7 +85,7 @@ def _get_available_rosgz_bridge_configurators() -> List[str]:
 def _get_default_params_file_for_robot_version(robot_version: str) -> str:
     """Return default params YAML path for a robot version using naming convention."""
 
-    config_dir = Path(get_package_share_directory('robot_forklift_simple_3aw')).joinpath('config')
+    config_dir = Path(get_package_share_directory('robot_forklift_simple_3sw')).joinpath('config')
     candidate = config_dir.joinpath(f'example_{robot_version}.yaml')
 
     # If a version-specific params file does not exist, fall back to core params config.
@@ -103,7 +100,7 @@ def _get_default_params_file_for_robot_version(robot_version: str) -> str:
 def _get_default_sim_file_for_robot_version(robot_version: str) -> str:
     """Return default simulation YAML path for a robot version using naming convention."""
 
-    config_dir = Path(get_package_share_directory('robot_forklift_simple_3aw')).joinpath('config')
+    config_dir = Path(get_package_share_directory('robot_forklift_simple_3sw')).joinpath('config')
     candidate = config_dir.joinpath(f'example_{robot_version}_simulation.yaml')
 
     # If a version-specific default does not exist, fall back to core simulation config.
@@ -163,7 +160,7 @@ def _get_rosgz_bridge_configurator(robot_version: str):
     if not robot_version:
         return None
 
-    module_name = f'robot_forklift_simple_3aw.rosgz_bridge_configurator_catalog.{robot_version}'
+    module_name = f'robot_forklift_simple_3sw.rosgz_bridge_configurator_catalog.{robot_version}'
 
     try:
         module = import_module(module_name)
@@ -183,7 +180,7 @@ def _get_rosgz_bridge_configurator(robot_version: str):
 
 
 def _launch_rosgz_bridge(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
-    """Create and launch the rosgz bridge node for the selected fs3aw profile."""
+    """Create and launch the rosgz bridge node for the selected fs3sw profile."""
 
     robot_version = LaunchConfiguration('robot_version').perform(ctx).strip()
     namespace = LaunchConfiguration('namespace').perform(ctx).strip()
@@ -268,7 +265,7 @@ def _launch_rosgz_bridge(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
     return ldes
 
 
-def _validate_selected_robot_version(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
+def _validate_robot_version(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
     """Fail fast if selected robot version has no rosgz bridge configurator."""
     robot_version = LaunchConfiguration('robot_version').perform(ctx).strip()
     available_configurators = _get_available_rosgz_bridge_configurators()

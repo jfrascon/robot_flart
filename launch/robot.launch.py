@@ -9,11 +9,11 @@ from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.substitutions import FindPackageShare
 
 from launch import LaunchContext, LaunchDescription, LaunchDescriptionEntity
-from robot_forklift_simple_3aw import xargs_catalog_manager
+from robot_forklift_simple_3sw import xargs_catalog_manager
 
 
 def generate_launch_description() -> LaunchDescription:
-    """Build the unified launch description for all fs3aw robot versions."""
+    """Build the unified launch description for all fs3sw robot versions."""
     ldes: list[LaunchDescriptionEntity] = [
         DeclareLaunchArgument(
             'use_sim_time',
@@ -25,13 +25,13 @@ def generate_launch_description() -> LaunchDescription:
         DeclareLaunchArgument(
             'robot_version', default_value='core', description='Robot version to launch (for example: core, v1)'
         ),
-        DeclareLaunchArgument('robot_name', default_value='fs3aw', description='The unique name for the robot'),
+        DeclareLaunchArgument('robot_name', default_value='fs3sw', description='The unique name for the robot'),
         DeclareLaunchArgument(
             'params_file',
             default_value='',
             description='Path to params file. If empty, each included launch picks default by robot_version.',
         ),
-        OpaqueFunction(function=_validate_selected_robot_version),
+        OpaqueFunction(function=_validate_robot_version),
         OpaqueFunction(function=_declare_xargs_launch_arguments_for_selected_version),
     ]
 
@@ -112,7 +112,7 @@ def _include_rosgz_bridge(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
                 PathJoinSubstitution(
-                    [FindPackageShare('robot_forklift_simple_3aw'), 'launch', 'rosgz_bridge.launch.py']
+                    [FindPackageShare('robot_forklift_simple_3sw'), 'launch', 'rosgz_bridge.launch.py']
                 )
             ),
             launch_arguments={
@@ -136,7 +136,7 @@ def _include_rsp(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
     return [
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
-                PathJoinSubstitution([FindPackageShare('robot_forklift_simple_3aw'), 'launch', 'rsp.launch.py'])
+                PathJoinSubstitution([FindPackageShare('robot_forklift_simple_3sw'), 'launch', 'rsp.launch.py'])
             ),
             launch_arguments={
                 'use_sim_time': LaunchConfiguration('use_sim_time'),
@@ -161,7 +161,7 @@ def _include_three_swerve_kinematics(ctx: LaunchContext) -> List[LaunchDescripti
     if input_params_file:
         params_file = input_params_file
     else:
-        config_dir = Path(get_package_share_directory('robot_forklift_simple_3aw')).joinpath('config')
+        config_dir = Path(get_package_share_directory('robot_forklift_simple_3sw')).joinpath('config')
         candidate = config_dir.joinpath(f'example_{robot_version}.yaml')
         params_file = str(candidate if candidate.is_file() else config_dir.joinpath('example_core.yaml'))
 
@@ -185,8 +185,8 @@ def _include_three_swerve_kinematics(ctx: LaunchContext) -> List[LaunchDescripti
     ]
 
 
-def _validate_selected_robot_version(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
-    """Fail fast if selected robot version is not supported by the xargs catalog."""
+def _validate_robot_version(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
+    """Fail if the selected robot version is not recognized."""
 
     robot_version = LaunchConfiguration('robot_version').perform(ctx).strip()
     available_robot_versions = xargs_catalog_manager.get_robot_versions()
@@ -195,6 +195,6 @@ def _validate_selected_robot_version(ctx: LaunchContext) -> List[LaunchDescripti
         return []
 
     raise ValueError(
-        f"Version '{robot_version}' for the 'fs3aw' robot is not available. "
+        f"Version '{robot_version}' for the 'fs3sw' robot is not available. "
         f'Available versions: {", ".join(available_robot_versions)}'
     )

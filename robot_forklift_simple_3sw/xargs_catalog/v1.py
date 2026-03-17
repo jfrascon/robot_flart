@@ -1,4 +1,4 @@
-"""Xargs specification for fs3aw v1 version."""
+"""Xargs specification for fs3sw v1 version."""
 
 import os
 
@@ -10,9 +10,9 @@ XARGS = {
     'args': {
         'sim_file': {
             'default_value': os.path.join(
-                get_package_share_directory('robot_forklift_simple_3aw'), 'config', 'example_v1_simulation.yaml'
+                get_package_share_directory('robot_forklift_simple_3sw'), 'config', 'example_v1_simulation.yaml'
             ),
-            'description': "Path to simulation configuration for the 'v1' version of the 'fs3aw' robot",
+            'description': "Path to simulation configuration for the 'v1' version of the 'fs3sw' robot",
         },
         'top_platform_use_visual': {
             'default_value': 'True',

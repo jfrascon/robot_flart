@@ -8,8 +8,8 @@ from launch.actions import DeclareLaunchArgument, LogInfo
 from launch.substitutions import LaunchConfiguration
 
 from launch import LaunchDescriptionEntity
-from robot_forklift_simple_3aw.xargs_catalog.core import XARGS as CORE_XARGS
-from robot_forklift_simple_3aw.xargs_catalog.v1 import XARGS as V1_XARGS
+from robot_forklift_simple_3sw.xargs_catalog.core import XARGS as CORE_XARGS
+from robot_forklift_simple_3sw.xargs_catalog.v1 import XARGS as V1_XARGS
 
 # Single source of truth for xarg catalog entries, keyed by robot version.
 XARGS_CATALOG: Dict[str, Dict[str, Any]] = {CORE_XARGS['version']: CORE_XARGS, V1_XARGS['version']: V1_XARGS}
@@ -30,7 +30,7 @@ def declare_launch_arguments_for_robot_version(robot_version: str) -> List[Launc
     if selected_robot_version not in available_robot_versions:
         ldes.append(
             LogInfo(
-                msg=f"Version '{selected_robot_version}' for the 'fs3aw' robot is not available. "
+                msg=f"Version '{selected_robot_version}' for the 'fs3sw' robot is not available. "
                 f'Available versions: {", ".join(available_robot_versions)}'
             )
         )

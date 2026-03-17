@@ -1,4 +1,4 @@
-# This file shows the simulation configuration for the version 'v1' of the 'fs3aw' robot.
+# This file shows the simulation configuration for the version 'v1' of the 'fs3sw' robot.
 # It is self-contained and includes:
 # - core plugins (base + fork + joint_state_publisher)
 # - v1 extra plugins (top_lidar + top_imu + rear_camera)

@@ -1,24 +1,23 @@
 <?xml version="1.0"?>
 <!--
-The word 'fs3aw' is obtained from the combination of the words 'forklift' and 'artisteril', being 'artisteril' the
-company that manufactures the forklift robot.
-(f)ork(l)ift + (art)isteril -> fs3aw
+The word 'fs3sw' is obtained from the combination of the words '(f)orklift', '(s)imple' and '(3) (s)teerable
+(w)heels'.
 
-This xacro file defines the 'v1' version of the fs3aw robot, which a combination of the 'core' version plus:
+This xacro file defines the 'v1' version of the fs3sw robot, which is a combination of the 'core' version plus:
   - A top 3D LiDAR (RoboSense Helios 16P)
   - A top IMU (UM7)
   - A rear RGBD camera (Intel RealSense D435)
 -->
-<robot name="fs3aw_v1" xmlns:xacro="http://www.ros.org/wiki/xacro" xmlns:gz="http://gazebosim.org/schema">
+<robot name="fs3sw_v1" xmlns:xacro="http://www.ros.org/wiki/xacro" xmlns:gz="http://gazebosim.org/schema">
 
-  <xacro:property name="robot_forklift_simple_3aw_pkg_dir"           value="$(find robot_forklift_simple_3aw)"/>
+  <xacro:property name="robot_forklift_simple_3sw_pkg_dir"           value="$(find robot_forklift_simple_3sw)"/>
   <xacro:property name="robotics_description_pkg_dir"  value="$(find robotics_description)"/>
 
   <!-- ===================================================================== -->
   <!-- INCLUDES -->
   <!-- ===================================================================== -->
 
-  <xacro:include filename="${robot_forklift_simple_3aw_pkg_dir}/urdf/core.xacro"/>
+  <xacro:include filename="${robot_forklift_simple_3sw_pkg_dir}/urdf/core.xacro"/>
   <!--
   Properties imported from core.xacro and used in this file:
   - sim_cfg

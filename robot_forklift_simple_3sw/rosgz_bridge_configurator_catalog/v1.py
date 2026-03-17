@@ -2,13 +2,13 @@ from typing import Any, Dict, List, Tuple
 
 import ros2_launch_helpers as rlh
 
-from robot_forklift_simple_3aw.rosgz_bridge_configurator_catalog import core
+from robot_forklift_simple_3sw.rosgz_bridge_configurator_catalog import core
 
 __all__ = ['create_cfg']
 
 
 def create_cfg(sim_file: str, namespace: str, robot_name: str) -> Tuple[List[Dict[str, Any]], List[str]]:
-    """Create the ROS <-> GZ bridge channels configuration for the v1 fs3aw profile.
+    """Create the ROS <-> GZ bridge channels configuration for the v1 fs3sw profile.
 
     This builder composes the core profile channels and adds the v1-specific sensor channels.
     """
@@ -50,7 +50,7 @@ def create_cfg(sim_file: str, namespace: str, robot_name: str) -> Tuple[List[Dic
             core_messages
             + [
                 f'[{underscored_robot_ns}] No plugins enabled in the simulation configuration for the extra elements '
-                "of the 'v1' version of the 'fs3aw' robot."
+                "of the 'v1' version of the 'fs3sw' robot."
             ],
         )
 
