@@ -9,7 +9,7 @@ from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.substitutions import FindPackageShare
 
 from launch import LaunchContext, LaunchDescription, LaunchDescriptionEntity
-from robot_forklift_simple_3sw import xargs_catalog_manager
+from robot_forklift_simple_3sw import xargs
 
 
 def generate_launch_description() -> LaunchDescription:
@@ -31,8 +31,7 @@ def generate_launch_description() -> LaunchDescription:
             default_value='',
             description='Path to params file. If empty, each included launch picks default by robot_version.',
         ),
-        OpaqueFunction(function=_validate_robot_version),
-        OpaqueFunction(function=_declare_xargs_launch_arguments_for_selected_version),
+        OpaqueFunction(function=_declare_xargs),
     ]
 
     ldes.extend(_declare_topic_remappings())
@@ -95,15 +94,26 @@ def _declare_topic_remappings() -> List[LaunchDescriptionEntity]:
     ]
 
 
-# An OF is needed to have access to the launch context, resolve the selected robot version and pass it to the
-# xargs catalog manager which returns the appropriate DeclareLaunchArgument entities based on the catalog of xargs that
-# robot version declares.
-# This allows us to only declare the launch arguments relevant to the selected robot version and keep the launch file
-# clean and scalable as new versions are added.
-def _declare_xargs_launch_arguments_for_selected_version(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
+def _declare_xargs(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
     """Declare xargs launch arguments for the selected robot version."""
     robot_version = LaunchConfiguration('robot_version').perform(ctx).strip()
-    return xargs_catalog_manager.declare_launch_arguments_for_robot_version(robot_version)
+    available_robot_versions = xargs.get_robot_versions()
+
+    if robot_version not in available_robot_versions:
+        raise ValueError(
+            f"Version '{robot_version}' for the 'fs3sw' robot is not available. "
+            f'Available robot versions: {", ".join(available_robot_versions)}'
+        )
+
+    available_xargs_versions = xargs.get_xargs_versions()
+
+    if robot_version not in available_xargs_versions:
+        raise ValueError(
+            f"Version '{robot_version}' for the 'fs3sw' robot has no xargs configuration. "
+            f'Available xargs versions: {", ".join(available_xargs_versions)}'
+        )
+
+    return xargs.declare_launch_arguments(robot_version)
 
 
 def _include_rosgz_bridge(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
@@ -121,7 +131,10 @@ def _include_rosgz_bridge(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
                 'robot_version': LaunchConfiguration('robot_version'),
                 'robot_name': LaunchConfiguration('robot_name'),
                 'params_file': LaunchConfiguration('params_file'),
+                # Keys `sim_file` and `rosgz_bridge_file` are declared dynamically from xargs.
+                # Both belong to the shared core xargs catalog, so every robot version provides them.
                 'sim_file': LaunchConfiguration('sim_file'),
+                'rosgz_bridge_file': LaunchConfiguration('rosgz_bridge_file'),
                 'node_options': LaunchConfiguration('rosgz_bridge_node_options'),
                 'logging_options': LaunchConfiguration('rosgz_bridge_node_logging_options'),
             }.items(),
@@ -147,7 +160,7 @@ def _include_rsp(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
                 'topic_remappings': LaunchConfiguration('rsp_topic_remappings'),
                 'node_options': LaunchConfiguration('rsp_options'),
                 'logging_options': LaunchConfiguration('rsp_logging_options'),
-                **xargs_catalog_manager.get_launch_configurations_for_robot_version(robot_version),
+                **xargs.get_launch_configurations(robot_version),
             }.items(),
         )
     ]
@@ -158,12 +171,22 @@ def _include_three_swerve_kinematics(ctx: LaunchContext) -> List[LaunchDescripti
     robot_version = LaunchConfiguration('robot_version').perform(ctx).strip()
     input_params_file = LaunchConfiguration('params_file').perform(ctx).strip()
 
+    # If the user provided a params file via the 'params_file' launch argument, use it for the
+    # kinematics node. Otherwise, look for a default params file based on the robot version under
+    # the config directory. For example, if the robot version is "v1", look for
+    # "config/example_v1.yaml".
+
     if input_params_file:
-        params_file = input_params_file
+        params_file = Path(input_params_file)
     else:
         config_dir = Path(get_package_share_directory('robot_forklift_simple_3sw')).joinpath('config')
-        candidate = config_dir.joinpath(f'example_{robot_version}.yaml')
-        params_file = str(candidate if candidate.is_file() else config_dir.joinpath('example_core.yaml'))
+        params_file = config_dir.joinpath(f'example_{robot_version}.yaml')
+
+    if not params_file.is_file():
+        raise FileNotFoundError(
+            f"Params file '{params_file}' does not exist for robot version '{robot_version}'. "
+            f"Please provide a valid params file via the 'params_file' launch argument."
+        )
 
     return [
         IncludeLaunchDescription(
@@ -176,25 +199,10 @@ def _include_three_swerve_kinematics(ctx: LaunchContext) -> List[LaunchDescripti
                 'use_sim_time': LaunchConfiguration('use_sim_time'),
                 'namespace': LaunchConfiguration('namespace'),
                 'robot_name': LaunchConfiguration('robot_name'),
-                'params_file': params_file,
+                'params_file': str(params_file),
                 'topic_remappings': LaunchConfiguration('three_swerve_kinematics_node_topic_remappings'),
                 'node_options': LaunchConfiguration('three_swerve_kinematics_node_options'),
                 'logging_options': LaunchConfiguration('three_swerve_kinematics_node_logging_options'),
             }.items(),
         )
     ]
-
-
-def _validate_robot_version(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
-    """Fail if the selected robot version is not recognized."""
-
-    robot_version = LaunchConfiguration('robot_version').perform(ctx).strip()
-    available_robot_versions = xargs_catalog_manager.get_robot_versions()
-
-    if robot_version in available_robot_versions:
-        return []
-
-    raise ValueError(
-        f"Version '{robot_version}' for the 'fs3sw' robot is not available. "
-        f'Available versions: {", ".join(available_robot_versions)}'
-    )
