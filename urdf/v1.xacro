@@ -20,8 +20,9 @@ This xacro file defines the 'v1' version of the fs3sw robot, which is a combinat
   <xacro:include filename="${robot_forklift_simple_3sw_pkg_dir}/urdf/core.xacro"/>
   <!--
   Properties imported from core.xacro and used in this file:
-  - sim_cfg
   - use_sim_mode
+  - sim_cfg
+  - rosgz_bridge_cfg
   - robot_prefix
   - robot_namespace
   - base_name
@@ -165,6 +166,7 @@ This xacro file defines the 'v1' version of the fs3sw robot, which is a combinat
   <xacro:property name="joint_parent_fr_front_lidar_fr_x" value="${(0.5 * body_size_x) + front_lidar_radius - 0.028}"/>
   -->
   <xacro:property name="top_lidar_sim_cfg" value="${sim_cfg.get('top_lidar', dict())}"/>
+  <xacro:property name="bc_cfg_top_lidar" value="${rosgz_bridge_cfg.get('top_lidar', dict())}"/>
 
   <!--
   If use_sim_mode is True and the top_lidar_sim_cfg has the 'enabled' field set to True, then the top lidar
@@ -187,16 +189,7 @@ This xacro file defines the 'v1' version of the fs3sw robot, which is a combinat
   - ${prop_prefix}_sim_gaussian_noise
   -->
   <xacro:set_props_plugin_lidar_3d_ring prop_prefix="top_lidar"
-                                        lidar_3d_sim_cfg="${top_lidar_sim_cfg}"
-                                        default_sim_always_on="True"
-                                        default_sim_visualize="False"
-                                        default_sim_update_rate="10.0"
-                                        default_sim_hor_fov_deg="-180.0 180.0"
-                                        default_sim_hor_res_deg="0.2"
-                                        default_sim_ver_fov_deg="-15.0 15.0"
-                                        default_sim_ver_res_deg="2.0"
-                                        default_sim_dist_span="0.2 150.0"
-                                        default_sim_gaussian_noise="0.0 0.01"/>
+                                        lidar_3d_sim_cfg="${top_lidar_sim_cfg}"/>
 
   <!--
   parent_frame="${robot_prefix}${base_name}_link"
@@ -225,13 +218,15 @@ This xacro file defines the 'v1' version of the fs3sw robot, which is a combinat
                               sim_ver_fov_deg="${top_lidar_sim_ver_fov_deg}"
                               sim_ver_res_deg="${top_lidar_sim_ver_res_deg}"
                               sim_dist_span="${top_lidar_sim_dist_span}"
-                              sim_gaussian_noise="${top_lidar_sim_gaussian_noise}"/>
+                              sim_gaussian_noise="${top_lidar_sim_gaussian_noise}"
+                              sim_topic="${bc_cfg_top_lidar.get('gz_topic_name', '')}"/>
 
   <!-- ===================================================================== -->
   <!-- TOP IMU: UM7 -->
   <!-- ===================================================================== -->
 
   <xacro:property name="top_imu_sim_cfg" value="${sim_cfg.get('top_imu', dict())}"/>
+  <xacro:property name="bc_cfg_top_imu" value="${rosgz_bridge_cfg.get('top_imu', dict())}"/>
 
   <!--
   If use_sim_mode is True and the top_imu_sim_cfg has the 'enabled' field set to True, then the top imu simulation is
@@ -242,17 +237,7 @@ This xacro file defines the 'v1' version of the fs3sw robot, which is a combinat
   False, then the top imu simulation is disabled.
   -->
   <xacro:set_props_plugin_imu prop_prefix="top_imu"
-                              imu_sim_cfg="${top_imu_sim_cfg}"
-                              default_sim_use_gravity="True"
-                              default_sim_always_on="True"
-                              default_sim_update_rate="100"
-                              default_sim_ang_vel_gaussian_noise="0 0.0002 0 0.0002 0 0.0002"
-                              default_sim_ang_vel_gaussian_noise_bias="0.0000075 0.0000008 0.0000075 0.0000008 0.0000075 0.0000008"
-                              default_sim_ang_vel_gaussian_noise_dynamic_bias="0 0 0 0 0 0"
-                              default_sim_lin_acc_gaussian_noise="0 0.017 0 0.017 0 0.017"
-                              default_sim_lin_acc_gaussian_noise_bias="0.1 0.001 0.1 0.001 0.1 0.001"
-                              default_sim_lin_acc_gaussian_noise_dynamic_bias="0 0 0 0 0 0"
-                              default_sim_use_orientation="True"/>
+                              imu_sim_cfg="${top_imu_sim_cfg}"/>
 
   <xacro:um7 name="top_imu"
              prefix="${robot_prefix}"
@@ -275,138 +260,105 @@ This xacro file defines the 'v1' version of the fs3sw robot, which is a combinat
              sim_lin_acc_gaussian_noise="${top_imu_sim_lin_acc_gaussian_noise}"
              sim_lin_acc_gaussian_noise_bias="${top_imu_sim_lin_acc_gaussian_noise_bias}"
              sim_lin_acc_gaussian_noise_dynamic_bias="${top_imu_sim_lin_acc_gaussian_noise_dynamic_bias}"
-             sim_use_orientation="${top_imu_sim_use_orientation}"/>
+             sim_use_orientation="${top_imu_sim_use_orientation}"
+             sim_topic="${bc_cfg_top_imu.get('gz_topic_name', '')}"/>
 
   <!-- ===================================================================== -->
   <!-- REAR CAMERA: REALSENSE D435 -->
   <!-- ===================================================================== -->
 
-  <xacro:property name="rear_camera_sim_cfg" value="${sim_cfg.get('rear_camera', dict())}"/>
+  <xacro:if value="${False}">
+    <!-- The rear camera is temporarily disabled while we finish the bridge refactor. -->
+    <xacro:property name="rear_camera_sim_cfg" value="${sim_cfg.get('rear_camera', dict())}"/>
 
-  <xacro:set_props_plugin_camera_all prop_prefix="rear_cam_c"
-                                     camera_sim_cfg="${rear_camera_sim_cfg.get('color_camera', dict())}"
-                                     default_sim_camera_type="camera"
-                                     default_sim_use_gravity="True"
-                                     default_sim_always_on="True"
-                                     default_sim_visualize="False"
-                                     default_sim_enable_metrics="False"
-                                     default_sim_save="False /tmp/rear_cam_color"
-                                     default_sim_triggered="False"
-                                     default_sim_visible_mask="4294967295"
-                                     default_sim_clip="0.1 100.0"
-                                     default_sim_update_rate="30.0"
-                                     default_sim_image="1920 1080 R8G8B8 4"
-                                     default_sim_lens_single_elements="gnomonical True 69.0 256"
-                                     default_sim_lens_intrinsics="1396.8 1406.7 959.5 539.5"
-                                     default_sim_lens_xy_skew="0.0"
-                                     default_sim_distortion_k_p="0.0 0.0 0.0 0.0 0.0"
-                                     default_sim_distortion_center="0.5 0.5"
-                                     default_sim_gaussian_noise="0.0 0.0"/>
+    <xacro:property name="rear_cam_c_sim_cfg"
+                    value="${rear_camera_sim_cfg['color_camera'] if use_sim_mode else dict(enabled=False, type='camera')}"/>
 
-  <xacro:set_props_plugin_camera_all prop_prefix="rear_cam_ir"
-                                     camera_sim_cfg="${rear_camera_sim_cfg.get('infrared_camera', dict())}"
-                                     default_sim_camera_type="camera"
-                                     default_sim_use_gravity="True"
-                                     default_sim_always_on="True"
-                                     default_sim_visualize="False"
-                                     default_sim_enable_metrics="False"
-                                     default_sim_save="False /tmp/rear_cam_infrared"
-                                     default_sim_triggered="False"
-                                     default_sim_visible_mask="4294967295"
-                                     default_sim_clip="0.1 10.0"
-                                     default_sim_update_rate="30.0"
-                                     default_sim_image="1280 720 L8 4"
-                                     default_sim_lens_single_elements="gnomonical True 91.2 256"
-                                     default_sim_lens_intrinsics="626.7 559.7 639.5 359.5"
-                                     default_sim_lens_xy_skew="0.0"
-                                     default_sim_distortion_k_p="0.0 0.0 0.0 0.0 0.0"
-                                     default_sim_distortion_center="0.5 0.5"
-                                     default_sim_gaussian_noise="0.0 0.0"/>
+    <xacro:property name="rear_cam_ir_sim_cfg"
+                    value="${rear_camera_sim_cfg['infrared_camera'] if use_sim_mode else dict(enabled=False, type='camera')}"/>
 
-  <xacro:set_props_plugin_camera_all prop_prefix="rear_cam_d"
-                                     camera_sim_cfg="${rear_camera_sim_cfg.get('depth_camera', dict())}"
-                                     default_sim_camera_type="depth"
-                                     default_sim_use_gravity="True"
-                                     default_sim_always_on="True"
-                                     default_sim_visualize="False"
-                                     default_sim_enable_metrics="False"
-                                     default_sim_save="False /tmp/rear_cam_depth"
-                                     default_sim_triggered="False"
-                                     default_sim_visible_mask="4294967295"
-                                     default_sim_clip="0.1 100.0"
-                                     default_sim_depth_clip="0.1 10.0"
-                                     default_sim_update_rate="30.0"
-                                     default_sim_image="1280 720 L8 4"
-                                     default_sim_lens_single_elements="gnomonical True 90.0 256"
-                                     default_sim_lens_intrinsics="640.0 588.2 639.5 359.5"
-                                     default_sim_lens_xy_skew="0.0"
-                                     default_sim_distortion_k_p="0.0 0.0 0.0 0.0 0.0"
-                                     default_sim_distortion_center="0.5 0.5"
-                                     default_sim_gaussian_noise="0.0 0.0"/>
+    <xacro:property name="rear_cam_d_sim_cfg"
+                    value="${rear_camera_sim_cfg['depth_camera'] if use_sim_mode else dict(enabled=False, type='depth')}"/>
 
-  <xacro:realsense_d435 name="rear_camera"
-                        prefix="${robot_prefix}"
-                        namespace="${robot_namespace}"
-                        parent_frame="${robot_prefix}${fork_name}_root_link"
-                        use_visual="${rear_rgbd_use_visual}"
-                        use_collision="${rear_rgbd_use_collision}"
-                        use_inertial="${rear_rgbd_use_inertial}"
-                        use_v_mesh="${rear_rgbd_use_v_mesh}"
-                        color="${rear_rgbd_color}"
-                        use_c_mesh="${rear_rgbd_use_c_mesh}"
-                        joint_parent_fr_root_fr="0.010401 0.0 0.0 0.0 0.0 0.0"
-                        use_nominal_extrinsics="True"
-                        use_sim="${use_sim_mode}"
-                        color_cam_sim_enabled="${rear_cam_c_sim_enabled}"
-                        color_cam_sim_use_gravity="${rear_cam_c_sim_use_gravity}"
-                        color_cam_sim_always_on="${rear_cam_c_sim_always_on}"
-                        color_cam_sim_visualize="${rear_cam_c_sim_visualize}"
-                        color_cam_sim_enable_metrics="${rear_cam_c_sim_enable_metrics}"
-                        color_cam_sim_save="${rear_cam_c_sim_save}"
-                        color_cam_sim_triggered="${rear_cam_c_sim_triggered}"
-                        color_cam_sim_visible_mask="${rear_cam_c_sim_visible_mask}"
-                        color_cam_sim_clip="${rear_cam_c_sim_clip}"
-                        color_cam_sim_update_rate="${rear_cam_c_sim_update_rate}"
-                        color_cam_sim_image="${rear_cam_c_sim_image}"
-                        color_cam_sim_lens_single_elements="${rear_cam_c_sim_lens_single_elements}"
-                        color_cam_sim_lens_intrinsics="${rear_cam_c_sim_lens_intrinsics}"
-                        color_cam_sim_lens_xy_skew="${rear_cam_c_sim_lens_xy_skew}"
-                        color_cam_sim_distortion_k_p="${rear_cam_c_sim_distortion_k_p}"
-                        color_cam_sim_distortion_center="${rear_cam_c_sim_distortion_center}"
-                        color_cam_sim_gaussian_noise="${rear_cam_c_sim_gaussian_noise}"
-                        infrared_cam_sim_enabled="${rear_cam_ir_sim_enabled}"
-                        infrared_cam_sim_use_gravity="${rear_cam_ir_sim_use_gravity}"
-                        infrared_cam_sim_always_on="${rear_cam_ir_sim_always_on}"
-                        infrared_cam_sim_visualize="${rear_cam_ir_sim_visualize}"
-                        infrared_cam_sim_enable_metrics="${rear_cam_ir_sim_enable_metrics}"
-                        infrared_cam_sim_save="${rear_cam_ir_sim_save}"
-                        infrared_cam_sim_triggered="${rear_cam_ir_sim_triggered}"
-                        infrared_cam_sim_visible_mask="${rear_cam_ir_sim_visible_mask}"
-                        infrared_cam_sim_clip="${rear_cam_ir_sim_clip}"
-                        infrared_cam_sim_update_rate="${rear_cam_ir_sim_update_rate}"
-                        infrared_cam_sim_image="${rear_cam_ir_sim_image}"
-                        infrared_cam_sim_lens_single_elements="${rear_cam_ir_sim_lens_single_elements}"
-                        infrared_cam_sim_lens_intrinsics="${rear_cam_ir_sim_lens_intrinsics}"
-                        infrared_cam_sim_lens_xy_skew="${rear_cam_ir_sim_lens_xy_skew}"
-                        infrared_cam_sim_distortion_k_p="${rear_cam_ir_sim_distortion_k_p}"
-                        infrared_cam_sim_distortion_center="${rear_cam_ir_sim_distortion_center}"
-                        infrared_cam_sim_gaussian_noise="${rear_cam_ir_sim_gaussian_noise}"
-                        depth_cam_sim_enabled="${rear_cam_d_sim_enabled}"
-                        depth_cam_sim_use_gravity="${rear_cam_d_sim_use_gravity}"
-                        depth_cam_sim_always_on="${rear_cam_d_sim_always_on}"
-                        depth_cam_sim_visualize="${rear_cam_d_sim_visualize}"
-                        depth_cam_sim_enable_metrics="${rear_cam_d_sim_enable_metrics}"
-                        depth_cam_sim_save="${rear_cam_d_sim_save}"
-                        depth_cam_sim_triggered="${rear_cam_d_sim_triggered}"
-                        depth_cam_sim_visible_mask="${rear_cam_d_sim_visible_mask}"
-                        depth_cam_sim_clip="${rear_cam_d_sim_clip}"
-                        depth_cam_sim_depth_clip="${rear_cam_d_sim_depth_clip}"
-                        depth_cam_sim_update_rate="${rear_cam_d_sim_update_rate}"
-                        depth_cam_sim_image="${rear_cam_d_sim_image}"
-                        depth_cam_sim_lens_single_elements="${rear_cam_d_sim_lens_single_elements}"
-                        depth_cam_sim_lens_intrinsics="${rear_cam_d_sim_lens_intrinsics}"
-                        depth_cam_sim_lens_xy_skew="${rear_cam_d_sim_lens_xy_skew}"
-                        depth_cam_sim_distortion_k_p="${rear_cam_d_sim_distortion_k_p}"
-                        depth_cam_sim_distortion_center="${rear_cam_d_sim_distortion_center}"
-                        depth_cam_sim_gaussian_noise="${rear_cam_d_sim_gaussian_noise}"/>
+    <xacro:set_props_plugin_camera_all prop_prefix="rear_cam_c"
+                                       camera_sim_cfg="${rear_cam_c_sim_cfg}"/>
+
+    <xacro:set_props_plugin_camera_all prop_prefix="rear_cam_ir"
+                                       camera_sim_cfg="${rear_cam_ir_sim_cfg}"/>
+
+    <xacro:set_props_plugin_camera_all prop_prefix="rear_cam_d"
+                                       camera_sim_cfg="${rear_cam_d_sim_cfg}"/>
+
+    <xacro:realsense_d435 name="rear_camera"
+                          prefix="${robot_prefix}"
+                          namespace="${robot_namespace}"
+                          parent_frame="${robot_prefix}${fork_name}_root_link"
+                          use_visual="${rear_rgbd_use_visual}"
+                          use_collision="${rear_rgbd_use_collision}"
+                          use_inertial="${rear_rgbd_use_inertial}"
+                          use_v_mesh="${rear_rgbd_use_v_mesh}"
+                          color="${rear_rgbd_color}"
+                          use_c_mesh="${rear_rgbd_use_c_mesh}"
+                          joint_parent_fr_root_fr="0.010401 0.0 0.0 0.0 0.0 0.0"
+                          use_nominal_extrinsics="${use_sim_mode}"
+                          use_sim="${use_sim_mode}"
+                          color_cam_sim_enabled="${rear_cam_c_sim_enabled}"
+                          color_cam_sim_use_gravity="${rear_cam_c_sim_use_gravity}"
+                          color_cam_sim_always_on="${rear_cam_c_sim_always_on}"
+                          color_cam_sim_visualize="${rear_cam_c_sim_visualize}"
+                          color_cam_sim_enable_metrics="${rear_cam_c_sim_enable_metrics}"
+                          color_cam_sim_save="${rear_cam_c_sim_save}"
+                          color_cam_sim_triggered="${rear_cam_c_sim_triggered}"
+                          color_cam_sim_visible_mask="${rear_cam_c_sim_visible_mask}"
+                          color_cam_sim_clip="${rear_cam_c_sim_clip}"
+                          color_cam_sim_update_rate="${rear_cam_c_sim_update_rate}"
+                          color_cam_sim_image="${rear_cam_c_sim_image}"
+                          color_cam_sim_lens_single_elements="${rear_cam_c_sim_lens_single_elements}"
+                          color_cam_sim_lens_custom_function="${rear_cam_c_sim_lens_custom_function}"
+                          color_cam_sim_lens_intrinsics="${rear_cam_c_sim_lens_intrinsics}"
+                          color_cam_sim_lens_projection="${rear_cam_c_sim_lens_projection}"
+                          color_cam_sim_lens_xy_skew="${rear_cam_c_sim_lens_xy_skew}"
+                          color_cam_sim_distortion_k_p="${rear_cam_c_sim_distortion_k_p}"
+                          color_cam_sim_distortion_center="${rear_cam_c_sim_distortion_center}"
+                          color_cam_sim_gaussian_noise="${rear_cam_c_sim_gaussian_noise}"
+                          infrared_cam_sim_enabled="${rear_cam_ir_sim_enabled}"
+                          infrared_cam_sim_use_gravity="${rear_cam_ir_sim_use_gravity}"
+                          infrared_cam_sim_always_on="${rear_cam_ir_sim_always_on}"
+                          infrared_cam_sim_visualize="${rear_cam_ir_sim_visualize}"
+                          infrared_cam_sim_enable_metrics="${rear_cam_ir_sim_enable_metrics}"
+                          infrared_cam_sim_save="${rear_cam_ir_sim_save}"
+                          infrared_cam_sim_triggered="${rear_cam_ir_sim_triggered}"
+                          infrared_cam_sim_visible_mask="${rear_cam_ir_sim_visible_mask}"
+                          infrared_cam_sim_clip="${rear_cam_ir_sim_clip}"
+                          infrared_cam_sim_update_rate="${rear_cam_ir_sim_update_rate}"
+                          infrared_cam_sim_image="${rear_cam_ir_sim_image}"
+                          infrared_cam_sim_lens_single_elements="${rear_cam_ir_sim_lens_single_elements}"
+                          infrared_cam_sim_lens_custom_function="${rear_cam_ir_sim_lens_custom_function}"
+                          infrared_cam_sim_lens_intrinsics="${rear_cam_ir_sim_lens_intrinsics}"
+                          infrared_cam_sim_lens_projection="${rear_cam_ir_sim_lens_projection}"
+                          infrared_cam_sim_lens_xy_skew="${rear_cam_ir_sim_lens_xy_skew}"
+                          infrared_cam_sim_distortion_k_p="${rear_cam_ir_sim_distortion_k_p}"
+                          infrared_cam_sim_distortion_center="${rear_cam_ir_sim_distortion_center}"
+                          infrared_cam_sim_gaussian_noise="${rear_cam_ir_sim_gaussian_noise}"
+                          depth_cam_sim_enabled="${rear_cam_d_sim_enabled}"
+                          depth_cam_sim_use_gravity="${rear_cam_d_sim_use_gravity}"
+                          depth_cam_sim_always_on="${rear_cam_d_sim_always_on}"
+                          depth_cam_sim_visualize="${rear_cam_d_sim_visualize}"
+                          depth_cam_sim_enable_metrics="${rear_cam_d_sim_enable_metrics}"
+                          depth_cam_sim_save="${rear_cam_d_sim_save}"
+                          depth_cam_sim_triggered="${rear_cam_d_sim_triggered}"
+                          depth_cam_sim_visible_mask="${rear_cam_d_sim_visible_mask}"
+                          depth_cam_sim_clip="${rear_cam_d_sim_clip}"
+                          depth_cam_sim_depth_clip="${rear_cam_d_sim_depth_clip}"
+                          depth_cam_sim_update_rate="${rear_cam_d_sim_update_rate}"
+                          depth_cam_sim_image="${rear_cam_d_sim_image}"
+                          depth_cam_sim_lens_single_elements="${rear_cam_d_sim_lens_single_elements}"
+                          depth_cam_sim_lens_custom_function="${rear_cam_d_sim_lens_custom_function}"
+                          depth_cam_sim_lens_intrinsics="${rear_cam_d_sim_lens_intrinsics}"
+                          depth_cam_sim_lens_projection="${rear_cam_d_sim_lens_projection}"
+                          depth_cam_sim_lens_xy_skew="${rear_cam_d_sim_lens_xy_skew}"
+                          depth_cam_sim_distortion_k_p="${rear_cam_d_sim_distortion_k_p}"
+                          depth_cam_sim_distortion_center="${rear_cam_d_sim_distortion_center}"
+                          depth_cam_sim_gaussian_noise="${rear_cam_d_sim_gaussian_noise}"/>
+  </xacro:if>
 </robot>

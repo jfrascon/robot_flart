@@ -1,201 +1,203 @@
 # This file shows the simulation configuration for the version 'core' (basic version) of the 'fs3sw' robot.
+# Each top-level key configures one plugin of the core part of the robot.
 # If you need to customize the simulation configuration, create a new file and pass it as a value for the parameter
-# 'sim_file' in the launch file 'robot.launch.py'.
+# 'core_sim_file' in the launch file 'robot.launch.py'.
 
-base:
-  # Plugin to control the mobile base in velocity.
-  velocity_controller:
-    enabled: True
-    initial_linear: { "x": 0.0, "y": 0.0, "z": 0.0 }
-    initial_angular: { "x": 0.0, "y": 0.0, "z": 0.0 }
-  # Plugin to publish the pose of the robot w.r.t a fixed frame of your election.
-  # Notes to choose the values of 'fixed_frame' and 'tf_topic':
-  # Context:
-  # Strictly speaking, odometry is the pose (and some might consider velocities as well) of the robot w.r.t its
-  # starting pose. Global localization, on the other hand, is the pose (again, some might consider velocities as
-  # well) of the robot w.r.t a fixed global frame considered for the whole application.
-  # The global frame for applications is usually called 'map' or 'world', and the odometry frame is usually called
-  # 'odom'. Each robot has its own odometry frame in an application, i.e., this frame should be prefixed with the
-  # robot's name to avoid conflicts when multiple robots are present in the same application, while there is usually a
-  # single global frame for the entire application.
-  # Main point:
-  # This plugin publishes the pose (position and orientation) and velocities of the robot w.r.t to a FIXED FRAME
-  # OF YOUR ELECTION, 'fixed_frame' in this configuration.
-  # The odometry message published by this plugin is always providing the transformation:
-  # T:<fixed_frame> -> <robot_root_frame> by means of its fields:
-  # msg.header.frame_id = <fixed_frame>
-  # msg.child_frame_id = <robot_root_frame>, where <robot_root_frame> is present in the urdf/xacro file of the robot
-  # msg.pose.pose.position of the robot w.r.t <fixed_frame>
-  # msg.pose.pose.orientation of the robot w.r.t <fixed_frame>
+# Plugin to control the mobile base in velocity.
+base_velocity_controller:
+  enabled: True
+  initial_linear: { "x": 0.0, "y": 0.0, "z": 0.0 }
+  initial_angular: { "x": 0.0, "y": 0.0, "z": 0.0 }
 
-  # Clarification:
-  # Consider an example where you spawn the robot in a Gazebo world at:
-  # position (x=0, y=0, z=0) and orientation (R=0, P=0, Y=0) and
-  # you use as offset (x=0, y=0, z=0, R=0, P=0, Y=0).
+# Plugin to publish the pose of the robot w.r.t a fixed frame of your election.
+# Notes to choose the values of 'fixed_frame' and 'tf_topic':
+# Context:
+# Strictly speaking, odometry is the pose (and some might consider velocities as well) of the robot w.r.t its
+# starting pose. Global localization, on the other hand, is the pose (again, some might consider velocities as
+# well) of the robot w.r.t a fixed global frame considered for the whole application.
+# The global frame for applications is usually called 'map' or 'world', and the odometry frame is usually called
+# 'odom'. Each robot has its own odometry frame in an application, i.e., this frame should be prefixed with the
+# robot's name to avoid conflicts when multiple robots are present in the same application, while there is usually a
+# single global frame for the entire application.
+# Main point:
+# This plugin publishes the pose (position and orientation) and velocities of the robot w.r.t to a FIXED FRAME
+# OF YOUR ELECTION, 'fixed_frame' in this configuration.
+# The odometry message published by this plugin is always providing the transformation:
+# T:<fixed_frame> -> <robot_root_frame> by means of its fields:
+# msg.header.frame_id = <fixed_frame>
+# msg.child_frame_id = <robot_root_frame>, where <robot_root_frame> is present in the urdf/xacro file of the robot
+# msg.pose.pose.position of the robot w.r.t <fixed_frame>
+# msg.pose.pose.orientation of the robot w.r.t <fixed_frame>
 
-  # WHEN YOU USE AN OFFSET OF (0,0,0,0,0,0), YOU ARE SAYING THAT THE 'FIXED_FRAME', FROM WHICH THE POSE OF THE ROBOT
-  # IS COMPUTED, COINCIDES IN THE SPACE WITH GAZEBO'S GLOBAL FRAME (REFERRED TO AS 'sim_world' IN THIS FILE).
-  # IN THIS CASE YOU CAN USE THE VALUE 'sim_world' AS THE VALUE OF THE FIELD 'fixed_frame', BUT IT IS OK TO USE ALSO
-  # 'map' OR 'world' OR ANY OTHER NAME YOU WANT, SINCE THE IMPORTANT POINT IS THAT THE 'FIXED_FRAME' IS A GLOBAL FRAME
-  # IN THIS EXAMPLE.
+# Clarification:
+# Consider an example where you spawn the robot in a Gazebo world at:
+# position (x=0, y=0, z=0) and orientation (R=0, P=0, Y=0) and
+# you use as offset (x=0, y=0, z=0, R=0, P=0, Y=0).
 
-  # In this first example, at any time, the pose of the robot w.r.t 'fixed_frame', coincides with the pose of the robot
-  # w.r.t Gazebo's global frame ('sim_world'), because of the offset (0,0,0,0,0,0) used, as explained above.
+# WHEN YOU USE AN OFFSET OF (0,0,0,0,0,0), YOU ARE SAYING THAT THE 'FIXED_FRAME', FROM WHICH THE POSE OF THE ROBOT
+# IS COMPUTED, COINCIDES IN THE SPACE WITH GAZEBO'S GLOBAL FRAME (REFERRED TO AS 'sim_world' IN THIS FILE).
+# IN THIS CASE YOU CAN USE THE VALUE 'sim_world' AS THE VALUE OF THE FIELD 'fixed_frame', BUT IT IS OK TO USE ALSO
+# 'map' OR 'world' OR ANY OTHER NAME YOU WANT, SINCE THE IMPORTANT POINT IS THAT THE 'FIXED_FRAME' IS A GLOBAL FRAME
+# IN THIS EXAMPLE.
 
-  # Since the robot was spawned at (x=0, y=0, z=0) and (R=0, P=0, Y=0) the odometry frame also coincides with Gazebo's
-  # global frame and the 'fixed_frame', therefore the three frames are placed at the same position and orientation in
-  # space.
-  # Despite this coincidence of the three frames placed at the same position and orientation in space, it is important
-  # to understand that the pose of the robot is GLOBAL, although, as mentioned before, in this first example the
-  # pose of the robot w.r.t the 'fixed_frame' coincides with the pose of the robot w.r.t Gazebo's global frame and with
-  # the pose of the robot w.r.t its starting pose (odometry frame).
-  # In this first example, it is recommended setting the value of the field 'fixed_frame' to 'sim_world' or 'world' or 'map',
-  # etc., depending on the naming conventions you use in your application or what you want to express with that
-  # name.
+# In this first example, at any time, the pose of the robot w.r.t 'fixed_frame', coincides with the pose of the robot
+# w.r.t Gazebo's global frame ('sim_world'), because of the offset (0,0,0,0,0,0) used, as explained above.
 
-  # In every ROS application a healthy TF-tree needs <global_fr> -> <odometry_fr> -> <robot_root_fr>
-  # By the explanation given above, this plugin always provides the transformation:
-  # TF:<fixed_frame='sim_world' or 'world' or 'map'> -> <robot_root_frame>.
-  # It is always true that:
-  # T:<global_fr> -> <robot_root_fr> = T:<global_fr> -> <odometry_fr> * T:<odometry_fr> -> <robot_root_fr>
-  # Therefore:
-  # T:<global_fr> -> <odometry_fr> = T:<global_fr> -> <robot_root_fr> * inv(T:<odometry_fr> -> <robot_root_fr>)
-  # T:<global_fr> -> <robot_root_fr> is provided by this plugin (<fixed_fr> and <global_fr> are interchangeable terms
-  # here).
-  # T:<odometry_fr> -> <robot_root_fr> should be provided by an odometry computation node you use in your application.
-  # If you are working in simulation and want to use the 'fake_localization' node, it can compute the transformation
-  # T:<odometry_fr> -> <robot_root_fr> by using the transformation T:<global_fr> -> <robot_root_fr>, provided by this
-  # plugin, and the transformation T:<odometry_fr> -> <robot_root_fr> provided by your odometry computation node.
-  # Given all these details above, it is recommended to assign a value different from '/tf' to the field 'tf_topic', for example
-  # 'tf_<fixed_frame>_fr_robot_root_fr', since global transformations should not be directly inserted in the TF-tree.
+# Since the robot was spawned at (x=0, y=0, z=0) and (R=0, P=0, Y=0) the odometry frame also coincides with Gazebo's
+# global frame and the 'fixed_frame', therefore the three frames are placed at the same position and orientation in
+# space.
+# Despite this coincidence of the three frames placed at the same position and orientation in space, it is important
+# to understand that the pose of the robot is GLOBAL, although, as mentioned before, in this first example the
+# pose of the robot w.r.t the 'fixed_frame' coincides with the pose of the robot w.r.t Gazebo's global frame and with
+# the pose of the robot w.r.t its starting pose (odometry frame).
+# In this first example, it is recommended setting the value of the field 'fixed_frame' to 'sim_world' or 'world' or
+# 'map', etc., depending on the naming conventions you use in your application or what you want to express with that
+# name.
 
-  # Another example, even more clarifying is the following:
-  # Consider an example where you spawn the robot in a Gazebo world at:
-  # position (x=x0, y=y0, z=0) and orientation (R=0, P=0, Y=yaw0) and
-  # you use as offset (x=0, y=0, z=0, R=0, P=0, Y=0).
+# In every ROS application a healthy TF-tree needs <global_fr> -> <odometry_fr> -> <robot_root_fr>
+# By the explanation given above, this plugin always provides the transformation:
+# TF:<fixed_frame='sim_world' or 'world' or 'map'> -> <robot_root_frame>.
+# It is always true that:
+# T:<global_fr> -> <robot_root_fr> = T:<global_fr> -> <odometry_fr> * T:<odometry_fr> -> <robot_root_fr>
+# Therefore:
+# T:<global_fr> -> <odometry_fr> = T:<global_fr> -> <robot_root_fr> * inv(T:<odometry_fr> -> <robot_root_fr>)
+# T:<global_fr> -> <robot_root_fr> is provided by this plugin (<fixed_fr> and <global_fr> are interchangeable terms
+# here).
+# T:<odometry_fr> -> <robot_root_fr> should be provided by an odometry computation node you use in your application.
+# If you are working in simulation and want to use the 'fake_localization' node, it can compute the transformation
+# T:<global_fr> -> <odometry_fr> by using the transformation T:<global_fr> -> <robot_root_fr>, provided by this
+# plugin, and the transformation T:<odometry_fr> -> <robot_root_fr> provided by your odometry computation node.
+# Given all these details above, it is recommended to assign a value different from '/tf' to the field 'tf_topic', for
+# example 'tf_<fixed_frame>_fr_robot_root_fr', since global transformations should not be directly inserted in the
+# TF-tree.
 
-  # Again, by using an offset of (0,0,0,0,0,0), you are saying that the 'fixed_frame', from which the pose of the robot
-  # is computed, coincides in the space with Gazebo's global frame (referred to as 'sim_world' in this file).
-  # Also in this case, you can use the value 'sim_world' as the value of the field 'fixed_frame', and it is still ok to
-  # use 'map' or 'world' or any other name you want, since the important point is that the 'fixed_frame' is a global
-  # frame in this example.
+# Another example, even more clarifying is the following:
+# Consider an example where you spawn the robot in a Gazebo world at:
+# position (x=x0, y=y0, z=0) and orientation (R=0, P=0, Y=yaw0) and
+# you use as offset (x=0, y=0, z=0, R=0, P=0, Y=0).
 
-  # In this case, at the beginning of the simulation, the robot is placed at (x=x0, y=y0, z=0) and (R=0, P=0, Y=yaw0)
-  # w.r.t 'fixed_frame' (which coincides with Gazebo's global frame). In other words, the position and orientation of
-  # the odometry frame (starting pose of the robot) w.r.t 'fixed_frame' (which coincides with Gazebo's global frame) is
-  # (x=x0, y=y0, z=0) and (R=0, P=0, Y=yaw0). And of course, the pose of the robot w.r.t odometry frame (starting pose
-  # of the robot) at the moment of starting the simulation is (x=0, y=0, z=0) and (R=0, P=0, Y=0).
-  # In this example, it is very clear the relationship between the three frames.
-  # In this example It still holds what was said before about the TF-tree, the use of the 'fake_localization' node, the
-  # use of a node that computes odometry, and the value to assign to the field 'tf_topic'.
+# Again, by using an offset of (0,0,0,0,0,0), you are saying that the 'fixed_frame', from which the pose of the robot
+# is computed, coincides in the space with Gazebo's global frame (referred to as 'sim_world' in this file).
+# Also in this case, you can use the value 'sim_world' as the value of the field 'fixed_frame', and it is still ok to
+# use 'map' or 'world' or any other name you want, since the important point is that the 'fixed_frame' is a global
+# frame in this example.
 
-  # Another clarifying example is the following:
-  # Consider an example where you spawn the robot in a Gazebo world at:
-  # position (x=x0, y=y0, z=0) and orientation (R=0, P=0, Y=yaw0) and
-  # you use as offset (x=x_offset, y=y_offset, z=0, R=0, P=0, Y=yaw_offset).
-  # IN THIS EXAMPLE, THE GAZEBO'S GLOBAL FRAME ('sim_world') AND THE 'fixed_frame' ARE NOT COINCIDENT IN SPACE ANYMORE,
-  # IN FACT THE POSITION AND ORIENTATION OF THE GAZEBO'S GLOBAL FRAME ('sim_world') W.R.T THE 'fixed_frame' IS GIVEN BY
-  # THE OFFSET (x=x_offset, y=y_offset, z=0, R=0, P=0, Y=yaw_offset).
-  # In other words, with 'x_offset', 'y_offset' and 'yaw_offset' you are specifying the transformation:
-  # T: <fixed_frame> -> 'sim_world'.
-  # Gazebo first computes the pose of the robot w.r.t Gazebo's global frame ('sim_world'), and next compute the
-  # pose of the robot w.r.t 'fixed_frame' by applying the transformation:
-  # pose_wrt_<fixed_frame> = T:<fixed_frame> -> 'sim_world' * pose_wrt_'sim_world'
-  # The pose 'pose_wrt_<fixed_frame>' is the one published by this plugin in the odometry message.
+# In this case, at the beginning of the simulation, the robot is placed at (x=x0, y=y0, z=0) and (R=0, P=0, Y=yaw0)
+# w.r.t 'fixed_frame' (which coincides with Gazebo's global frame). In other words, the position and orientation of
+# the odometry frame (starting pose of the robot) w.r.t 'fixed_frame' (which coincides with Gazebo's global frame) is
+# (x=x0, y=y0, z=0) and (R=0, P=0, Y=yaw0). And of course, the pose of the robot w.r.t odometry frame (starting pose
+# of the robot) at the moment of starting the simulation is (x=0, y=0, z=0) and (R=0, P=0, Y=0).
+# In this example, it is very clear the relationship between the three frames.
+# In this example It still holds what was said before about the TF-tree, the use of the 'fake_localization' node, the
+# use of a node that computes odometry, and the value to assign to the field 'tf_topic'.
 
-  # In this case:
-  # The pose of the Gazebo's global frame ('sim_world') w.r.t 'fixed_frame' is ALWAYS given by the offset
-  # (x=x_offset, y=y_offset, z=0, R=0, P=0, Y=yaw_offset).
-  # The pose of the odometry frame (starting pose of the robot) w.r.t Gazebo's global frame ('sim_world') is ALWAYS
-  # (x=x0, y=y0, z=0) and (R=0, P=0, Y=yaw0), but w.r.t 'fixed_frame' it is:
-  # 'T:<fixed_frame> -> 'sim_world' * (x=x0, y=y0, z=0, R=0, P=0, Y=yaw0)'.
-  # At any time, the pose of the robot:
-  # w.r.t the odometry frame is pose_robot_wrt_odom (x=x_odom, y=y_odom, z=0) and (R=0, P=0, Y=yaw_odom),
-  # w.r.t Gazebo's global frame ('sim_world') is
-  # pose_robot_wrt_gz_global_frame = T:'sim_world' -> <odometry_fr> * (x=x_odom, y=y_odom, z=0, R=0, P=0, Y=yaw_odom),
-  # (However, this previous equation is provided here just for the sake of clarity, since there is no way to get this
-  # information directly from this plugin).
-  # w.r.t 'fixed_frame' is
-  # pose_robot_wrt_<fixed_frame> = T:<fixed_frame> -> 'sim_world' * pose_robot_wrt_gz_global_frame
-  # In this example, it is even more clear the relationship between the three frames.
-  # In this example It still holds what was said before about the TF-tree, the use of the 'fake_localization' node, the
-  # use of a node that computes odometry, and the value to assign to the field 'tf_topic'.
-  # BE CAREFUL IF YOU USE THE NODE 'fake_localization' IN THIS THIRD EXAMPLE.
-  # AS EXPLAINED BEFORE, OFFSETS PROVIDE THE POSITION AND ORIENTATION OF THE GAZEBO'S GLOBAL FRAME W.R.T THE
-  # 'fixed_frame' BUT THE NODE 'fake_localization' ALSO OFFERS OFFETS TO DO THE SAME THING (CALLED DELTAS IN THAT NODE).
-  # THE DELTAS (delta_x, delta_y, delta_yaw) IN THE NODE 'fake_localization' ARE USED TO LOCATE THE FRAME,
-  # IN WHICH THE POSE IT RECEIVES AS INPUT (WHICH IS THE POSE PUBLISHED BY THIS PLUGIN) IS DEFINED, W.R.T ANOTHER FRAME
-  # CONSIDERED THE REFERENCE FRAME FOR THE APPLICATION.
-  # THEREFORE, YOU HAVE THE FLEXIBILITY TO USE OFFSETS (THAT MEANS TRANSFORMATIONS) IN DIFFERENT PARTS OF YOUR
-  # APPLICATION (THIS PLUGIN, THE NODE 'fake_localization'), SO BE CAREFUL AND UNDERSTAND WELL WHAT YOU ARE DOING TO
-  # AVOID TRANSFORMING FRAMES INCORRECTLY.
-  # For example, one could use the workflow of:
-  # 1. Using the offsets in this plugin to define the transformation T:<fixed_frame> -> 'sim_world' and then
-  #    using zero deltas in the 'fake_localization' node to consider that the pose published by this plugin is already
-  #    defined w.r.t the global frame of the application. In this scenario, Gazebo knows the relation between
-  #    'sim_world' and <fixed_frame> because of the offsets.
-  # 2. Using zero offsets in this plugin (considering that the 'fixed_frame' coincides with Gazebo's global frame), i.e,
-  #    Gazebo is not aware that there exists a <fixed_frame> different from 'sim_world', and then using the deltas in
-  #    the 'fake_localization' node to define the transformation T:<global_fr> -> 'sim_world'.
+# Another clarifying example is the following:
+# Consider an example where you spawn the robot in a Gazebo world at:
+# position (x=x0, y=y0, z=0) and orientation (R=0, P=0, Y=yaw0) and
+# you use as offset (x=x_offset, y=y_offset, z=0, R=0, P=0, Y=yaw_offset).
+# IN THIS EXAMPLE, THE GAZEBO'S GLOBAL FRAME ('sim_world') AND THE 'fixed_frame' ARE NOT COINCIDENT IN SPACE ANYMORE,
+# IN FACT THE POSITION AND ORIENTATION OF THE GAZEBO'S GLOBAL FRAME ('sim_world') W.R.T THE 'fixed_frame' IS GIVEN BY
+# THE OFFSET (x=x_offset, y=y_offset, z=0, R=0, P=0, Y=yaw_offset).
+# In other words, with 'x_offset', 'y_offset' and 'yaw_offset' you are specifying the transformation:
+# T: <fixed_frame> -> 'sim_world'.
+# Gazebo first computes the pose of the robot w.r.t Gazebo's global frame ('sim_world'), and next compute the
+# pose of the robot w.r.t 'fixed_frame' by applying the transformation:
+# pose_wrt_<fixed_frame> = [[ T:<fixed_frame> -> 'sim_world' ]] * pose_wrt_'sim_world' (matrix times vector).
+# The pose 'pose_wrt_<fixed_frame>' is the one published by this plugin in the odometry message.
 
-  # FINALLY, THE ONLY CASE WHERE USING '/tf' AS THE VALUE OF THE FIELD 'tf_topic', TO INSERT
-  # THE TRANSFORMATION COMPUTED BY THIS PLUGIN DIRECTLY IN THE TF-TREE, IS WHEN THAT TRANSFORMATION (WHICH IS
-  # REPRESENTED ALSO BY THE VALUES OF THE FIELDS IN THE ODOMETRY MESSAGE) REFLECTS THE TRANSFORMATION
-  # T:<odometry_fr> -> <robot_root_fr>;
-  # AND THIS SITUATION ONLY HAPPENS WHEN THE THREE FRAMES 'sim_world', 'fixed_frame' AND the odometry_fr COINCIDE IN
-  # SPACE, WHICH HAPPENS WHEN THE ROBOT IS SPAWNED AT (x=0, y=0, z=0) AND (R=0, P=0, Y=0) AND ZERO OFFSETS ARE USED.
-  # IN THIS SCENARIO, YOU DO NOT NEED A NODE THAT COMPUTES ODOMETRY, BECAUSE THE POSE PUBLISHED BY THIS PLUGIN IS
-  # ALREADY THE ODOMETRY OF THE ROBOT, AND IN CASE OF USING THE NODE 'fake_localization', ZERO DELTAS SHOULD BE USED,
-  # AND THE 'fake_localization' NODE BY JUST SUBSCRIBING TO THE TOPIC PUBLISHED BY THIS PLUGIN WILL BE ABLE TO PROVIDE
-  # THE TRANSFORMATION T:<global_fr> -> <odometry_fr> (global_fr is a parameter passed to the 'fake_localization' node).
-  # For the sake of completeness, in this scenario:
-  # T:<global_fr> -> <robot_root_fr> = T:<global_fr> -> <odometry_fr> * T:<odometry_fr> -> <robot_root_fr>
-  # But in this case it is true that:
-  # T:<global_fr> -> <robot_root_fr> = T:<odometry_fr> -> <robot_root_fr>
-  # Therefore:
-  # T:<odometry_fr> -> <robot_root_fr> = T:<global_fr> -> <odometry_fr> * T:<odometry_fr> -> <robot_root_fr>
-  # T:<global_fr> -> <odometry_fr> = T:<odometry_fr> -> <robot_root_fr> * inv(T:<odometry_fr> -> <robot_root_fr>)
-  #                                = identity transformation (1's and 0's).
-  # Therefore, the transformation T:<global_fr> -> <odometry_fr> is an identity transformation (1's and 0's) is
-  # published by the 'fake_localization' node (inserting it into the topic '/tf').
-  # The transformation  T:<odometry_fr> -> <robot_root_fr> is published by this plugin (inserting it into the topic
-  # '/tf').
+# In this case:
+# The pose of the Gazebo's global frame ('sim_world') w.r.t 'fixed_frame' is ALWAYS given by the offset
+# (x=x_offset, y=y_offset, z=0, R=0, P=0, Y=yaw_offset).
+# The pose of the odometry frame (starting pose of the robot) w.r.t Gazebo's global frame ('sim_world') is ALWAYS
+# (x=x0, y=y0, z=0) and (R=0, P=0, Y=yaw0), but w.r.t 'fixed_frame' it is:
+# 'T:<fixed_frame> -> 'sim_world' * (x=x0, y=y0, z=0, R=0, P=0, Y=yaw0)'.
+# At any time, the pose of the robot:
+# w.r.t the odometry frame is pose_robot_wrt_odom (x=x_odom, y=y_odom, z=0) and (R=0, P=0, Y=yaw_odom),
+# w.r.t Gazebo's global frame ('sim_world') is
+# pose_robot_wrt_gz_global_frame = T:'sim_world' -> <odometry_fr> * (x=x_odom, y=y_odom, z=0, R=0, P=0, Y=yaw_odom),
+# (However, this previous equation is provided here just for the sake of clarity, since there is no way to get this
+# information directly from this plugin).
+# w.r.t 'fixed_frame' is
+# pose_robot_wrt_<fixed_frame> = T:<fixed_frame> -> 'sim_world' * pose_robot_wrt_gz_global_frame
+# In this example, it is even more clear the relationship between the three frames.
+# In this example It still holds what was said before about the TF-tree, the use of the 'fake_localization' node, the
+# use of a node that computes odometry, and the value to assign to the field 'tf_topic'.
+# BE CAREFUL IF YOU USE THE NODE 'fake_localization' IN THIS THIRD EXAMPLE.
+# AS EXPLAINED BEFORE, OFFSETS PROVIDE THE POSITION AND ORIENTATION OF THE GAZEBO'S GLOBAL FRAME W.R.T THE
+# 'fixed_frame' BUT THE NODE 'fake_localization' ALSO OFFERS OFFETS TO DO THE SAME THING (CALLED DELTAS IN THAT NODE).
+# THE DELTAS (delta_x, delta_y, delta_yaw) IN THE NODE 'fake_localization' ARE USED TO LOCATE THE FRAME,
+# IN WHICH THE POSE IT RECEIVES AS INPUT (WHICH IS THE POSE PUBLISHED BY THIS PLUGIN) IS DEFINED, W.R.T ANOTHER FRAME
+# CONSIDERED THE REFERENCE FRAME FOR THE APPLICATION.
+# THEREFORE, YOU HAVE THE FLEXIBILITY TO USE OFFSETS (THAT MEANS TRANSFORMATIONS) IN DIFFERENT PARTS OF YOUR
+# APPLICATION (THIS PLUGIN, THE NODE 'fake_localization'), SO BE CAREFUL AND UNDERSTAND WELL WHAT YOU ARE DOING TO
+# AVOID TRANSFORMING FRAMES INCORRECTLY.
+# For example, one could use the workflow of:
+# 1. Using the offsets in this plugin to define the transformation T:<fixed_frame> -> 'sim_world' and then
+#    using zero deltas in the 'fake_localization' node to consider that the pose published by this plugin is already
+#    defined w.r.t the global frame of the application. In this scenario, Gazebo knows the relation between
+#    'sim_world' and <fixed_frame> because of the offsets.
+# 2. Using zero offsets in this plugin (considering that the 'fixed_frame' coincides with Gazebo's global frame), i.e,
+#    Gazebo is not aware that there exists a <fixed_frame> different from 'sim_world', and then using the deltas in
+#    the 'fake_localization' node to define the transformation T:<global_fr> -> 'sim_world'.
 
-  # This explanation is intended to help configure this plugin properly for your
-  # application. :)
+# FINALLY, THE ONLY CASE WHERE USING '/tf' AS THE VALUE OF THE FIELD 'tf_topic', TO INSERT
+# THE TRANSFORMATION COMPUTED BY THIS PLUGIN DIRECTLY IN THE TF-TREE, IS WHEN THAT TRANSFORMATION (WHICH IS
+# REPRESENTED ALSO BY THE VALUES OF THE FIELDS IN THE ODOMETRY MESSAGE) REFLECTS THE TRANSFORMATION
+# T:<odometry_fr> -> <robot_root_fr>;
+# AND THIS SITUATION ONLY HAPPENS WHEN THE THREE FRAMES 'sim_world', 'fixed_frame' AND the odometry_fr COINCIDE IN
+# SPACE, WHICH HAPPENS WHEN THE ROBOT IS SPAWNED AT (x=0, y=0, z=0) AND (R=0, P=0, Y=0) AND ZERO OFFSETS ARE USED.
+# IN THIS SCENARIO, YOU DO NOT NEED A NODE THAT COMPUTES ODOMETRY, BECAUSE THE POSE PUBLISHED BY THIS PLUGIN IS
+# ALREADY THE ODOMETRY OF THE ROBOT, AND IN CASE OF USING THE NODE 'fake_localization', ZERO DELTAS SHOULD BE USED,
+# AND THE 'fake_localization' NODE BY JUST SUBSCRIBING TO THE TOPIC PUBLISHED BY THIS PLUGIN WILL BE ABLE TO PROVIDE
+# THE TRANSFORMATION T:<global_fr> -> <odometry_fr> (global_fr is a parameter passed to the 'fake_localization' node).
+# For the sake of completeness, in this scenario:
+# T:<global_fr> -> <robot_root_fr> = T:<global_fr> -> <odometry_fr> * T:<odometry_fr> -> <robot_root_fr>
+# But in this case it is true that:
+# T:<global_fr> -> <robot_root_fr> = T:<odometry_fr> -> <robot_root_fr>
+# Therefore:
+# T:<odometry_fr> -> <robot_root_fr> = T:<global_fr> -> <odometry_fr> * T:<odometry_fr> -> <robot_root_fr>
+# T:<global_fr> -> <odometry_fr> = T:<odometry_fr> -> <robot_root_fr> * inv(T:<odometry_fr> -> <robot_root_fr>)
+#                                = identity transformation (1's and 0's).
+# Therefore, the transformation T:<global_fr> -> <odometry_fr> is an identity transformation (1's and 0's) is
+# published by the 'fake_localization' node (inserting it into the topic '/tf').
+# The transformation  T:<odometry_fr> -> <robot_root_fr> is published by this plugin (inserting it into the topic
+# '/tf').
 
-  pose_ground_truth_publisher:
-    enabled: True
-    # By using zero offsets, this assumes that the 'fixed_frame' coincides with Gazebo's global frame ('sim_world').
-    # In this situation it is ok to use 'sim_world' or 'map' or 'world' or any other name you want as the value of the
-    # field 'fixed_frame', since the important point is that the 'fixed_frame' is a global frame in this example.
-    # Also, it is important not to use '/tf' as the value of the field 'tf_topic', to avoid inserting global
-    # transformations directly in the TF-tree.
-    offset: { "x": 0.0, "y": 0.0, "z": 0.0, "R": 0.0, "P": 0.0, "Y": 0.0 }
-    fixed_frame: map
-    tf_topic: tf_map_robot_root_fr
-    publication_frequency: 50.0
-    gaussian_noise: 0.0
-  # Plugin to control the steerable wheels.
-  # By enabling this
-  steerable_wheel_steerable_joint_controller:
-    enabled: True
-    # velocity controls how fast the orientation of the wheel changes.
-    # By setting a high value, the wheel will change its orientation almost instantaneously, so it will behave like an
-    # ideal steerable wheel.
-    velocity: 10000.0
-  # Plugin to control the rotation of the steerable wheels.
-  # It has visual purposes only, since the motion of the platform is controlled by the base_velocity_controller.
-  # If disabled, the wheels will not rotate visually, but the platform will still move correctly.
-  steerable_wheel_rotation_joint_controller:
-    enabled: True
+# This explanation is intended to help configure this plugin properly for your
+# application. :)
+
+base_pose_ground_truth_publisher:
+  enabled: True
+  # By using zero offsets, this assumes that the 'fixed_frame' coincides with Gazebo's global frame ('sim_world').
+  # In this situation it is ok to use 'sim_world' or 'map' or 'world' or any other name you want as the value of the
+  # field 'fixed_frame', since the important point is that the 'fixed_frame' is a global frame in this example.
+  # Also, it is important not to use '/tf' as the value of the field 'tf_topic', to avoid inserting global
+  # transformations directly in the TF-tree.
+  offset: { "x": 0.0, "y": 0.0, "z": 0.0, "R": 0.0, "P": 0.0, "Y": 0.0 }
+  fixed_frame: map
+  publication_frequency: 50.0
+  gaussian_noise: 0.0
+
+# Plugin to control the steerable wheels.
+# By enabling this
+base_steerable_wheel_steerable_joint_controller:
+  enabled: True
+  # velocity controls how fast the orientation of the wheel changes.
+  # By setting a high value, the wheel will change its orientation almost instantaneously, so it will behave like an
+  # ideal steerable wheel.
+  velocity: 10000.0
+
+# Plugin to control the rotation of the steerable wheels.
+# It has visual purposes only, since the motion of the platform is controlled by the base_velocity_controller.
+# If disabled, the wheels will not rotate visually, but the platform will still move correctly.
+base_steerable_wheel_rotation_joint_controller:
+  enabled: True
 
 # Plugin to control the fork in position.
-fork:
-  position_controller:
-    enabled: True
-    # Velocity at which the fork moves up and down (m/s).
-    velocity: 0.3
+fork_position_controller:
+  enabled: True
+  # Velocity at which the fork moves up and down (m/s).
+  velocity: 0.3
 
 # Plugin to publish the joint states of the robot.
 joint_state_publisher:
