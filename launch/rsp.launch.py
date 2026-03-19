@@ -123,12 +123,12 @@ def _build_xacro_command(ctx: LaunchContext) -> Tuple[List[Any], List[str]]:
                     'No simulation plugins will be loaded for that robot part'
                 )
                 value = ''
-        elif xarg_name == 'rosgz_bridge_file':
+        elif xarg_name == 'bridge_file':
             if not use_sim_time:
                 value = ''
             elif not value:
                 config_dir = Path(get_package_share_directory('robot_forklift_simple_3sw')).joinpath('config')
-                value = str(config_dir.joinpath(f'example_{robot_version}_rosgz_bridge.yaml'))
+                value = str(config_dir.joinpath(f'example_{robot_version}_bridge.yaml'))
             else:
                 value = rlh.resolve_file(value)
 

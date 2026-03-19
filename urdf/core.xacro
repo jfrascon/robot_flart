@@ -36,8 +36,8 @@ No sensors or extra elements are included.
   -->
   <xacro:arg name="sim_file"
              default="${robot_forklift_simple_3sw_pkg_dir}/config/example_core_simulation.yaml"/>
-  <xacro:arg name="rosgz_bridge_file"
-             default="${robot_forklift_simple_3sw_pkg_dir}/config/example_core_rosgz_bridge.yaml"/>
+  <xacro:arg name="bridge_file"
+             default="${robot_forklift_simple_3sw_pkg_dir}/config/example_core_bridge.yaml"/>
 
   <!--
   Args for body
@@ -125,14 +125,14 @@ No sensors or extra elements are included.
   configuration from the file. If no configuration file is provided, use an empty configuration, so no gz-plugins are
   loaded.
   -->
-  <xacro:property name="sim_file"          value="$(arg sim_file)"/>
-  <xacro:property name="rosgz_bridge_file" value="$(arg rosgz_bridge_file)"/>
+  <xacro:property name="sim_file"    value="$(arg sim_file)"/>
+  <xacro:property name="bridge_file" value="$(arg bridge_file)"/>
 
   <xacro:property name="sim_cfg"
                   value="${xacro.load_yaml(sim_file) if use_sim_mode and sim_file != '' else dict()}"/>
 
-  <xacro:property name="rosgz_bridge_cfg"
-                  value="${xacro.load_yaml(rosgz_bridge_file) if use_sim_mode and rosgz_bridge_file != '' else dict()}"/>
+  <xacro:property name="bridge_cfg"
+                  value="${xacro.load_yaml(bridge_file) if use_sim_mode and bridge_file != '' else dict()}"/>
 
   <xacro:property name="body_use_inertial"  value="$(arg body_use_inertial)"/>
 
@@ -558,25 +558,25 @@ No sensors or extra elements are included.
     <xacro:property name="joint_state_publisher_sim_cfg"
                     value="${sim_cfg.get('joint_state_publisher', dict())}"/>
 
-    <!-- 'bc_cfg' stands for (b)ridge (c)hannel (c)on(f)i(g)uration -->
+    <!-- Bridge channel configurations -->
 
-    <xacro:property name="bc_cfg_base_velocity_controller"
-                    value="${rosgz_bridge_cfg.get('base_velocity_controller', dict())}"/>
+    <xacro:property name="base_velocity_controller_bridge_channel_cfg"
+                    value="${bridge_cfg.get('base_velocity_controller', dict())}"/>
 
-    <xacro:property name="bc_cfg_base_pose_ground_truth_publisher"
-                    value="${rosgz_bridge_cfg.get('base_pose_ground_truth_publisher', dict())}"/>
+    <xacro:property name="base_pose_ground_truth_publisher_bridge_channel_cfg"
+                    value="${bridge_cfg.get('base_pose_ground_truth_publisher', dict())}"/>
 
-    <xacro:property name="bc_cfg_base_pose_ground_truth_publisher_tf"
-                    value="${rosgz_bridge_cfg.get('base_pose_ground_truth_publisher_tf', dict())}"/>
+    <xacro:property name="base_pose_ground_truth_publisher_tf_bridge_channel_cfg"
+                    value="${bridge_cfg.get('base_pose_ground_truth_publisher_tf', dict())}"/>
 
-    <xacro:property name="bc_cfg_base_steerable_wheel_command"
-                    value="${rosgz_bridge_cfg.get('base_steerable_wheel_command', dict())}"/>
+    <xacro:property name="base_steerable_wheel_command_bridge_channel_cfg"
+                    value="${bridge_cfg.get('base_steerable_wheel_command', dict())}"/>
 
-    <xacro:property name="bc_cfg_fork_position_controller"
-                    value="${rosgz_bridge_cfg.get('fork_position_controller', dict())}"/>
+    <xacro:property name="fork_position_controller_bridge_channel_cfg"
+                    value="${bridge_cfg.get('fork_position_controller', dict())}"/>
 
-    <xacro:property name="bc_cfg_joint_state_publisher"
-                    value="${rosgz_bridge_cfg.get('joint_state_publisher', dict())}"/>
+    <xacro:property name="joint_state_publisher_bridge_channel_cfg"
+                    value="${bridge_cfg.get('joint_state_publisher', dict())}"/>
 
     <!--
     # GZ topics for the plugins, with namespace handling.
@@ -584,32 +584,32 @@ No sensors or extra elements are included.
     Otherwise, the topic name is prefixed with the robot namespace.
     -->
     <xacro:property name="base_velocity_controller_gz_topic"
-                    value="${bc_cfg_base_velocity_controller.get('gz_topic_name', 'cmd_vel')}"/>
+                    value="${base_velocity_controller_bridge_channel_cfg.get('gz_topic_name', 'cmd_vel')}"/>
     <xacro:property name="base_velocity_controller_topic"
                     value="${base_velocity_controller_gz_topic if base_velocity_controller_gz_topic.startswith('/') else robot_namespace + '/' + base_velocity_controller_gz_topic}"/>
 
     <xacro:property name="base_pose_ground_truth_publisher_gz_topic"
-                    value="${bc_cfg_base_pose_ground_truth_publisher.get('gz_topic_name', 'base_pose_ground_truth')}"/>
+                    value="${base_pose_ground_truth_publisher_bridge_channel_cfg.get('gz_topic_name', 'base_pose_ground_truth')}"/>
     <xacro:property name="base_pose_ground_truth_publisher_topic"
                     value="${base_pose_ground_truth_publisher_gz_topic if base_pose_ground_truth_publisher_gz_topic.startswith('/') else robot_namespace + '/' + base_pose_ground_truth_publisher_gz_topic}"/>
 
     <xacro:property name="base_pose_ground_truth_publisher_tf_gz_topic"
-                    value="${bc_cfg_base_pose_ground_truth_publisher_tf.get('gz_topic_name', 'tf_sim_world_fr_robot_root_fr')}"/>
+                    value="${base_pose_ground_truth_publisher_tf_bridge_channel_cfg.get('gz_topic_name', 'tf_sim_world_fr_robot_root_fr')}"/>
     <xacro:property name="base_pose_ground_truth_publisher_tf_topic"
                     value="${base_pose_ground_truth_publisher_tf_gz_topic if base_pose_ground_truth_publisher_tf_gz_topic.startswith('/') else robot_namespace + '/' + base_pose_ground_truth_publisher_tf_gz_topic}"/>
 
     <xacro:property name="base_steerable_wheel_command_gz_topic"
-                    value="${bc_cfg_base_steerable_wheel_command.get('gz_topic_name', 'joint_commands/base')}"/>
+                    value="${base_steerable_wheel_command_bridge_channel_cfg.get('gz_topic_name', 'joint_commands/base')}"/>
     <xacro:property name="base_steerable_wheel_command_topic"
                     value="${base_steerable_wheel_command_gz_topic if base_steerable_wheel_command_gz_topic.startswith('/') else robot_namespace + '/' + base_steerable_wheel_command_gz_topic}"/>
 
     <xacro:property name="fork_position_controller_gz_topic"
-                    value="${bc_cfg_fork_position_controller.get('gz_topic_name', 'joint_commands/fork')}"/>
+                    value="${fork_position_controller_bridge_channel_cfg.get('gz_topic_name', 'joint_commands/fork')}"/>
     <xacro:property name="fork_position_controller_topic"
                     value="${fork_position_controller_gz_topic if fork_position_controller_gz_topic.startswith('/') else robot_namespace + '/' + fork_position_controller_gz_topic}"/>
 
     <xacro:property name="joint_state_publisher_gz_topic"
-                    value="${bc_cfg_joint_state_publisher.get('gz_topic_name', 'joint_states')}"/>
+                    value="${joint_state_publisher_bridge_channel_cfg.get('gz_topic_name', 'joint_states')}"/>
     <xacro:property name="joint_state_publisher_topic"
                     value="${joint_state_publisher_gz_topic if joint_state_publisher_gz_topic.startswith('/') else robot_namespace + '/' + joint_state_publisher_gz_topic}"/>
 
@@ -703,13 +703,13 @@ No sensors or extra elements are included.
           <odom_publish_frequency>${publication_frequency}</odom_publish_frequency>
           <!--
           Custom topic on which this system will publish odometry messages.
-          The rosgz_bridge for this robot is configured not to send this topic to ROS2, instead it
+          The bridge for this robot is configured not to send this topic to ROS2, instead it
           will send the topic with covariance.
           -->
           <odom_topic>${robot_namespace}/base_pose_ground_truth_wo_cov</odom_topic>
           <!--
           Custom topic on which this system will publish odometry with covariance messages.
-          The rosgz_bridge for this robot will send this topic to ROS2.
+          The bridge for this robot will send this topic to ROS2.
           - The covariance is set as a diagonal matrix with the variance values set to the value of
           <gaussian_noise> squared.
           0 means no noise, and therefore no covariance.

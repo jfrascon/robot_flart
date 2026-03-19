@@ -42,7 +42,7 @@
       # - steerable_wheel_2: right wheel.
 
       steerable_wheel_0:
-        radius: 0.10
+        radius: 0.127
         dist: 0.50
         alpha: 3.141592653589793 # rad = pi
         beta: -1.5707963267948966 # rad = pi/2 - alpha_0
@@ -57,7 +57,7 @@
           limits: { lower: -50.0, upper: 50.0 } # rad/s
 
       steerable_wheel_1:
-        radius: 0.10
+        radius: 0.127
         dist: 0.50
         alpha: 2.6878070480712677 # rad = 154 deg
         beta: -1.117010721276371 # rad = pi/2 - alpha_1
@@ -72,7 +72,7 @@
           limits: { lower: -50.0, upper: 50.0 } # rad/s
 
       steerable_wheel_2:
-        radius: 0.10
+        radius: 0.127
         dist: 0.50
         alpha: -2.6878070480712677 # rad = -154 deg
         beta: 4.258603374866164 # rad = pi/2 - alpha_2 = pi/2 - (-alpha_1) = pi/2 + alpha_1
@@ -86,8 +86,8 @@
           name: "$(var robot_prefix)steerable_wheel_2_rotation_joint"
           limits: { lower: -50.0, upper: 50.0 } # rad/s
 
-/**/rosgz_bridge:
+/**/bridge:
   ros__parameters:
     subscription_heartbeat: 1000
     # config_file, expand_gz_topic_names and override_timestamps_with_wall_time are forced in the launch file.
-    # See the launch file 'rosgz_bridge.launch.py' for details.
+    # See the launch file 'bridge.launch.py' for details.

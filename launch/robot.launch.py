@@ -40,7 +40,7 @@ def generate_launch_description() -> LaunchDescription:
     ldes.extend(
         [
             OpaqueFunction(function=_include_rsp),
-            OpaqueFunction(function=_include_rosgz_bridge),
+            OpaqueFunction(function=_include_bridge),
             OpaqueFunction(function=_include_three_swerve_kinematics),
         ]
     )
@@ -60,7 +60,7 @@ def _declare_logging_options() -> List[LaunchDescriptionEntity]:
             description=rlh.LOGGING_OPTIONS_DESC,
         ),
         DeclareLaunchArgument(
-            'rosgz_bridge_node_logging_options',
+            'bridge_logging_options',
             default_value=rlh.default_logging_options_str(),
             description=rlh.LOGGING_OPTIONS_DESC,
         ),
@@ -79,7 +79,7 @@ def _declare_node_options() -> List[LaunchDescriptionEntity]:
             description=rlh.NODE_OPTIONS_DESC,
         ),
         DeclareLaunchArgument(
-            'rosgz_bridge_node_options', default_value=rlh.default_node_options_str(), description=rlh.NODE_OPTIONS_DESC
+            'bridge_options', default_value=rlh.default_node_options_str(), description=rlh.NODE_OPTIONS_DESC
         ),
     ]
 
@@ -116,14 +116,12 @@ def _declare_xargs(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
     return xargs.declare_launch_arguments(robot_version)
 
 
-def _include_rosgz_bridge(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
-    """Include the shared ROS-GZ bridge launch for the selected version."""
+def _include_bridge(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
+    """Include the shared bridge launch for the selected version."""
     return [
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
-                PathJoinSubstitution(
-                    [FindPackageShare('robot_forklift_simple_3sw'), 'launch', 'rosgz_bridge.launch.py']
-                )
+                PathJoinSubstitution([FindPackageShare('robot_forklift_simple_3sw'), 'launch', 'bridge.launch.py'])
             ),
             launch_arguments={
                 'use_sim_time': LaunchConfiguration('use_sim_time'),
@@ -131,12 +129,12 @@ def _include_rosgz_bridge(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
                 'robot_version': LaunchConfiguration('robot_version'),
                 'robot_name': LaunchConfiguration('robot_name'),
                 'params_file': LaunchConfiguration('params_file'),
-                # Keys `sim_file` and `rosgz_bridge_file` are declared dynamically from xargs.
+                # Keys `sim_file` and `bridge_file` are declared dynamically from xargs.
                 # Both belong to the shared core xargs catalog, so every robot version provides them.
                 'sim_file': LaunchConfiguration('sim_file'),
-                'rosgz_bridge_file': LaunchConfiguration('rosgz_bridge_file'),
-                'node_options': LaunchConfiguration('rosgz_bridge_node_options'),
-                'logging_options': LaunchConfiguration('rosgz_bridge_node_logging_options'),
+                'bridge_file': LaunchConfiguration('bridge_file'),
+                'node_options': LaunchConfiguration('bridge_options'),
+                'logging_options': LaunchConfiguration('bridge_logging_options'),
             }.items(),
         )
     ]

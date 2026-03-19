@@ -3,9 +3,9 @@
 sim_file:
   default_value: ""
   description: "Path to simulation configuration. If empty, the default for the selected robot version is used."
-rosgz_bridge_file:
+bridge_file:
   default_value: ""
-  description: "Path to ROS-GZ bridge configuration. If empty, the default for the selected robot version is used."
+  description: "Path to bridge configuration. If empty, the default for the selected robot version is used."
 body_use_inertial:
   default_value: "True"
   description: "Use inertial element for the robot body. If False, a null inertia will be used"
