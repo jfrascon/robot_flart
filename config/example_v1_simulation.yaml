@@ -1,209 +1,76 @@
 # This file shows the full simulation configuration for the version 'v1' of the 'fs3sw' robot.
-# It contains both the plugins inherited from the base version 'core' and the extra plugins added by 'v1'.
-# If you need to customize the simulation configuration, create a new file and pass it as a value for the parameter
+# If you need to customize the simulation configuration, create a new file and
+# pass it as a value for the parameter
 # 'sim_file' in the launch file 'robot.launch.py'.
 
 # Plugin to control the mobile base in velocity.
 base_velocity_controller:
   enabled: True
-  initial_linear: { "x": 0.0, "y": 0.0, "z": 0.0 }
-  initial_angular: { "x": 0.0, "y": 0.0, "z": 0.0 }
-
-# Plugin to publish the pose of the robot w.r.t a fixed frame of your election.
-# Notes to choose the values of 'fixed_frame' and 'tf_topic':
-# Context:
-# Strictly speaking, odometry is the pose (and some might consider velocities as well) of the robot w.r.t its
-# starting pose. Global localization, on the other hand, is the pose (again, some might consider velocities as
-# well) of the robot w.r.t a fixed global frame considered for the whole application.
-# The global frame for applications is usually called 'map' or 'world', and the odometry frame is usually called
-# 'odom'. Each robot has its own odometry frame in an application, i.e., this frame should be prefixed with the
-# robot's name to avoid conflicts when multiple robots are present in the same application, while there is usually a
-# single global frame for the entire application.
-# Main point:
-# This plugin publishes the pose (position and orientation) and velocities of the robot w.r.t to a FIXED FRAME
-# OF YOUR ELECTION, 'fixed_frame' in this configuration.
-# The odometry message published by this plugin is always providing the transformation:
-# T:<fixed_frame> -> <robot_root_frame> by means of its fields:
-# msg.header.frame_id = <fixed_frame>
-# msg.child_frame_id = <robot_root_frame>, where <robot_root_frame> is present in the urdf/xacro file of the robot
-# msg.pose.pose.position of the robot w.r.t <fixed_frame>
-# msg.pose.pose.orientation of the robot w.r.t <fixed_frame>
-
-# Clarification:
-# Consider an example where you spawn the robot in a Gazebo world at:
-# position (x=0, y=0, z=0) and orientation (R=0, P=0, Y=0) and
-# you use as offset (x=0, y=0, z=0, R=0, P=0, Y=0).
-
-# WHEN YOU USE AN OFFSET OF (0,0,0,0,0,0), YOU ARE SAYING THAT THE 'FIXED_FRAME', FROM WHICH THE POSE OF THE ROBOT
-# IS COMPUTED, COINCIDES IN THE SPACE WITH GAZEBO'S GLOBAL FRAME (REFERRED TO AS 'sim_world' IN THIS FILE).
-# IN THIS CASE YOU CAN USE THE VALUE 'sim_world' AS THE VALUE OF THE FIELD 'fixed_frame', BUT IT IS OK TO USE ALSO
-# 'map' OR 'world' OR ANY OTHER NAME YOU WANT, SINCE THE IMPORTANT POINT IS THAT THE 'FIXED_FRAME' IS A GLOBAL FRAME
-# IN THIS EXAMPLE.
-
-# In this first example, at any time, the pose of the robot w.r.t 'fixed_frame', coincides with the pose of the robot
-# w.r.t Gazebo's global frame ('sim_world'), because of the offset (0,0,0,0,0,0) used, as explained above.
-
-# Since the robot was spawned at (x=0, y=0, z=0) and (R=0, P=0, Y=0) the odometry frame also coincides with Gazebo's
-# global frame and the 'fixed_frame', therefore the three frames are placed at the same position and orientation in
-# space.
-# Despite this coincidence of the three frames placed at the same position and orientation in space, it is important
-# to understand that the pose of the robot is GLOBAL, although, as mentioned before, in this first example the
-# pose of the robot w.r.t the 'fixed_frame' coincides with the pose of the robot w.r.t Gazebo's global frame and with
-# the pose of the robot w.r.t its starting pose (odometry frame).
-# In this first example, it is recommended setting the value of the field 'fixed_frame' to 'sim_world' or 'world' or
-# 'map', etc., depending on the naming conventions you use in your application or what you want to express with that
-# name.
-
-# In every ROS application a healthy TF-tree needs <global_fr> -> <odometry_fr> -> <robot_root_fr>
-# By the explanation given above, this plugin always provides the transformation:
-# TF:<fixed_frame='sim_world' or 'world' or 'map'> -> <robot_root_frame>.
-# It is always true that:
-# T:<global_fr> -> <robot_root_fr> = T:<global_fr> -> <odometry_fr> * T:<odometry_fr> -> <robot_root_fr>
-# Therefore:
-# T:<global_fr> -> <odometry_fr> = T:<global_fr> -> <robot_root_fr> * inv(T:<odometry_fr> -> <robot_root_fr>)
-# T:<global_fr> -> <robot_root_fr> is provided by this plugin (<fixed_fr> and <global_fr> are interchangeable terms
-# here).
-# T:<odometry_fr> -> <robot_root_fr> should be provided by an odometry computation node you use in your application.
-# If you are working in simulation and want to use the 'fake_localization' node, it can compute the transformation
-# T:<global_fr> -> <odometry_fr> by using the transformation T:<global_fr> -> <robot_root_fr>, provided by this
-# plugin, and the transformation T:<odometry_fr> -> <robot_root_fr> provided by your odometry computation node.
-# Given all these details above, it is recommended to assign a value different from '/tf' to the field 'tf_topic', for
-# example 'tf_<fixed_frame>_fr_robot_root_fr', since global transformations should not be directly inserted in the
-# TF-tree.
-
-# Another example, even more clarifying is the following:
-# Consider an example where you spawn the robot in a Gazebo world at:
-# position (x=x0, y=y0, z=0) and orientation (R=0, P=0, Y=yaw0) and
-# you use as offset (x=0, y=0, z=0, R=0, P=0, Y=0).
-
-# Again, by using an offset of (0,0,0,0,0,0), you are saying that the 'fixed_frame', from which the pose of the robot
-# is computed, coincides in the space with Gazebo's global frame (referred to as 'sim_world' in this file).
-# Also in this case, you can use the value 'sim_world' as the value of the field 'fixed_frame', and it is still ok to
-# use 'map' or 'world' or any other name you want, since the important point is that the 'fixed_frame' is a global
-# frame in this example.
-
-# In this case, at the beginning of the simulation, the robot is placed at (x=x0, y=y0, z=0) and (R=0, P=0, Y=yaw0)
-# w.r.t 'fixed_frame' (which coincides with Gazebo's global frame). In other words, the position and orientation of
-# the odometry frame (starting pose of the robot) w.r.t 'fixed_frame' (which coincides with Gazebo's global frame) is
-# (x=x0, y=y0, z=0) and (R=0, P=0, Y=yaw0). And of course, the pose of the robot w.r.t odometry frame (starting pose
-# of the robot) at the moment of starting the simulation is (x=0, y=0, z=0) and (R=0, P=0, Y=0).
-# In this example, it is very clear the relationship between the three frames.
-# In this example It still holds what was said before about the TF-tree, the use of the 'fake_localization' node, the
-# use of a node that computes odometry, and the value to assign to the field 'tf_topic'.
-
-# Another clarifying example is the following:
-# Consider an example where you spawn the robot in a Gazebo world at:
-# position (x=x0, y=y0, z=0) and orientation (R=0, P=0, Y=yaw0) and
-# you use as offset (x=x_offset, y=y_offset, z=0, R=0, P=0, Y=yaw_offset).
-# IN THIS EXAMPLE, THE GAZEBO'S GLOBAL FRAME ('sim_world') AND THE 'fixed_frame' ARE NOT COINCIDENT IN SPACE ANYMORE,
-# IN FACT THE POSITION AND ORIENTATION OF THE GAZEBO'S GLOBAL FRAME ('sim_world') W.R.T THE 'fixed_frame' IS GIVEN BY
-# THE OFFSET (x=x_offset, y=y_offset, z=0, R=0, P=0, Y=yaw_offset).
-# In other words, with 'x_offset', 'y_offset' and 'yaw_offset' you are specifying the transformation:
-# T: <fixed_frame> -> 'sim_world'.
-# Gazebo first computes the pose of the robot w.r.t Gazebo's global frame ('sim_world'), and next compute the
-# pose of the robot w.r.t 'fixed_frame' by applying the transformation:
-# pose_wrt_<fixed_frame> = [[ T:<fixed_frame> -> 'sim_world' ]] * pose_wrt_'sim_world' (matrix times vector).
-# The pose 'pose_wrt_<fixed_frame>' is the one published by this plugin in the odometry message.
-
-# In this case:
-# The pose of the Gazebo's global frame ('sim_world') w.r.t 'fixed_frame' is ALWAYS given by the offset
-# (x=x_offset, y=y_offset, z=0, R=0, P=0, Y=yaw_offset).
-# The pose of the odometry frame (starting pose of the robot) w.r.t Gazebo's global frame ('sim_world') is ALWAYS
-# (x=x0, y=y0, z=0) and (R=0, P=0, Y=yaw0), but w.r.t 'fixed_frame' it is:
-# 'T:<fixed_frame> -> 'sim_world' * (x=x0, y=y0, z=0, R=0, P=0, Y=yaw0)'.
-# At any time, the pose of the robot:
-# w.r.t the odometry frame is pose_robot_wrt_odom (x=x_odom, y=y_odom, z=0) and (R=0, P=0, Y=yaw_odom),
-# w.r.t Gazebo's global frame ('sim_world') is
-# pose_robot_wrt_gz_global_frame = T:'sim_world' -> <odometry_fr> * (x=x_odom, y=y_odom, z=0, R=0, P=0, Y=yaw_odom),
-# (However, this previous equation is provided here just for the sake of clarity, since there is no way to get this
-# information directly from this plugin).
-# w.r.t 'fixed_frame' is
-# pose_robot_wrt_<fixed_frame> = T:<fixed_frame> -> 'sim_world' * pose_robot_wrt_gz_global_frame
-# In this example, it is even more clear the relationship between the three frames.
-# In this example It still holds what was said before about the TF-tree, the use of the 'fake_localization' node, the
-# use of a node that computes odometry, and the value to assign to the field 'tf_topic'.
-# BE CAREFUL IF YOU USE THE NODE 'fake_localization' IN THIS THIRD EXAMPLE.
-# AS EXPLAINED BEFORE, OFFSETS PROVIDE THE POSITION AND ORIENTATION OF THE GAZEBO'S GLOBAL FRAME W.R.T THE
-# 'fixed_frame' BUT THE NODE 'fake_localization' ALSO OFFERS OFFETS TO DO THE SAME THING (CALLED DELTAS IN THAT NODE).
-# THE DELTAS (delta_x, delta_y, delta_yaw) IN THE NODE 'fake_localization' ARE USED TO LOCATE THE FRAME,
-# IN WHICH THE POSE IT RECEIVES AS INPUT (WHICH IS THE POSE PUBLISHED BY THIS PLUGIN) IS DEFINED, W.R.T ANOTHER FRAME
-# CONSIDERED THE REFERENCE FRAME FOR THE APPLICATION.
-# THEREFORE, YOU HAVE THE FLEXIBILITY TO USE OFFSETS (THAT MEANS TRANSFORMATIONS) IN DIFFERENT PARTS OF YOUR
-# APPLICATION (THIS PLUGIN, THE NODE 'fake_localization'), SO BE CAREFUL AND UNDERSTAND WELL WHAT YOU ARE DOING TO
-# AVOID TRANSFORMING FRAMES INCORRECTLY.
-# For example, one could use the workflow of:
-# 1. Using the offsets in this plugin to define the transformation T:<fixed_frame> -> 'sim_world' and then
-#    using zero deltas in the 'fake_localization' node to consider that the pose published by this plugin is already
-#    defined w.r.t the global frame of the application. In this scenario, Gazebo knows the relation between
-#    'sim_world' and <fixed_frame> because of the offsets.
-# 2. Using zero offsets in this plugin (considering that the 'fixed_frame' coincides with Gazebo's global frame), i.e,
-#    Gazebo is not aware that there exists a <fixed_frame> different from 'sim_world', and then using the deltas in
-#    the 'fake_localization' node to define the transformation T:<global_fr> -> 'sim_world'.
-
-# FINALLY, THE ONLY CASE WHERE USING '/tf' AS THE VALUE OF THE FIELD 'tf_topic', TO INSERT
-# THE TRANSFORMATION COMPUTED BY THIS PLUGIN DIRECTLY IN THE TF-TREE, IS WHEN THAT TRANSFORMATION (WHICH IS
-# REPRESENTED ALSO BY THE VALUES OF THE FIELDS IN THE ODOMETRY MESSAGE) REFLECTS THE TRANSFORMATION
-# T:<odometry_fr> -> <robot_root_fr>;
-# AND THIS SITUATION ONLY HAPPENS WHEN THE THREE FRAMES 'sim_world', 'fixed_frame' AND the odometry_fr COINCIDE IN
-# SPACE, WHICH HAPPENS WHEN THE ROBOT IS SPAWNED AT (x=0, y=0, z=0) AND (R=0, P=0, Y=0) AND ZERO OFFSETS ARE USED.
-# IN THIS SCENARIO, YOU DO NOT NEED A NODE THAT COMPUTES ODOMETRY, BECAUSE THE POSE PUBLISHED BY THIS PLUGIN IS
-# ALREADY THE ODOMETRY OF THE ROBOT, AND IN CASE OF USING THE NODE 'fake_localization', ZERO DELTAS SHOULD BE USED,
-# AND THE 'fake_localization' NODE BY JUST SUBSCRIBING TO THE TOPIC PUBLISHED BY THIS PLUGIN WILL BE ABLE TO PROVIDE
-# THE TRANSFORMATION T:<global_fr> -> <odometry_fr> (global_fr is a parameter passed to the 'fake_localization' node).
-# For the sake of completeness, in this scenario:
-# T:<global_fr> -> <robot_root_fr> = T:<global_fr> -> <odometry_fr> * T:<odometry_fr> -> <robot_root_fr>
-# But in this case it is true that:
-# T:<global_fr> -> <robot_root_fr> = T:<odometry_fr> -> <robot_root_fr>
-# Therefore:
-# T:<odometry_fr> -> <robot_root_fr> = T:<global_fr> -> <odometry_fr> * T:<odometry_fr> -> <robot_root_fr>
-# T:<global_fr> -> <odometry_fr> = T:<odometry_fr> -> <robot_root_fr> * inv(T:<odometry_fr> -> <robot_root_fr>)
-#                                = identity transformation (1's and 0's).
-# Therefore, the transformation T:<global_fr> -> <odometry_fr> is an identity transformation (1's and 0's) is
-# published by the 'fake_localization' node (inserting it into the topic '/tf').
-# The transformation  T:<odometry_fr> -> <robot_root_fr> is published by this plugin (inserting it into the topic
-# '/tf').
-
-# This explanation is intended to help configure this plugin properly for your
-# application. :)
+  topic: cmd_vel
+  initial_linear_vel: { "x": 0.0, "y": 0.0, "z": 0.0 }
+  initial_angular_vel: { "x": 0.0, "y": 0.0, "z": 0.0 }
 
 base_pose_ground_truth_publisher:
   enabled: True
-  # By using zero offsets, this assumes that the 'fixed_frame' coincides with Gazebo's global frame ('sim_world').
-  # In this situation it is ok to use 'sim_world' or 'map' or 'world' or any other name you want as the value of the
-  # field 'fixed_frame', since the important point is that the 'fixed_frame' is a global frame in this example.
-  # Also, it is important not to use '/tf' as the value of the field 'tf_topic', to avoid inserting global
-  # transformations directly in the TF-tree.
-  offset: { "x": 0.0, "y": 0.0, "z": 0.0, "R": 0.0, "P": 0.0, "Y": 0.0 }
   fixed_frame: map
-  publication_frequency: 50.0
+  offset: { "x": 0.0, "y": 0.0, "z": 0.0, "R": 0.0, "P": 0.0, "Y": 0.0 }
+  global_offset: { "x": 0.0, "y": 0.0, "z": 0.0, "R": 0.0, "P": 0.0, "Y": 0.0 }
   gaussian_noise: 0.0
+  publication_frequency: 50.0
+  nav_topic_no_cov: base_pose_ground_truth_no_cov # published
+  nav_topic_cov: base_pose_ground_truth           # published
+  tf_topic: tf_sim_world_fr_robot_root_fr         # published
 
-# Plugin to control the steerable wheels.
-# By enabling this
-base_steerable_wheel_steerable_joint_controller:
+# Plugin to control the steering joint of the steerable wheel 0
+base_steerable_wheel_0_steering_joint_controller:
   enabled: True
-  # velocity controls how fast the orientation of the wheel changes.
-  # By setting a high value, the wheel will change its orientation almost instantaneously, so it will behave like an
-  # ideal steerable wheel.
-  velocity: 10000.0
+  initial_angle: 0.0
+  topic: joint_commands/base # received
+
+# Plugin to control the steering joint of the steerable wheel 1
+base_steerable_wheel_1_steering_joint_controller:
+  enabled: True
+  initial_angle: 0.0
+  topic: joint_commands/base # received
+
+# Plugin to control the steering joint of the steerable wheel 2
+base_steerable_wheel_2_steering_joint_controller:
+  enabled: True
+  initial_angle: 0.0
+  topic: joint_commands/base # received
 
 # Plugin to control the rotation of the steerable wheels.
-# It has visual purposes only, since the motion of the platform is controlled by the base_velocity_controller.
-# If disabled, the wheels will not rotate visually, but the platform will still move correctly.
-base_steerable_wheel_rotation_joint_controller:
+# It has visual purposes only, since the motion of the platform is controlled by
+# the base_velocity_controller.
+# If disabled, the wheels will not rotate visually, but the platform will still
+# move correctly.
+base_steerable_wheel_0_rotation_joint_controller:
   enabled: True
+  topic: joint_commands/base # received
+
+base_steerable_wheel_1_rotation_joint_controller:
+  enabled: True
+  topic: joint_commands/base # received
+
+base_steerable_wheel_2_rotation_joint_controller:
+  enabled: True
+  topic: joint_commands/base # received
 
 # Plugin to control the fork in position.
-fork_position_controller:
+fork_controller:
   enabled: True
-  # Velocity at which the fork moves up and down (m/s).
-  velocity: 0.3
+  initial_position: 0.0
+  topic: joint_commands/fork # received
 
 # Plugin to publish the joint states of the robot.
 joint_state_publisher:
   enabled: True
+  topic: joint_states # published
 
-# Top lidar plugin. Sensor model: RoboSense Helios 16P.
+################################################################################
+# Top LiDAR is a Robosense Helios 16.
+################################################################################
+# Configuration for a `gpu_lidar` Gazebo plugin.
 top_lidar:
   enabled: True
   use_gravity: True
@@ -216,8 +83,15 @@ top_lidar:
   ver_res_deg: 2
   dist_span: { "min_dist": 0.2, "max_dist": 50 } # m
   gaussian_noise: { "mean": 0, "stddev": 0.01 }
+  # The Gazebo plugin will publish two topics:
+  # Topic <base_topic> with messages of type gz.msgs.LaserScan
+  # Topic <base_topic>/points with messages of type gz.msgs.PointCloudPacked
+  base_topic: top_lidar/scan
 
-# Top IMU plugin. Sensor model: UM7.
+################################################################################
+# Top IMU is a UM7.
+################################################################################
+# Configuration for an 'imu' Gazebo plugin.
 top_imu:
   enabled: True
   use_gravity: True
@@ -266,134 +140,226 @@ top_imu:
     stddev_z: 0.0
     corr_time_z: 0.0
   use_orientation: True
+  topic: top_imu/data # published
 
-# Rear camera plugin. Sensor model: RealSense D435.
-rear_camera:
-  # Remember that many of the values you find here can be obtained by running the binay:
-  # > rs-enumerate-devices <options>
-  # Find more information about the command and its options at
-  # https://github.com/realsenseai/librealsense/blob/master/tools/enumerate-devices/readme.md
-  #
-  # This flag applies to all simulated sensors in the RGBD rear camera model.
+################################################################################
+# Rear camera is a RealSense D435
+################################################################################
+# In a physical RealSense D435, depth is estimated from the stereo pair captured by the two
+# infrared cameras.
+# In this simulation model, the color and depth streams are generated by a single 'rgbd_camera'
+# Gazebo plugin, while the two infrared streams are generated by two separate 'camera' Gazebo
+# plugins.
+
+# Many of the values you find here can be obtained by running the binay:
+# > rs-enumerate-devices <options>
+# Find more information about the command and its options at
+# https://github.com/realsenseai/librealsense/blob/master/tools/enumerate-devices/readme.md
+
+# Configuration for a 'rgbd_camera' Gazebo plugin.
+rear_camera_rgbd:
+  enabled: True
   use_gravity: True
+  always_on: True
+  visualize: False
+  enable_metrics: False
+  save:
+    enabled: False
+    path: /tmp/rear_camera_rgbd
+  triggered: False
+  visible_mask: 4294967295
+  clip:
+    near: 0.1
+    far: 10.0
+  depth_clip:
+    near: 0.1
+    far: 10.0
+  # These values follow the depth stream geometry used in the split D435 example.
+  # The RGB image published by the RGBD sensor will still use image.format below.
+  update_rate: 30.0
+  image:
+    width: 1280
+    height: 720
+    format: R8G8B8
+    anti_aliasing: 4
+  lens_single_elements:
+    type: gnomonical # DO NOT CHANGE
+    scale_to_hfov: True # DO NOT CHANGE
+    cutoff_angle_deg: 90.0
+    env_texture_size: 256
+  # 'lens_custom_function' is not used, since it must be '' (empty string)
+  lens_custom_function: ''
+  # fx = (image_width_px/2) / tan(horizontal_fov/2) = (1280/2) / tan(90/2) = 640 / tan(45) = 640
+  # fy = (image_height_px/2) / tan(vertical_fov/2)  = (720/2) / tan(63/2) = 360 / tan(31.5) = 588.2
+  # cx = (image_width_px − 1) / 2 = (1280 − 1) / 2  = 639.5
+  # cy = (image_height_px − 1) / 2 = (720 − 1) / 2  = 359.5
+  lens_intrinsics:
+    fx: 640.0
+    fy: 588.2
+    cx: 639.5
+    cy: 359.5
+  lens_xy_skew: 0.0
+  # 'lens_projection' is not used, since it must be '' (empty string)
+  lens_projection: ''
+  distortion_k_p:
+    k1: 0.0
+    k2: 0.0
+    k3: 0.0
+    p1: 0.0
+    p2: 0.0
+  # center_x_norm = lens_intrinsics.cx + 0.5 / image.width = (639.5 + 0.5) / 1280 = 0.5
+  # center_y_norm = lens_intrinsics.cy + 0.5 / image.height = (359.5 + 0.5) / 720 = 0.5
+  # Use +0.5 to convert from pixel index to pixel center.
+  distortion_center:
+    center_x_norm: 0.5
+    center_y_norm: 0.5
+  gaussian_noise:
+    mean: 0.0
+    stddev: 0.0
+  # The Gazebo plugin will publish the following topics:
+  # Topic <base_topic>/image with messages of type gz.msgs.Image
+  # Topic <base_topic>/depth_image with messages of type gz.msgs.Image
+  # Topic <base_topic>/points with messages of type gz.msgs.PointCloudPacked
+  # Topic <base_topic>/camera_info with messages of type gz.msgs.CameraInfo
+  base_topic: rear_camera/rgbd
+  # Use this topic if triggered is True. The Gazebo plugin will subscribe to this topic and capture
+  # an image each time a message is published in it.
+  # The message type should be gz.msgs.Empty, since the content of the message is not used.
+  trigger_topic: rear_camera/rgbd/trigger
 
-  # In this RGBD model the main Gazebo sensor combines color and depth. For that reason, this example keeps the
-  # optical and depth-related parameters close to the split model's depth camera, which is usually the more
-  # representative starting point when tuning perception around the depth stream. The image.format field is still
-  # exposed here because an RGBD camera also publishes a regular color image stream.
-  rgbd_camera:
-    enabled: True
-    always_on: True
-    visualize: False
-    enable_metrics: False
-    save:
-      enabled: False
-      path: /tmp/rear_cam_rgbd
-    triggered: False
-    visible_mask: 4294967295
-    clip:
-      near: 0.1
-      far: 10.0
-    depth_clip:
-      near: 0.1
-      far: 10.0
-    # These values follow the depth stream geometry used in the split D435 example.
-    # The RGB image published by the RGBD sensor will still use image.format below.
-    update_rate: 30.0
-    image:
-      width: 1280
-      height: 720
-      format: R8G8B8
-      anti_aliasing: 4
-    lens_single_elements:
-      type: gnomonical # DO NOT CHANGE
-      scale_to_hfov: True # DO NOT CHANGE
-      cutoff_angle_deg: 90.0
-      env_texture_size: 256
-    # 'lens_custom_function' is not used, since it must be '' (empty string)
-    lens_custom_function: ''
-    # fx = (image_width_px/2) / tan(horizontal_fov/2) = (1280/2) / tan(90/2) = 640 / tan(45) = 640
-    # fy = (image_height_px/2) / tan(vertical_fov/2)  = (720/2) / tan(63/2) = 360 / tan(31.5) = 588.2
-    # cx = (image_width_px − 1) / 2 = (1280 − 1) / 2  = 639.5
-    # cy = (image_height_px − 1) / 2 = (720 − 1) / 2  = 359.5
-    lens_intrinsics:
-      fx: 640.0
-      fy: 588.2
-      cx: 639.5
-      cy: 359.5
-    lens_xy_skew: 0.0
-    # 'lens_projection' is not used, since it must be '' (empty string)
-    lens_projection: ''
-    distortion_k_p:
-      k1: 0.0
-      k2: 0.0
-      k3: 0.0
-      p1: 0.0
-      p2: 0.0
-    # center_x_norm = lens_intrinsics.cx + 0.5 / image.width = (639.5 + 0.5) / 1280 = 0.5
-    # center_y_norm = lens_intrinsics.cy + 0.5 / image.height = (359.5 + 0.5) / 720 = 0.5
-    # Use +0.5 to convert from pixel index to pixel center.
-    distortion_center:
-      center_x_norm: 0.5
-      center_y_norm: 0.5
-    gaussian_noise:
-      mean: 0.0
-      stddev: 0.0
+# The configuration for both infrared cameras should be the same.
 
-  infrared_camera:
-    enabled: True
-    always_on: True
-    visualize: False
-    enable_metrics: False
-    save:
-      enabled: False
-      path: /tmp/rear_cam_infra
-    triggered: False
-    visible_mask: 4294967295
-    clip:
-      near: 0.1
-      far: 10.0
-    # For a list of official supported modes for the infrared camera, see the comments in
-    # robotics_description/config/sensors/cameras/example_realsense_d435_simulation.yaml
-    update_rate: 30.0
-    image:
-      width: 1280
-      height: 720
-      format: L8
-      anti_aliasing: 4
-    lens_single_elements:
-      type: gnomonical # DO NOT CHANGE: The infrared camera uses a gnomonical (aka pinhole) lens.
-      scale_to_hfov: True # DO NOT CHANGE
-      cutoff_angle_deg: 91.2
-      # Resolution of the environment cube map used to draw the world. The higher it is, the sharper the image.
-      # Integer value.
-      env_texture_size: 256
-    # 'lens_custom_function' is not used, since it must be '' (empty string)
-    lens_custom_function: ''
-    # fx = (image_width_px/2) / tan(horizontal_fov/2) = (1280/2) / tan(91.2/2) = 640/tan(45.6) = 626.7
-    # fy = (image_height_px/2) / tan(vertical_fov/2) = (720/2) / tan(65.5/2) = 360/tan(32.75) = 559.7
-    # cx = (image_width_px − 1) / 2 = (1280 − 1) / 2 = 639.5
-    # cy = (image_height_px − 1) / 2 = (720 − 1) / 2 = 359.5
-    lens_intrinsics:
-      fx: 626.7
-      fy: 559.7
-      cx: 639.5
-      cy: 359.5
-    lens_xy_skew: 0.0
-    # 'lens_projection' is not used, since it must be '' (empty string)
-    lens_projection: ''
-    distortion_k_p:
-      k1: 0.0
-      k2: 0.0
-      k3: 0.0
-      p1: 0.0
-      p2: 0.0
-    # center_x_norm = lens_intrinsics.cx + 0.5 / image.width = (639.5 + 0.5) / 1280 = 0.5
-    # center_y_norm = lens_intrinsics.cy + 0.5 / image.height = (359.5 + 0.5) / 720 = 0.5
-    # Use +0.5 to convert from pixel index to pixel center.
-    distortion_center:
-      center_x_norm: 0.5
-      center_y_norm: 0.5
-    gaussian_noise:
-      mean: 0.0
-      stddev: 0.0
+# Configuration for a 'camera' Gazebo plugin.
+rear_camera_infra1:
+  enabled: True
+  use_gravity: True
+  always_on: True
+  visualize: False
+  enable_metrics: False
+  save:
+    enabled: False
+    path: /tmp/rear_camera_infra1
+  triggered: False
+  visible_mask: 4294967295
+  clip:
+    near: 0.1
+    far: 10.0
+  # For a list of official supported modes for the infrared camera, see the comments in
+  # robotics_description/config/sensors/cameras/example_realsense_d435_simulation.yaml
+  update_rate: 30.0
+  image:
+    width: 1280
+    height: 720
+    format: L8
+    anti_aliasing: 4
+  lens_single_elements:
+    type: gnomonical # DO NOT CHANGE: The infrared camera uses a gnomonical (aka pinhole) lens.
+    scale_to_hfov: True # DO NOT CHANGE
+    cutoff_angle_deg: 91.2
+    # Resolution of the environment cube map used to draw the world.
+    # The higher it is, the sharper the image.
+    # Integer value.
+    env_texture_size: 256
+  # 'lens_custom_function' is not used, since it must be '' (empty string)
+  lens_custom_function: ''
+  # fx = (image_width_px/2) / tan(horizontal_fov/2) = (1280/2) / tan(91.2/2) = 640/tan(45.6) = 626.7
+  # fy = (image_height_px/2) / tan(vertical_fov/2) = (720/2) / tan(65.5/2) = 360/tan(32.75) = 559.7
+  # cx = (image_width_px − 1) / 2 = (1280 − 1) / 2 = 639.5
+  # cy = (image_height_px − 1) / 2 = (720 − 1) / 2 = 359.5
+  lens_intrinsics:
+    fx: 626.7
+    fy: 559.7
+    cx: 639.5
+    cy: 359.5
+  lens_xy_skew: 0.0
+  # 'lens_projection' is not used, since it must be '' (empty string)
+  lens_projection: ''
+  distortion_k_p:
+    k1: 0.0
+    k2: 0.0
+    k3: 0.0
+    p1: 0.0
+    p2: 0.0
+  # center_x_norm = lens_intrinsics.cx + 0.5 / image.width = (639.5 + 0.5) / 1280 = 0.5
+  # center_y_norm = lens_intrinsics.cy + 0.5 / image.height = (359.5 + 0.5) / 720 = 0.5
+  # Use +0.5 to convert from pixel index to pixel center.
+  distortion_center:
+    center_x_norm: 0.5
+    center_y_norm: 0.5
+  gaussian_noise:
+    mean: 0.0
+    stddev: 0.0
+  image_topic: rear_camera/infra1/image # published
+  camera_info_topic: rear_camera/infra1/camera_info # published
+  # Use this topic if triggered is True. The Gazebo plugin will subscribe to this topic and capture
+  # an image each time a message is published in it.
+  # The message type should be gz.msgs.Empty, since the content of the message is not used.
+  trigger_topic: rear_camera/infra1/trigger
+
+
+# Configuration for a 'camera' Gazebo plugin.
+rear_camera_infra2:
+  enabled: True
+  use_gravity: True
+  always_on: True
+  visualize: False
+  enable_metrics: False
+  save:
+    enabled: False
+    path: /tmp/rear_camera_infra2
+  triggered: False
+  visible_mask: 4294967295
+  clip:
+    near: 0.1
+    far: 10.0
+  # For a list of official supported modes for the infrared camera, see the comments in
+  # robotics_description/config/sensors/cameras/example_realsense_d435_simulation.yaml
+  update_rate: 30.0
+  image:
+    width: 1280
+    height: 720
+    format: L8
+    anti_aliasing: 4
+  lens_single_elements:
+    type: gnomonical # DO NOT CHANGE: The infrared camera uses a gnomonical (aka pinhole) lens.
+    scale_to_hfov: True # DO NOT CHANGE
+    cutoff_angle_deg: 91.2
+    # Resolution of the environment cube map used to draw the world.
+    # The higher it is, the sharper the image.
+    # Integer value.
+    env_texture_size: 256
+  # 'lens_custom_function' is not used, since it must be '' (empty string)
+  lens_custom_function: ''
+  # fx = (image_width_px/2) / tan(horizontal_fov/2) = (1280/2) / tan(91.2/2) = 640/tan(45.6) = 626.7
+  # fy = (image_height_px/2) / tan(vertical_fov/2) = (720/2) / tan(65.5/2) = 360/tan(32.75) = 559.7
+  # cx = (image_width_px − 1) / 2 = (1280 − 1) / 2 = 639.5
+  # cy = (image_height_px − 1) / 2 = (720 − 1) / 2 = 359.5
+  lens_intrinsics:
+    fx: 626.7
+    fy: 559.7
+    cx: 639.5
+    cy: 359.5
+  lens_xy_skew: 0.0
+  # 'lens_projection' is not used, since it must be '' (empty string)
+  lens_projection: ''
+  distortion_k_p:
+    k1: 0.0
+    k2: 0.0
+    k3: 0.0
+    p1: 0.0
+    p2: 0.0
+  # center_x_norm = lens_intrinsics.cx + 0.5 / image.width = (639.5 + 0.5) / 1280 = 0.5
+  # center_y_norm = lens_intrinsics.cy + 0.5 / image.height = (359.5 + 0.5) / 720 = 0.5
+  # Use +0.5 to convert from pixel index to pixel center.
+  distortion_center:
+    center_x_norm: 0.5
+    center_y_norm: 0.5
+  gaussian_noise:
+    mean: 0.0
+    stddev: 0.0
+  image_topic: rear_camera/infra2/image # published
+  camera_info_topic: rear_camera/infra2/camera_info # published
+  # Use this topic if triggered is True. The Gazebo plugin will subscribe to this topic and capture
+  # an image each time a message is published in it.
+  # The message type should be gz.msgs.Empty, since the content of the message is not used.
+  trigger_topic: rear_camera/infra2/trigger

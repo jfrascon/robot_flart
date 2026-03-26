@@ -1,187 +1,134 @@
-# Each entry in this file represents a rosgz bridge channel, i.e.; a topic that is transfered by the
-# rosgz bridge between ROS and Gazebo, with the specified direction and QoS profile.
+# Each item in this file is one ROS <-> Gazebo bridge channel.
+# The topics listed here should match the topics configured in the simulation
+# plugins, or the topics derived from those plugin settings.
 
-# The rosgz bridge channel's name is related to the gz plugin that pusblishes or subscribes to the topic.
-# If you go to the file example_v1_simulation.yaml you can see similar names for the plugins.
-# The association between a gz plugin and a rosgz bridge channel is 1:N, meaning that a gz plugin can be associated to
-# multiple rosgz bridge channels.
-# For example, the gz plugin 'base_pose_ground_truth_publisher' is associated to two channels:
-# 'base_pose_ground_truth_publisher' and 'base_pose_ground_truth_publisher_tf'.
-# This is because the plugin publishes two topics, one with the odometry message and another with the tf message, and
-# we want to transfer both topics to ROS.
-
-base_velocity_controller:
-  ros_topic_name: cmd_vel
-  gz_topic_name: cmd_vel
+- topic_name: cmd_vel
   ros_type_name: geometry_msgs/msg/Twist
   gz_type_name: gz.msgs.Twist
   direction: ROS_TO_GZ
   qos_profile: SENSOR_DATA
   lazy: True
 
-base_pose_ground_truth_publisher:
-  ros_topic_name: base_pose_ground_truth
-  gz_topic_name: base_pose_ground_truth
+- topic_name: base_pose_ground_truth
   ros_type_name: nav_msgs/msg/Odometry
   gz_type_name: gz.msgs.OdometryWithCovariance
   direction: GZ_TO_ROS
   qos_profile: SENSOR_DATA
   lazy: True
 
-base_pose_ground_truth_publisher_tf:
-  ros_topic_name: tf_sim_world_fr_robot_root_fr
-  gz_topic_name: tf_sim_world_fr_robot_root_fr
+- topic_name: tf_sim_world_fr_robot_root_fr
   ros_type_name: tf2_msgs/msg/TFMessage
   gz_type_name: gz.msgs.Pose_V
   direction: GZ_TO_ROS
   qos_profile: SENSOR_DATA
   lazy: False
 
-base_steerable_wheel_command:
-  ros_topic_name: joint_commands/base
-  gz_topic_name: joint_commands/base
+- topic_name: joint_commands/base
   ros_type_name: actuator_msgs/msg/Actuators
   gz_type_name: gz.msgs.Actuators
   direction: ROS_TO_GZ
   qos_profile: SENSOR_DATA
   lazy: True
 
-fork_position_controller:
-  ros_topic_name: joint_commands/fork
-  gz_topic_name: joint_commands/fork
+- topic_name: joint_commands/fork
   ros_type_name: std_msgs/msg/Float64
   gz_type_name: gz.msgs.Double
   direction: ROS_TO_GZ
   qos_profile: SENSOR_DATA
   lazy: True
 
-joint_state_publisher:
-  ros_topic_name: joint_states
-  gz_topic_name: joint_states
+- topic_name: joint_states
   ros_type_name: sensor_msgs/msg/JointState
   gz_type_name: gz.msgs.Model
   direction: GZ_TO_ROS
   qos_profile: SENSOR_DATA
   lazy: True
 
-top_lidar:
-  ros_topic_name: top_lidar/scan/points
-  gz_topic_name: top_lidar/scan/points
+- topic_name: top_lidar/scan/points
   ros_type_name: sensor_msgs/msg/PointCloud2
   gz_type_name: gz.msgs.PointCloudPacked
   direction: GZ_TO_ROS
   qos_profile: SENSOR_DATA
   lazy: True
 
-top_imu:
-  ros_topic_name: top_imu/data
-  gz_topic_name: top_imu/data
+- topic_name: top_imu/data
   ros_type_name: sensor_msgs/msg/Imu
   gz_type_name: gz.msgs.IMU
   direction: GZ_TO_ROS
   qos_profile: SENSOR_DATA
   lazy: True
 
-# Rear camera channels for the RGBD variant of the D435.
-# The RGBD image, depth_image, and points channels must share a common base topic. For that reason, their final
-# Gazebo topics must end with '/image', '/depth_image', and '/points', respectively.
-# Trigger channels remain in the public bridge catalog even when the corresponding plugin is not
-# triggered. bridge.launch.py removes them from the runtime bridge config whenever the simulation
-# file sets `triggered: false`.
-
-rear_camera_rgbd_image:
-  ros_topic_name: rear_camera/rgbd/image
-  gz_topic_name: rear_camera/rgbd/image
+- topic_name: rear_camera/rgbd/image
   ros_type_name: sensor_msgs/msg/Image
   gz_type_name: gz.msgs.Image
   direction: GZ_TO_ROS
   qos_profile: SENSOR_DATA
   lazy: True
 
-rear_camera_rgbd_camera_info:
-  ros_topic_name: rear_camera/rgbd/camera_info
-  gz_topic_name: rear_camera/rgbd/camera_info
-  ros_type_name: sensor_msgs/msg/CameraInfo
-  gz_type_name: gz.msgs.CameraInfo
-  direction: GZ_TO_ROS
-  qos_profile: SENSOR_DATA
-  lazy: True
-
-rear_camera_rgbd_depth_image:
-  ros_topic_name: rear_camera/rgbd/depth_image
-  gz_topic_name: rear_camera/rgbd/depth_image
+- topic_name: rear_camera/rgbd/depth_image
   ros_type_name: sensor_msgs/msg/Image
   gz_type_name: gz.msgs.Image
   direction: GZ_TO_ROS
   qos_profile: SENSOR_DATA
   lazy: True
 
-rear_camera_rgbd_points:
-  ros_topic_name: rear_camera/rgbd/points
-  gz_topic_name: rear_camera/rgbd/points
+- topic_name: rear_camera/rgbd/points
   ros_type_name: sensor_msgs/msg/PointCloud2
   gz_type_name: gz.msgs.PointCloudPacked
   direction: GZ_TO_ROS
   qos_profile: SENSOR_DATA
   lazy: True
 
-rear_camera_rgbd_trigger:
-  ros_topic_name: rear_camera/rgbd/trigger
-  gz_topic_name: rear_camera/rgbd/trigger
-  ros_type_name: std_msgs/msg/Empty
-  gz_type_name: gz.msgs.Empty
-  direction: ROS_TO_GZ
-  qos_profile: DEFAULT
-  lazy: True
-
-rear_camera_infra1_image:
-  ros_topic_name: rear_camera/infra1/image_raw
-  gz_topic_name: rear_camera/infra1/image_raw
-  ros_type_name: sensor_msgs/msg/Image
-  gz_type_name: gz.msgs.Image
-  direction: GZ_TO_ROS
-  qos_profile: SENSOR_DATA
-  lazy: True
-
-rear_camera_infra1_camera_info:
-  ros_topic_name: rear_camera/infra1/camera_info
-  gz_topic_name: rear_camera/infra1/camera_info
+- topic_name: rear_camera/rgbd/camera_info
   ros_type_name: sensor_msgs/msg/CameraInfo
   gz_type_name: gz.msgs.CameraInfo
   direction: GZ_TO_ROS
   qos_profile: SENSOR_DATA
   lazy: True
 
-rear_camera_infra1_trigger:
-  ros_topic_name: rear_camera/infra1/trigger
-  gz_topic_name: rear_camera/infra1/trigger
+- topic_name: rear_camera/rgbd/trigger
   ros_type_name: std_msgs/msg/Empty
   gz_type_name: gz.msgs.Empty
   direction: ROS_TO_GZ
   qos_profile: DEFAULT
   lazy: True
 
-rear_camera_infra2_image:
-  ros_topic_name: rear_camera/infra2/image_raw
-  gz_topic_name: rear_camera/infra2/image_raw
+- topic_name: rear_camera/infra1/image
   ros_type_name: sensor_msgs/msg/Image
   gz_type_name: gz.msgs.Image
   direction: GZ_TO_ROS
   qos_profile: SENSOR_DATA
   lazy: True
 
-rear_camera_infra2_camera_info:
-  ros_topic_name: rear_camera/infra2/camera_info
-  gz_topic_name: rear_camera/infra2/camera_info
+- topic_name: rear_camera/infra1/camera_info
   ros_type_name: sensor_msgs/msg/CameraInfo
   gz_type_name: gz.msgs.CameraInfo
   direction: GZ_TO_ROS
   qos_profile: SENSOR_DATA
   lazy: True
 
-rear_camera_infra2_trigger:
-  ros_topic_name: rear_camera/infra2/trigger
-  gz_topic_name: rear_camera/infra2/trigger
+- topic_name: rear_camera/infra1/trigger
+  ros_type_name: std_msgs/msg/Empty
+  gz_type_name: gz.msgs.Empty
+  direction: ROS_TO_GZ
+  qos_profile: DEFAULT
+  lazy: True
+
+- topic_name: rear_camera/infra2/image
+  ros_type_name: sensor_msgs/msg/Image
+  gz_type_name: gz.msgs.Image
+  direction: GZ_TO_ROS
+  qos_profile: SENSOR_DATA
+  lazy: True
+
+- topic_name: rear_camera/infra2/camera_info
+  ros_type_name: sensor_msgs/msg/CameraInfo
+  gz_type_name: gz.msgs.CameraInfo
+  direction: GZ_TO_ROS
+  qos_profile: SENSOR_DATA
+  lazy: True
+
+- topic_name: rear_camera/infra2/trigger
   ros_type_name: std_msgs/msg/Empty
   gz_type_name: gz.msgs.Empty
   direction: ROS_TO_GZ

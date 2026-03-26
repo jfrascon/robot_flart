@@ -47,8 +47,8 @@
         alpha: 3.141592653589793 # rad = pi
         beta: -1.5707963267948966 # rad = pi/2 - alpha_0
         name: "$(var robot_prefix)steerable_wheel_0"
-        steerable_joint:
-          name: "$(var robot_prefix)steerable_wheel_0_steerable_joint"
+        steering_joint:
+          name: "$(var robot_prefix)steerable_wheel_0_steering_joint"
           # Note: If you want the wheel to be able to reach +-pi rad angle (+-180 degress), set limits to +-3.1416.
           # pi = 3.141592654.... < 3.1416
           limits: { lower: -3.1416, upper: 3.1416 } # rad
@@ -62,8 +62,8 @@
         alpha: 2.6878070480712677 # rad = 154 deg
         beta: -1.117010721276371 # rad = pi/2 - alpha_1
         name: "$(var robot_prefix)steerable_wheel_1"
-        steerable_joint:
-          name: "$(var robot_prefix)steerable_wheel_1_steerable_joint"
+        steering_joint:
+          name: "$(var robot_prefix)steerable_wheel_1_steering_joint"
           # Note: If you want the wheel to be able to reach +-pi rad angle (+-180 degress), set limits to +-3.1416.
           # pi = 3.141592654.... < 3.1416
           limits: { lower: -3.1416, upper: 3.1416 } # rad
@@ -77,8 +77,8 @@
         alpha: -2.6878070480712677 # rad = -154 deg
         beta: 4.258603374866164 # rad = pi/2 - alpha_2 = pi/2 - (-alpha_1) = pi/2 + alpha_1
         name: "$(var robot_prefix)steerable_wheel_2"
-        steerable_joint:
-          name: "$(var robot_prefix)steerable_wheel_2_steerable_joint"
+        steering_joint:
+          name: "$(var robot_prefix)steerable_wheel_2_steering_joint"
           # Note: If you want the wheel to be able to reach +-pi rad angle (+-180 degress), set limits to +-3.1416.
           # pi = 3.141592654.... < 3.1416
           limits: { lower: -3.1416, upper: 3.1416 } # rad
@@ -89,5 +89,5 @@
 /**/bridge:
   ros__parameters:
     subscription_heartbeat: 1000
-    # config_file, expand_gz_topic_names and override_timestamps_with_wall_time are forced in the launch file.
-    # See the launch file 'bridge.launch.py' for details.
+    # config_file, expand_gz_topic_names and override_timestamps_with_wall_time
+    # are forced in the launch file. See 'robot.launch.py' for details.
