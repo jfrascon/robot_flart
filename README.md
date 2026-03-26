@@ -1,6 +1,13 @@
 # robot_forklift_simple_3sw
 
-`robot_forklift_simple_3sw` provides the robot description and launch files for the `fs3sw` forklift robot.
+`robot_forklift_simple_3sw` is a package that models a family of forklifts with three steerable wheels.
+
+The description above uses the term `family` because the package is designed to support multiple robot variants, providing a base robot version to which extra capalities can be added to constitute new versions. The `core` version is the base robot with a fork and motion capabilities, and the `v1` version extends the `core` robot with a specific sensor set. In the future, more robot versions can be added, `v2`, `v3`, etc., each with their own set of capabilities and sensors, but all sharing the same base robot description and kinematics.
+
+The term `simple` refers to the fact that the fork used in this family of robots is a basic fork; simple enough to model a fork, with two tines and a core body that links the tines together, but without the extra details of a real fork, such as the hydraulic system, the lifting mechanism, or the tilting mechanism. The `simple` fork is sufficient for simulation and testing purposes, but it is not intended to be a detailed model of a real forklift fork.
+The fork model used in this packages is imported from the `robotics_description` package, which provides simple fork models. Specifically, the `simple` fork model used in this package is the `fork_simple` model, which is derived from a reference fork mesh and can be geometrically scaled.
+
+Thefore, the `robotics_description` package is a dependency of this package, and it is provided in the file [./deps.repos](./deps.repos)
 
 For a user of the package, the important pieces are:
 - the robot launch file
@@ -40,14 +47,27 @@ Useful launch arguments:
 - `robot_name`: robot instance name
 - `namespace`: namespace prefix for the robot resources
 - `params_file`: kinematics / node parameters file
-- `sim_file`: simulation plugin configuration file
-- `bridge_file`: Gazebo bridge channel configuration file
+- `sim_file`: simulation plugin configuration file for the selected robot version
+- `bridge_file`: Gazebo bridge channel configuration file used by `robot.launch.py`
 
 To inspect all launch arguments:
 
 ```bash
 ros2 launch robot_forklift_simple_3sw robot.launch.py --show-args
 ```
+
+`robot.launch.py --show-args` shows the launch arguments that are declared statically in
+`launch/robot.launch.py`.
+
+This output does not include the xargs that are declared dynamically after `robot_version`
+is read. Those xargs are created from the YAML file that corresponds to the selected robot
+version. For example:
+- `core` uses `robot_forklift_simple_3sw/xargs/core.yaml`
+- `v1` uses `robot_forklift_simple_3sw/xargs/core.yaml` plus
+  `robot_forklift_simple_3sw/xargs/v1.yaml`
+
+This means that `--show-args` is useful to inspect the static launch arguments, but it is
+not a complete listing of the xargs that the selected robot version accepts.
 
 ## Configuration Files
 
@@ -64,7 +84,14 @@ Typical use:
 - use `example_*_simulation.yaml` for Gazebo plugin configuration
 - use `example_*_bridge.yaml` for ROS <-> Gazebo channel configuration
 
-If `params_file`, `sim_file`, or `bridge_file` are not provided, the package picks the matching example file for the selected `robot_version`.
+If `params_file` or `sim_file` are not provided, the package picks the matching
+example file for the selected `robot_version`. If `bridge_file` is not
+provided, `robot.launch.py` picks the matching example bridge file for the
+selected `robot_version`.
+
+`sim_file` belongs to the xargs set of the selected robot version, so it is part of the
+dynamic xargs mechanism described above. That is why `sim_file` can be accepted by the
+launch file even though `ros2 launch ... --show-args` does not list it.
 
 ## Robot Versions
 
@@ -78,8 +105,9 @@ Currently the package exposes at least these robot versions:
 
 ## Advanced Use
 
-If needed, the package also exposes the lower-level launches:
-- [launch/rsp.launch.py](launch/rsp.launch.py) for `robot_state_publisher`
-- [launch/bridge.launch.py](launch/bridge.launch.py) for the Gazebo bridge
+Most users should prefer [launch/robot.launch.py](launch/robot.launch.py),
+which now launches `robot_state_publisher` directly and keeps the robot
+description, kinematics, and bridge aligned.
 
-Most users should still prefer [launch/robot.launch.py](launch/robot.launch.py), because it keeps the robot description, kinematics, and bridge aligned.
+`robot.launch.py` is now the single launch entry point for the robot, including
+the Gazebo bridge.
