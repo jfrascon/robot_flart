@@ -306,6 +306,20 @@ This xacro file defines the 'v1' version of the fs3sw robot, which is a combinat
   <xacro:set_props_plugin_camera prop_prefix="rear_camera_infra2_sim"
                                  sim_cfg="${rear_camera_infra2_sim_cfg}"/>
 
+  <!--
+  The root frame for the realsense_d435 camera is ${prefix}${name}_bottom_screw_frame.
+  The frame of the mesh is located at its center.
+  Sizes of the mesh are: (size_x = 0.025053 m, size_y = 0.089909 m, size_z = 0.025000 m)
+  The frame of the mesh is located, w.r.t ${prefix}${name}_bottom_screw_frame, at
+  (x = 0.002375 m, y = 0 m, z = 0.0125 m, R = 0 rad, P = 0 rad, Y = 0 rad).
+  The bottom face of the mesh is touching the root frame of the camera.
+  Therefore, x_min = 0.002375 - (0.025053/2) m = -0.0101515 m.
+  Therefore, we have to move the root frame of the camera 0.0101515 m in the positive x-axis of
+  fork's root frame to have the back face of the camera aligned with the back face of the fork.
+  And, since the height of the union body that joins the tines of the fork is 6 cm, the root frame
+  of the camera has to be located at 6 cm in the z-axis of the fork's root frame.
+  -->
+
   <xacro:realsense_d435_rgbd name="rear_camera"
                              prefix="${robot_prefix}"
                              namespace="${robot_namespace}"
@@ -316,7 +330,7 @@ This xacro file defines the 'v1' version of the fs3sw robot, which is a combinat
                              use_v_mesh="${rear_rgbd_use_v_mesh}"
                              color="${rear_rgbd_color}"
                              use_c_mesh="${rear_rgbd_use_c_mesh}"
-                             joint_parent_fr_root_fr="0.010401 0.0 0.0 0.0 0.0 0.0"
+                             joint_parent_fr_root_fr="0.01015 0.0 0.06 0.0 0.0 0.0"
                              use_sensor_frames_and_joints="${use_sim_mode}"
                              sim_enabled="${(rear_camera_rgbd_sim_enabled or
                                              rear_camera_infra1_sim_enabled or
