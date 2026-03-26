@@ -1,11 +1,15 @@
+import os
 from pathlib import Path
-from typing import List
+from typing import Any, Dict, List, Tuple
 
 import ros2_launch_helpers as rlh
 from ament_index_python.packages import get_package_share_directory
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import Command, FindExecutable, LaunchConfiguration, PathJoinSubstitution
+from launch.utilities.type_utils import normalize_typed_substitution, perform_typed_substitution
+from launch_ros.actions import Node
+from launch_ros.descriptions import ParameterFile, ParameterValue
 from launch_ros.substitutions import FindPackageShare
 
 from launch import LaunchContext, LaunchDescription, LaunchDescriptionEntity
@@ -31,6 +35,25 @@ def generate_launch_description() -> LaunchDescription:
             default_value='',
             description='Path to params file. If empty, each included launch picks default by robot_version.',
         ),
+        DeclareLaunchArgument(
+            'bridge_file',
+            default_value='',
+            description='Path to bridge file. If empty, the bridge launch picks default by robot_version.',
+        ),
+        DeclareLaunchArgument(
+            'publish_frequency', default_value='', description='Frequency of publication for robot_state_publisher'
+        ),
+        DeclareLaunchArgument(
+            'ignore_timestamp',
+            default_value='',
+            choices=['True', 'true', 'False', 'false', ''],
+            description='If True, joint_state messages are accepted, no matter their timestamp',
+        ),
+        DeclareLaunchArgument(
+            'subscription_heartbeat',
+            default_value='',
+            description='Subscription heartbeat for the bridge node (optional).',
+        ),
         OpaqueFunction(function=_declare_xargs),
     ]
 
@@ -39,13 +62,92 @@ def generate_launch_description() -> LaunchDescription:
     ldes.extend(_declare_logging_options())
     ldes.extend(
         [
-            OpaqueFunction(function=_include_rsp),
-            OpaqueFunction(function=_include_bridge),
+            OpaqueFunction(function=_launch_rsp),
+            OpaqueFunction(function=_launch_bridge),
             OpaqueFunction(function=_include_three_swerve_kinematics),
         ]
     )
 
     return LaunchDescription(ldes)
+
+
+def _build_xacro_command(ctx: LaunchContext) -> Tuple[List[Any], List[str]]:
+    """Build the xacro command list and collect textual diagnostics for the selected version."""
+    robot_version = LaunchConfiguration('robot_version').perform(ctx).strip()
+    namespace = LaunchConfiguration('namespace').perform(ctx).strip()
+    robot_name = LaunchConfiguration('robot_name').perform(ctx).strip()
+    robot_ns = rlh.create_robot_namespace(namespace, robot_name)
+
+    xacro_file = os.path.join(
+        get_package_share_directory('robot_forklift_simple_3sw'), 'urdf', f'{robot_version}.xacro'
+    )
+
+    if not Path(xacro_file).is_file():
+        raise FileNotFoundError(_tagged_msg(robot_ns, 'ERROR', f"File '{xacro_file}' not found"))
+
+    use_sim_time = perform_typed_substitution(
+        ctx, normalize_typed_substitution(LaunchConfiguration('use_sim_time'), bool), bool
+    )
+
+    msgs: List[str] = []
+    cmd: List[Any] = [
+        FindExecutable(name='xacro'),
+        ' ',
+        xacro_file,
+        ' use_sim_mode:=',
+        LaunchConfiguration('use_sim_time'),
+        ' namespace:=',
+        LaunchConfiguration('namespace'),
+        ' robot_name:=',
+        LaunchConfiguration('robot_name'),
+    ]
+
+    # Iterate through xargs for the selected robot version and append them to the xacro command.
+    # Collect any diagnostic messages along the way.
+    for xarg_name in xargs.get_xargs(robot_version).keys():
+        value = LaunchConfiguration(xarg_name).perform(ctx).strip()
+
+        if xarg_name == 'sim_file':
+            # The xacro only needs a simulation file when simulation is enabled.
+            # If use_sim_time is false, force sim_file to '' so no simulation
+            # plugins are loaded.
+            # If use_sim_time is true and the user did not provide a sim_file,
+            # use the example simulation file for the selected robot version.
+            # If the user did provide a sim_file, resolve it to an absolute path.
+            # If the final path does not exist, warn and fall back to '' so the
+            # robot can still be expanded without simulation plugins.
+            if not use_sim_time:
+                value = ''
+            elif not value:
+                config_dir = Path(get_package_share_directory('robot_forklift_simple_3sw')).joinpath('config')
+                value = str(config_dir.joinpath(f'example_{robot_version}_simulation.yaml'))
+            else:
+                value = rlh.resolve_file(value)
+
+            if value and not Path(value).is_file():
+                msgs.append(
+                    _tagged_msg(
+                        robot_ns,
+                        'WARNING',
+                        f"File '{xarg_name}' not found. No simulation plugins will be loaded for that robot part",
+                    )
+                )
+                value = ''
+
+        cmd.extend([' ', f'{xarg_name}:=', _quote_xarg_value_if_needed(value)])
+
+    return cmd, msgs
+
+
+def _check_robot_version(robot_version: str) -> None:
+    """Raise if the requested robot version does not have a xacro under urdf."""
+    available_robot_versions = _get_robot_versions()
+
+    if robot_version not in available_robot_versions:
+        raise ValueError(
+            f"Version '{robot_version}' for the 'forklift_simple_3sw' robot is not available. "
+            f'Available robot versions: {", ".join(available_robot_versions)}'
+        )
 
 
 def _declare_logging_options() -> List[LaunchDescriptionEntity]:
@@ -97,13 +199,7 @@ def _declare_topic_remappings() -> List[LaunchDescriptionEntity]:
 def _declare_xargs(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
     """Declare xargs launch arguments for the selected robot version."""
     robot_version = LaunchConfiguration('robot_version').perform(ctx).strip()
-    available_robot_versions = xargs.get_robot_versions()
-
-    if robot_version not in available_robot_versions:
-        raise ValueError(
-            f"Version '{robot_version}' for the 'fs3sw' robot is not available. "
-            f'Available robot versions: {", ".join(available_robot_versions)}'
-        )
+    _check_robot_version(robot_version)
 
     available_xargs_versions = xargs.get_xargs_versions()
 
@@ -114,54 +210,6 @@ def _declare_xargs(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
         )
 
     return xargs.declare_launch_arguments(robot_version)
-
-
-def _include_bridge(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
-    """Include the shared bridge launch for the selected version."""
-    return [
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(
-                PathJoinSubstitution([FindPackageShare('robot_forklift_simple_3sw'), 'launch', 'bridge.launch.py'])
-            ),
-            launch_arguments={
-                'use_sim_time': LaunchConfiguration('use_sim_time'),
-                'namespace': LaunchConfiguration('namespace'),
-                'robot_version': LaunchConfiguration('robot_version'),
-                'robot_name': LaunchConfiguration('robot_name'),
-                'params_file': LaunchConfiguration('params_file'),
-                # Keys `sim_file` and `bridge_file` are declared dynamically from xargs.
-                # Both belong to the shared core xargs catalog, so every robot version provides them.
-                'sim_file': LaunchConfiguration('sim_file'),
-                'bridge_file': LaunchConfiguration('bridge_file'),
-                'node_options': LaunchConfiguration('bridge_options'),
-                'logging_options': LaunchConfiguration('bridge_logging_options'),
-            }.items(),
-        )
-    ]
-
-
-def _include_rsp(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
-    """Include the shared RSP launch with xargs resolved for the selected version."""
-    robot_version = LaunchConfiguration('robot_version').perform(ctx).strip()
-
-    return [
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(
-                PathJoinSubstitution([FindPackageShare('robot_forklift_simple_3sw'), 'launch', 'rsp.launch.py'])
-            ),
-            launch_arguments={
-                'use_sim_time': LaunchConfiguration('use_sim_time'),
-                'namespace': LaunchConfiguration('namespace'),
-                'robot_version': LaunchConfiguration('robot_version'),
-                'robot_name': LaunchConfiguration('robot_name'),
-                'params_file': LaunchConfiguration('params_file'),
-                'topic_remappings': LaunchConfiguration('rsp_topic_remappings'),
-                'node_options': LaunchConfiguration('rsp_options'),
-                'logging_options': LaunchConfiguration('rsp_logging_options'),
-                **xargs.get_launch_configurations(robot_version),
-            }.items(),
-        )
-    ]
 
 
 def _include_three_swerve_kinematics(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
@@ -204,3 +252,203 @@ def _include_three_swerve_kinematics(ctx: LaunchContext) -> List[LaunchDescripti
             }.items(),
         )
     ]
+
+
+def _launch_rsp(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
+    """Launch robot_state_publisher for the selected fs3sw robot version."""
+    robot_version = LaunchConfiguration('robot_version').perform(ctx).strip()
+    namespace = LaunchConfiguration('namespace').perform(ctx).strip()
+    robot_name = LaunchConfiguration('robot_name').perform(ctx).strip()
+    robot_ns = rlh.create_robot_namespace(namespace, robot_name)
+    ldes: List[LaunchDescriptionEntity] = []
+
+    cmd, msgs = _build_xacro_command(ctx)
+    # Log messages collected during xacro command construction, if any.
+    ldes.extend(rlh.to_log_info_actions(msgs))
+
+    parameters: List[Any] = []
+    input_params_file = LaunchConfiguration('params_file').perform(ctx).strip()
+
+    if input_params_file:
+        params_file = Path(input_params_file)
+    else:
+        config_dir = Path(get_package_share_directory('robot_forklift_simple_3sw')).joinpath('config')
+        params_file = config_dir.joinpath(f'example_{robot_version}.yaml')
+
+    if not params_file.is_file():
+        raise FileNotFoundError(
+            f"Params file '{params_file}' does not exist. "
+            f"Please provide a valid params file via the 'params_file' launch argument."
+        )
+
+    parameters.append(ParameterFile(str(params_file), allow_substs=False))
+
+    use_sim_time = perform_typed_substitution(
+        ctx, normalize_typed_substitution(LaunchConfiguration('use_sim_time'), bool), bool
+    )
+
+    parameters_dict: Dict[str, Any] = {
+        'use_sim_time': use_sim_time,
+        'robot_description': ParameterValue(Command(cmd), value_type=str),
+        'frame_prefix': '',
+        'use_robot_description_topic': False,
+    }
+
+    publish_frequency = LaunchConfiguration('publish_frequency').perform(ctx).strip()
+
+    if publish_frequency:
+        try:
+            parameters_dict['publish_frequency'] = float(publish_frequency)
+        except ValueError as exc:
+            raise ValueError(
+                _tagged_msg(
+                    robot_ns,
+                    'ERROR',
+                    f"Invalid 'publish_frequency' value '{publish_frequency}'. Expected a real number.",
+                )
+            ) from exc
+
+    ignore_timestamp = LaunchConfiguration('ignore_timestamp').perform(ctx).strip()
+
+    if ignore_timestamp:
+        ignore_timestamp = perform_typed_substitution(
+            ctx, normalize_typed_substitution(LaunchConfiguration('ignore_timestamp'), bool), bool
+        )
+        parameters_dict['ignore_timestamp'] = ignore_timestamp
+
+    parameters.append(parameters_dict)
+
+    node_options = rlh.process_node_options(LaunchConfiguration('rsp_options').perform(ctx))
+    node_name = str(node_options['name']) or 'robot_state_publisher'
+
+    ldes.append(
+        Node(
+            package='robot_state_publisher',
+            executable='robot_state_publisher',
+            name=node_name,
+            namespace=robot_ns,
+            parameters=parameters,
+            remappings=rlh.process_topic_remappings(LaunchConfiguration('rsp_topic_remappings').perform(ctx)),
+            ros_arguments=rlh.process_logging_options(LaunchConfiguration('rsp_logging_options').perform(ctx)),
+            output=node_options['output'],
+            emulate_tty=node_options['emulate_tty'],
+            respawn=node_options['respawn'],
+            respawn_delay=node_options['respawn_delay'],
+        )
+    )
+
+    return ldes
+
+
+def _get_urdf_dir() -> Path:
+    """Return the directory that stores robot xacro files."""
+    urdf_dir = Path(get_package_share_directory('robot_forklift_simple_3sw')).joinpath('urdf')
+
+    if not urdf_dir.is_dir():
+        raise FileNotFoundError(f'URDF directory {urdf_dir!r} not found.')
+
+    return urdf_dir
+
+
+def _get_robot_versions() -> List[str]:
+    """Return available robot versions from xacro files under urdf."""
+    try:
+        urdf_dir = _get_urdf_dir()
+    except FileNotFoundError:
+        return []
+
+    return sorted(path.stem for path in urdf_dir.glob('*.xacro') if path.is_file())
+
+
+def _launch_bridge(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
+    """Launch the Gazebo bridge for the selected fs3sw robot version."""
+    use_sim_time = perform_typed_substitution(
+        ctx, normalize_typed_substitution(LaunchConfiguration('use_sim_time'), bool), bool
+    )
+
+    if not use_sim_time:
+        return []
+
+    robot_version = LaunchConfiguration('robot_version').perform(ctx).strip()
+    namespace = LaunchConfiguration('namespace').perform(ctx).strip()
+    robot_name = LaunchConfiguration('robot_name').perform(ctx).strip()
+    robot_ns = rlh.create_robot_namespace(namespace, robot_name)
+    _check_robot_version(robot_version)
+
+    bridge_file = LaunchConfiguration('bridge_file').perform(ctx).strip()
+
+    if not bridge_file:
+        bridge_file = str(
+            Path(get_package_share_directory('robot_forklift_simple_3sw')).joinpath(
+                'config', f'example_{robot_version}_bridge.yaml'
+            )
+        )
+
+    if not Path(bridge_file).is_file():
+        raise FileNotFoundError(_tagged_msg(robot_ns, 'ERROR', f"Bridge file '{bridge_file}' not found."))
+
+    parameters: List[Any] = []
+    input_params_file = LaunchConfiguration('params_file').perform(ctx).strip()
+
+    if input_params_file:
+        params_file = Path(input_params_file)
+    else:
+        config_dir = Path(get_package_share_directory('robot_forklift_simple_3sw')).joinpath('config')
+        params_file = config_dir.joinpath(f'example_{robot_version}.yaml')
+
+    if not params_file.is_file():
+        raise FileNotFoundError(_tagged_msg(robot_ns, 'ERROR', f"Params file '{params_file}' not found."))
+
+    parameters.append(ParameterFile(str(params_file), allow_substs=False))
+
+    parameters_dict: Dict[str, Any] = {
+        'use_sim_time': True,
+        'config_file': str(bridge_file),
+        'expand_gz_topic_names': True,
+        # Keep original Gazebo timestamps instead of replacing them with wall time.
+        'override_timestamps_with_wall_time': False,
+    }
+
+    subscription_heartbeat = LaunchConfiguration('subscription_heartbeat').perform(ctx).strip()
+
+    if subscription_heartbeat:
+        try:
+            parameters_dict['subscription_heartbeat'] = int(subscription_heartbeat)
+        except ValueError as exc:
+            raise ValueError(
+                _tagged_msg(
+                    robot_ns,
+                    'ERROR',
+                    f"Invalid 'subscription_heartbeat' value '{subscription_heartbeat}'. Expected an integer.",
+                )
+            ) from exc
+
+    parameters.append(parameters_dict)
+
+    node_options = rlh.process_node_options(LaunchConfiguration('bridge_options').perform(ctx))
+    node_name = str(node_options['name']) or 'bridge'
+
+    return [
+        Node(
+            package='ros_gz_bridge',
+            executable='bridge_node',
+            name=node_name,
+            namespace=robot_ns,
+            parameters=parameters,
+            ros_arguments=rlh.process_logging_options(LaunchConfiguration('bridge_logging_options').perform(ctx)),
+            output=node_options['output'],
+            emulate_tty=node_options['emulate_tty'],
+            respawn=node_options['respawn'],
+            respawn_delay=node_options['respawn_delay'],
+        )
+    ]
+
+
+def _tagged_msg(robot_ns: str, level: str, message: str) -> str:
+    """Build one message tagged with the log level and the robot namespace."""
+    return f'[{level}][{robot_ns}] {message}'
+
+
+def _quote_xarg_value_if_needed(raw_value: str) -> str:
+    """Quote xarg values containing whitespace so xacro parses them as one token."""
+    return f'"{raw_value}"' if any(ch.isspace() for ch in raw_value) else raw_value

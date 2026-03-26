@@ -31,7 +31,7 @@ top_lidar_use_v_mesh:
   default_value: "False"
   description: "Use a mesh for visual; if False, use a primitive."
   choices: ["True", "true", "False", "false"]
-top_lidar_use_low_res_v_mesh:
+top_lidar_v_mesh_use_low_res:
   default_value: "True"
   description: "Prefer low-resolution mesh for visual when using mesh."
   choices: ["True", "true", "False", "false"]
@@ -42,7 +42,7 @@ top_lidar_use_c_mesh:
   default_value: "False"
   description: "Use a mesh for collision; if False, use a primitive."
   choices: ["True", "true", "False", "false"]
-top_lidar_use_low_res_c_mesh:
+top_lidar_c_mesh_use_low_res:
   default_value: "False"
   description: "Prefer low-resolution mesh for collision when using mesh."
   choices: ["True", "true", "False", "false"]

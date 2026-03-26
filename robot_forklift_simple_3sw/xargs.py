@@ -37,7 +37,6 @@ from typing import Any, Dict, List
 
 import ros2_launch_helpers as rlh
 import yaml
-from ament_index_python.packages import get_package_share_directory
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 
@@ -45,7 +44,8 @@ from launch import LaunchDescriptionEntity
 
 # The required fields for each xarg configuration. Each xarg must have these fields.
 REQUIRED_XARG_FIELDS = {'default_value', 'description'}
-# The allowed fields for each xarg configuration. Each xarg can have these fields, but they are not required.
+# The allowed fields for each xarg configuration.
+# Each xarg can have these fields, but they are not required.
 OPTIONAL_XARG_FIELDS = {'choices'}
 
 
@@ -67,16 +67,6 @@ def declare_launch_arguments(robot_version: str) -> List[LaunchDescriptionEntity
 def get_launch_configurations(robot_version: str) -> Dict[str, LaunchConfiguration]:
     """Return launch configurations for the xargs of one robot version."""
     return {xarg_name: LaunchConfiguration(xarg_name) for xarg_name in get_xargs(robot_version).keys()}
-
-
-def get_robot_versions() -> List[str]:
-    """Return available robot versions from xacro files under urdf."""
-    try:
-        urdf_dir = _get_urdf_dir()
-    except FileNotFoundError:
-        return []
-
-    return sorted(path.stem for path in urdf_dir.glob('*.xacro') if path.is_file())
 
 
 def get_xargs(robot_version: str) -> Dict[str, Dict[str, Any]]:
@@ -162,16 +152,6 @@ def _get_xargs_dir() -> Path:
         raise FileNotFoundError(f'Xargs directory {xargs_dir!r} not found.')
 
     return xargs_dir
-
-
-def _get_urdf_dir() -> Path:
-    """Return the directory that stores robot xacro files."""
-    urdf_dir = Path(get_package_share_directory('robot_forklift_simple_3sw')).joinpath('urdf')
-
-    if not urdf_dir.is_dir():
-        raise FileNotFoundError(f'URDF directory {urdf_dir!r} not found.')
-
-    return urdf_dir
 
 
 def _load_xargs_yaml(robot_version: str) -> Dict[str, Dict[str, Any]]:

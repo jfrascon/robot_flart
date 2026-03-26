@@ -3,9 +3,6 @@
 sim_file:
   default_value: ""
   description: "Path to simulation configuration. If empty, the default for the selected robot version is used."
-bridge_file:
-  default_value: ""
-  description: "Path to bridge configuration. If empty, the default for the selected robot version is used."
 body_use_inertial:
   default_value: "True"
   description: "Use inertial element for the robot body. If False, a null inertia will be used"
@@ -53,9 +50,9 @@ s_wheel_thickness:
 s_wheel_color:
   default_value: "0.1 0.1 0.1 1.0"
   description: "Steerable wheel color as 'r g b a'."
-s_wheel_steerable_limits:
+s_wheel_steering_joint_limits:
   default_value: "-3.1416 3.1416 100.0 100000.0"
-  description: "Steerable joint limits as 'lower upper velocity effort'."
+  description: "Steering joint limits as 'lower upper velocity effort'."
 s_wheel_rotation_joint_limits:
   default_value: "100.0 100000.0"
   description: "Wheel rotation joint limits as 'velocity effort'."
@@ -81,18 +78,12 @@ fork_use_inertial:
 fork_color:
   default_value: "0.1 0.1 0.1 1.0"
   description: "Fork color as 'r g b a'."
-fork_lower_limit:
-  default_value: "-0.01"
-  description: "Fork lower prismatic limit (m)."
-fork_upper_limit:
-  default_value: "0.8"
-  description: "Fork upper prismatic limit (m)."
-fork_velocity_limit:
-  default_value: "0.5"
-  description: "Fork prismatic joint velocity limit (m/s)."
-fork_effort_limit:
-  default_value: "20000.0"
-  description: "Fork prismatic joint effort limit."
+fork_scale:
+  default_value: "1.0 1.0 1.0"
+  description: "Fork geometric scale as 'sx sy sz'."
+fork_limits:
+  default_value: "-0.01 0.8 0.5 20000.0"
+  description: "Fork prismatic joint limits as 'lower upper velocity effort'."
 fork_tines_rest_clearance:
   default_value: "0.03"
   description: "Distance from ground to tine bottom face at rest (m)."
