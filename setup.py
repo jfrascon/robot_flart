@@ -29,7 +29,7 @@ setup(
     maintainer='Juan Francisco Rascon Crespo',
     maintainer_email='jfracon@gmail.com',
     description='Deployment package for the robot fs3sw',
-    license='Apache-2.0',
+    license='BSD-3-Clause',
     extras_require={'test': ['pytest']},
     entry_points={'console_scripts': []},
     python_requires='>=3.8',
