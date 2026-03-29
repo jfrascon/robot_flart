@@ -54,7 +54,7 @@ def generate_launch_description() -> LaunchDescription:
             default_value='',
             description='Subscription heartbeat for the bridge node (optional).',
         ),
-        OpaqueFunction(function=_declare_xargs),
+        OpaqueFunction(function=_declare_model_launch_arguments),
     ]
 
     ldes.extend(_declare_topic_remappings())
@@ -100,8 +100,9 @@ def _build_xacro_command(ctx: LaunchContext) -> Tuple[List[Any], List[str]]:
         LaunchConfiguration('robot_name'),
     ]
 
-    # Iterate through xargs for the selected robot model and append them to the xacro command.
-    # Collect any diagnostic messages along the way.
+    # Iterate through the model launch arguments defined by the selected robot
+    # model and append them to the xacro command. Collect any diagnostic
+    # messages along the way.
     for xarg_name in robot_model_utils.get_xargs(robot_model).keys():
         value = LaunchConfiguration(xarg_name).perform(ctx).strip()
 
@@ -183,12 +184,12 @@ def _declare_topic_remappings() -> List[LaunchDescriptionEntity]:
     ]
 
 
-def _declare_xargs(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
-    """Declare xargs launch arguments for the selected robot model."""
+def _declare_model_launch_arguments(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
+    """Declare the model launch arguments for the selected robot model."""
     robot_model = LaunchConfiguration('robot_model').perform(ctx).strip()
     available_robot_models = robot_model_utils.get_robot_models()
 
-    if not robot_model_utils.robot_model_exists(robot_model):
+    if robot_model not in available_robot_models:
         raise ValueError(
             f"Model '{robot_model}' for the 'forklift_simple_3sw' robot is not available. "
             f'Available robot models: {", ".join(available_robot_models)}'
@@ -198,8 +199,9 @@ def _declare_xargs(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
 
     if robot_model not in available_xargs_models:
         raise ValueError(
-            f"Model '{robot_model}' for the 'fs3sw' robot has no xargs configuration. "
-            f'Available xargs models: {", ".join(available_xargs_models)}'
+            f"Model '{robot_model}' for the 'fs3sw' robot has no model argument configuration. "
+            'Available robot models with model arguments: '
+            f'{", ".join(available_xargs_models)}'
         )
 
     return robot_model_utils.declare_launch_arguments(robot_model)
@@ -348,7 +350,7 @@ def _launch_bridge(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
     robot_ns = rlh.create_robot_namespace(namespace, robot_name)
     available_robot_models = robot_model_utils.get_robot_models()
 
-    if not robot_model_utils.robot_model_exists(robot_model):
+    if robot_model not in available_robot_models:
         raise ValueError(
             f"Model '{robot_model}' for the 'forklift_simple_3sw' robot is not available. "
             f'Available robot models: {", ".join(available_robot_models)}'
