@@ -3,9 +3,8 @@
 The word 'fs3sw' is obtained from the combination of the words '(f)orklift', '(s)imple' and '(3) (s)teerable
 (w)heels'.
 
-This xacro file defines the 'v1' version of the fs3sw robot, which is a combination of the 'core' version plus:
-  - A top 3D LiDAR (RoboSense Helios 16P)
-  - A top IMU (UM7)
+This xacro file defines the 'v1' model of the fs3sw robot, which is a combination of the 'core' model plus:
+  - A top 3D LiDAR with integrated IMU (RoboSense Airy)
   - A rear RGBD camera (Intel RealSense D435)
 -->
 <robot name="fs3sw_v1" xmlns:xacro="http://www.ros.org/wiki/xacro" xmlns:gz="http://gazebosim.org/schema">
@@ -53,14 +52,6 @@ This xacro file defines the 'v1' version of the fs3sw robot, which is a combinat
   <xacro:arg name="top_lidar_use_c_mesh"         default="False"/>
   <xacro:arg name="top_lidar_c_mesh_use_low_res" default="False"/>
 
-  <xacro:arg name="top_imu_use_visual"         default="True"/>
-  <xacro:arg name="top_imu_use_collision"      default="True"/>
-  <xacro:arg name="top_imu_use_inertial"       default="True"/>
-  <!-- The mesh has its own color. Since the mesh is used by default, the default value for color is empty. -->
-  <xacro:arg name="top_imu_use_v_mesh"         default="True"/>
-  <xacro:arg name="top_imu_color"              default=""/>
-  <xacro:arg name="top_imu_use_c_mesh"         default="False"/>
-
   <xacro:arg name="rear_rgbd_use_visual"       default="True"/>
   <xacro:arg name="rear_rgbd_use_collision"    default="True"/>
   <xacro:arg name="rear_rgbd_use_inertial"     default="True"/>
@@ -86,7 +77,7 @@ This xacro file defines the 'v1' version of the fs3sw robot, which is a combinat
   <xacro:property name="top_platform_size_y"            value="0.08"/>
   <xacro:property name="top_platform_size_z"            value="0.146"/>
 
-  <!-- Top LiDAR: Robosense Helios 16P -->
+  <!-- Top LiDAR: Robosense Airy -->
   <xacro:property name="top_lidar_use_visual"         value="$(arg top_lidar_use_visual)"/>
   <xacro:property name="top_lidar_use_collision"      value="$(arg top_lidar_use_collision)"/>
   <xacro:property name="top_lidar_use_inertial"       value="$(arg top_lidar_use_inertial)"/>
@@ -95,18 +86,6 @@ This xacro file defines the 'v1' version of the fs3sw robot, which is a combinat
   <xacro:property name="top_lidar_color"              value="$(arg top_lidar_color)"/>
   <xacro:property name="top_lidar_use_c_mesh"         value="$(arg top_lidar_use_c_mesh)"/>
   <xacro:property name="top_lidar_c_mesh_use_low_res" value="$(arg top_lidar_c_mesh_use_low_res)"/>
-
-  <!-- See macro robosense_helios_16_macro.xacro to check radius and length values. -->
-  <xacro:property name="top_lidar_radius"             value="0.05"/>
-  <xacro:property name="top_lidar_length"             value="0.1005"/>
-
-  <!-- Top IMU: UM7 -->
-  <xacro:property name="top_imu_use_visual"           value="$(arg top_imu_use_visual)"/>
-  <xacro:property name="top_imu_use_collision"        value="$(arg top_imu_use_collision)"/>
-  <xacro:property name="top_imu_use_inertial"         value="$(arg top_imu_use_inertial)"/>
-  <xacro:property name="top_imu_use_v_mesh"           value="$(arg top_imu_use_v_mesh)"/>
-  <xacro:property name="top_imu_color"                value="$(arg top_imu_color)"/>
-  <xacro:property name="top_imu_use_c_mesh"           value="$(arg top_imu_use_c_mesh)"/>
 
   <!-- Rear RGBD: RealSense D435 -->
   <xacro:property name="rear_rgbd_use_visual"         value="$(arg rear_rgbd_use_visual)"/>
@@ -158,43 +137,24 @@ This xacro file defines the 'v1' version of the fs3sw robot, which is a combinat
   </joint>
 
   <!-- ===================================================================== -->
-  <!-- TOP LIDAR: ROBOSENSE HELIOS 16 -->
+  <!-- TOP LIDAR: ROBOSENSE AIRY -->
   <!-- ===================================================================== -->
 
-  <!--
-  <xacro:property name="joint_parent_fr_front_lidar_fr_x" value="${(0.5 * body_size_x) + front_lidar_radius - 0.028}"/>
-  -->
   <xacro:property name="top_lidar_sim_cfg" value="${sim_cfg.get('top_lidar', dict())}"/>
 
   <!--
-  use_sim_mode = False: the lidar simulation is disabled.
-  use_sim_mode = True,  top_lidar_sim_cfg has the 'enabled' field set to False: lidar simulation is
-  disabled.
-  use_sim_mode = True,  top_lidar_sim_cfg has the 'enabled' field set to True: lidar simulation is
-  enabled.
-
-  set_props_plugin_lidar_3d_ring will set the following properties:
-  - ${prop_prefix}_enabled
-  - ${prop_prefix}_always_on
-  - ${prop_prefix}_visualize
-  - ${prop_prefix}_update_rate
-  - ${prop_prefix}_hor_fov_deg
-  - ${prop_prefix}_hor_res_deg
-  - ${prop_prefix}_ver_fov_deg
-  - ${prop_prefix}_ver_res_deg
-  - ${prop_prefix}_dist_span
-  - ${prop_prefix}_gaussian_noise
-  - ${prop_prefix}_base_topic
+  top_lidar_sim_cfg contains the simulation configuration for the Airy lidar plugin.
+  top_lidar_imu_sim_cfg contains the simulation configuration for the integrated IMU plugin.
   -->
+  <xacro:property name="top_lidar_imu_sim_cfg" value="${sim_cfg.get('top_lidar_imu', dict())}"/>
+
   <xacro:set_props_plugin_lidar_3d_ring prop_prefix="top_lidar_sim"
                                         sim_cfg="${top_lidar_sim_cfg}"/>
 
-  <!--
-  parent_frame="${robot_prefix}${base_name}_link"
-  joint_parent_fr_root_fr="${joint_base_fr_front_lidar_fr_x} 0 0.28 0 0 0"
-  -->
+  <xacro:set_props_plugin_imu prop_prefix="top_lidar_imu_sim"
+                              imu_sim_cfg="${top_lidar_imu_sim_cfg}"/>
 
-  <xacro:robosense_helios_16
+  <xacro:robosense_airy
       name="top_lidar"
       prefix="${robot_prefix}"
       parent_frame="${robot_prefix}top_platform_link"
@@ -207,73 +167,30 @@ This xacro file defines the 'v1' version of the fs3sw robot, which is a combinat
       use_c_mesh="${top_lidar_use_c_mesh}"
       c_mesh_use_low_res="${top_lidar_c_mesh_use_low_res}"
       joint_parent_fr_root_fr="0.0 0.0 ${top_platform_size_z} 0.0 0.0 0.0"
-      sim_enabled="${top_lidar_sim_enabled and use_sim_mode}"
-      sim_always_on="${top_lidar_sim_always_on}"
-      sim_visualize="${top_lidar_sim_visualize}"
-      sim_update_rate="${top_lidar_sim_update_rate}"
-      sim_hor_fov_deg="${top_lidar_sim_hor_fov_deg}"
-      sim_hor_res_deg="${top_lidar_sim_hor_res_deg}"
-      sim_ver_fov_deg="${top_lidar_sim_ver_fov_deg}"
-      sim_ver_res_deg="${top_lidar_sim_ver_res_deg}"
-      sim_dist_span="${top_lidar_sim_dist_span}"
-      sim_gaussian_noise="${top_lidar_sim_gaussian_noise}"
+      sim_lidar_enabled="${use_sim_mode and top_lidar_sim_enabled}"
+      sim_lidar_always_on="${top_lidar_sim_always_on}"
+      sim_lidar_visualize="${top_lidar_sim_visualize}"
+      sim_lidar_update_rate="${top_lidar_sim_update_rate}"
+      sim_lidar_hor_fov_deg="${top_lidar_sim_hor_fov_deg}"
+      sim_lidar_hor_res_deg="${top_lidar_sim_hor_res_deg}"
+      sim_lidar_ver_fov_deg="${top_lidar_sim_ver_fov_deg}"
+      sim_lidar_ver_res_deg="${top_lidar_sim_ver_res_deg}"
+      sim_lidar_dist_span="${top_lidar_sim_dist_span}"
+      sim_lidar_gaussian_noise="${top_lidar_sim_gaussian_noise}"
+      sim_imu_enabled="${use_sim_mode and top_lidar_imu_sim_enabled}"
+      sim_imu_use_gravity="${top_lidar_imu_sim_use_gravity}"
+      sim_imu_always_on="${top_lidar_imu_sim_always_on}"
+      sim_imu_update_rate="${top_lidar_imu_sim_update_rate}"
+      sim_imu_ang_vel_gaussian_noise="${top_lidar_imu_sim_ang_vel_gaussian_noise}"
+      sim_imu_ang_vel_gaussian_noise_bias="${top_lidar_imu_sim_ang_vel_gaussian_noise_bias}"
+      sim_imu_ang_vel_gaussian_noise_dynamic_bias="${top_lidar_imu_sim_ang_vel_gaussian_noise_dynamic_bias}"
+      sim_imu_lin_acc_gaussian_noise="${top_lidar_imu_sim_lin_acc_gaussian_noise}"
+      sim_imu_lin_acc_gaussian_noise_bias="${top_lidar_imu_sim_lin_acc_gaussian_noise_bias}"
+      sim_imu_lin_acc_gaussian_noise_dynamic_bias="${top_lidar_imu_sim_lin_acc_gaussian_noise_dynamic_bias}"
+      sim_imu_use_orientation="${top_lidar_imu_sim_use_orientation}"
       namespace="${robot_namespace}"
-      sim_base_topic="${top_lidar_sim_base_topic}"/>
-
-
-  <!-- ===================================================================== -->
-  <!-- TOP IMU: UM7 -->
-  <!-- ===================================================================== -->
-
-  <xacro:property name="top_imu_sim_cfg" value="${sim_cfg.get('top_imu', dict())}"/>
-
-  <!--
-  use_sim_mode = False: the IMU simulation is disabled.
-  use_sim_mode = True,  top_imu_sim_cfg has the 'enabled' field set to False: IMU simulation is
-  disabled.
-  use_sim_mode = True,  top_imu_sim_cfg has the 'enabled' field set to True: IMU simulation is
-  enabled.
-
-  set_props_plugin_imu will set the following properties:
-  - ${prop_prefix}_enabled
-  - ${prop_prefix}_use_gravity
-  - ${prop_prefix}_always_on
-  - ${prop_prefix}_update_rate
-  - ${prop_prefix}_ang_vel_gaussian_noise
-  - ${prop_prefix}_ang_vel_gaussian_noise_bias
-  - ${prop_prefix}_ang_vel_gaussian_noise_dynamic_bias
-  - ${prop_prefix}_lin_acc_gaussian_noise
-  - ${prop_prefix}_lin_acc_gaussian_noise_bias
-  - ${prop_prefix}_lin_acc_gaussian_noise_dynamic_bias
-  - ${prop_prefix}_use_orientation
-  - ${prop_prefix}_topic
-  -->
-  <xacro:set_props_plugin_imu prop_prefix="top_imu_sim"
-                              imu_sim_cfg="${top_imu_sim_cfg}"/>
-
-  <xacro:um7 name="top_imu"
-             prefix="${robot_prefix}"
-             parent_frame="${robot_prefix}top_lidar_root_link"
-             use_visual="${top_imu_use_visual}"
-             use_collision="${top_imu_use_collision}"
-             use_inertial="${top_imu_use_inertial}"
-             use_v_mesh="${top_imu_use_v_mesh}"
-             color="${top_imu_color}"
-             use_c_mesh="${top_imu_use_c_mesh}"
-             joint_parent_fr_root_fr="0 0 ${top_lidar_length} 0 0 0"
-             sim_enabled="${top_imu_sim_enabled and use_sim_mode}"
-             sim_use_gravity="${top_imu_sim_use_gravity}"
-             sim_always_on="${top_imu_sim_always_on}"
-             sim_update_rate="${top_imu_sim_update_rate}"
-             sim_ang_vel_gaussian_noise="${top_imu_sim_ang_vel_gaussian_noise}"
-             sim_ang_vel_gaussian_noise_bias="${top_imu_sim_ang_vel_gaussian_noise_bias}"
-             sim_ang_vel_gaussian_noise_dynamic_bias="${top_imu_sim_ang_vel_gaussian_noise_dynamic_bias}"
-             sim_lin_acc_gaussian_noise="${top_imu_sim_lin_acc_gaussian_noise}"
-             sim_lin_acc_gaussian_noise_bias="${top_imu_sim_lin_acc_gaussian_noise_bias}"
-             sim_lin_acc_gaussian_noise_dynamic_bias="${top_imu_sim_lin_acc_gaussian_noise_dynamic_bias}"
-             sim_use_orientation="${top_imu_sim_use_orientation}"
-             namespace="${robot_namespace}"
-             sim_topic="${top_imu_sim_topic}"/>
+      sim_lidar_base_topic="${top_lidar_sim_base_topic}"
+      sim_imu_topic="${top_lidar_imu_sim_topic}"/>
 
   <!-- ===================================================================== -->
   <!-- REAR CAMERA: REALSENSE D435 -->
@@ -332,10 +249,7 @@ This xacro file defines the 'v1' version of the fs3sw robot, which is a combinat
                              use_c_mesh="${rear_rgbd_use_c_mesh}"
                              joint_parent_fr_root_fr="0.01015 0.0 0.06 0.0 0.0 0.0"
                              use_sensor_frames_and_joints="${use_sim_mode}"
-                             sim_enabled="${(rear_camera_rgbd_sim_enabled or
-                                             rear_camera_infra1_sim_enabled or
-                                             rear_camera_infra2_sim_enabled) and use_sim_mode}"
-                             sim_rgbd_enabled="${rear_camera_rgbd_sim_enabled}"
+                             sim_rgbd_enabled="${use_sim_mode and rear_camera_rgbd_sim_enabled}"
                              sim_rgbd_use_gravity="${rear_camera_rgbd_sim_use_gravity}"
                              sim_rgbd_always_on="${rear_camera_rgbd_sim_always_on}"
                              sim_rgbd_visualize="${rear_camera_rgbd_sim_visualize}"
@@ -355,7 +269,7 @@ This xacro file defines the 'v1' version of the fs3sw robot, which is a combinat
                              sim_rgbd_distortion_k_p="${rear_camera_rgbd_sim_distortion_k_p}"
                              sim_rgbd_distortion_center="${rear_camera_rgbd_sim_distortion_center}"
                              sim_rgbd_gaussian_noise="${rear_camera_rgbd_sim_gaussian_noise}"
-                             sim_infra1_enabled="${rear_camera_infra1_sim_enabled}"
+                             sim_infra1_enabled="${use_sim_mode and rear_camera_infra1_sim_enabled}"
                              sim_infra1_use_gravity="${rear_camera_infra1_sim_use_gravity}"
                              sim_infra1_always_on="${rear_camera_infra1_sim_always_on}"
                              sim_infra1_visualize="${rear_camera_infra1_sim_visualize}"
@@ -374,7 +288,7 @@ This xacro file defines the 'v1' version of the fs3sw robot, which is a combinat
                              sim_infra1_distortion_k_p="${rear_camera_infra1_sim_distortion_k_p}"
                              sim_infra1_distortion_center="${rear_camera_infra1_sim_distortion_center}"
                              sim_infra1_gaussian_noise="${rear_camera_infra1_sim_gaussian_noise}"
-                             sim_infra2_enabled="${rear_camera_infra2_sim_enabled}"
+                             sim_infra2_enabled="${use_sim_mode and rear_camera_infra2_sim_enabled}"
                              sim_infra2_use_gravity="${rear_camera_infra2_sim_use_gravity}"
                              sim_infra2_always_on="${rear_camera_infra2_sim_always_on}"
                              sim_infra2_visualize="${rear_camera_infra2_sim_visualize}"

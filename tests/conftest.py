@@ -22,7 +22,8 @@ WORKSPACE_DIR = workspace_dir()
 
 def run_bash(command: str, *, timeout: int = 60) -> subprocess.CompletedProcess[str]:
     """Run one bash command in the workspace with ROS and workspace setup sourced."""
-    ros_setup = os.environ.get('ROS_SETUP_BASH', '/opt/ros/humble/setup.bash')
+    ros_distro = os.environ.get('ROS_DISTRO', 'jazzy')
+    ros_setup = os.environ.get('ROS_SETUP_BASH', f'/opt/ros/{ros_distro}/setup.bash')
     bash_command = f'source "{ros_setup}" && source "{WORKSPACE_DIR / "install" / "setup.bash"}" && {command}'
 
     return subprocess.run(

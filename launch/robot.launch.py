@@ -13,11 +13,11 @@ from launch_ros.descriptions import ParameterFile, ParameterValue
 from launch_ros.substitutions import FindPackageShare
 
 from launch import LaunchContext, LaunchDescription, LaunchDescriptionEntity
-from robot_forklift_simple_3sw import xargs
+from robot_forklift_simple_3sw import robot_model_utils
 
 
 def generate_launch_description() -> LaunchDescription:
-    """Build the unified launch description for all fs3sw robot versions."""
+    """Build the unified launch description for all fs3sw robot models."""
     ldes: list[LaunchDescriptionEntity] = [
         DeclareLaunchArgument(
             'use_sim_time',
@@ -27,18 +27,18 @@ def generate_launch_description() -> LaunchDescription:
         ),
         DeclareLaunchArgument('namespace', default_value='', description='Namespace for all resources'),
         DeclareLaunchArgument(
-            'robot_version', default_value='core', description='Robot version to launch (for example: core, v1)'
+            'robot_model', default_value='core', description='Robot model to launch (for example: core, v1)'
         ),
         DeclareLaunchArgument('robot_name', default_value='fs3sw', description='The unique name for the robot'),
         DeclareLaunchArgument(
             'params_file',
             default_value='',
-            description='Path to params file. If empty, each included launch picks default by robot_version.',
+            description='Path to params file. If empty, each included launch picks default by robot_model.',
         ),
         DeclareLaunchArgument(
             'bridge_file',
             default_value='',
-            description='Path to bridge file. If empty, the bridge launch picks default by robot_version.',
+            description='Path to bridge file. If empty, the bridge launch picks default by robot_model.',
         ),
         DeclareLaunchArgument(
             'publish_frequency', default_value='', description='Frequency of publication for robot_state_publisher'
@@ -72,15 +72,13 @@ def generate_launch_description() -> LaunchDescription:
 
 
 def _build_xacro_command(ctx: LaunchContext) -> Tuple[List[Any], List[str]]:
-    """Build the xacro command list and collect textual diagnostics for the selected version."""
-    robot_version = LaunchConfiguration('robot_version').perform(ctx).strip()
+    """Build the xacro command list and collect diagnostics for the selected model."""
+    robot_model = LaunchConfiguration('robot_model').perform(ctx).strip()
     namespace = LaunchConfiguration('namespace').perform(ctx).strip()
     robot_name = LaunchConfiguration('robot_name').perform(ctx).strip()
     robot_ns = rlh.create_robot_namespace(namespace, robot_name)
 
-    xacro_file = os.path.join(
-        get_package_share_directory('robot_forklift_simple_3sw'), 'urdf', f'{robot_version}.xacro'
-    )
+    xacro_file = os.path.join(get_package_share_directory('robot_forklift_simple_3sw'), 'urdf', f'{robot_model}.xacro')
 
     if not Path(xacro_file).is_file():
         raise FileNotFoundError(_tagged_msg(robot_ns, 'ERROR', f"File '{xacro_file}' not found"))
@@ -102,9 +100,9 @@ def _build_xacro_command(ctx: LaunchContext) -> Tuple[List[Any], List[str]]:
         LaunchConfiguration('robot_name'),
     ]
 
-    # Iterate through xargs for the selected robot version and append them to the xacro command.
+    # Iterate through xargs for the selected robot model and append them to the xacro command.
     # Collect any diagnostic messages along the way.
-    for xarg_name in xargs.get_xargs(robot_version).keys():
+    for xarg_name in robot_model_utils.get_xargs(robot_model).keys():
         value = LaunchConfiguration(xarg_name).perform(ctx).strip()
 
         if xarg_name == 'sim_file':
@@ -112,7 +110,7 @@ def _build_xacro_command(ctx: LaunchContext) -> Tuple[List[Any], List[str]]:
             # If use_sim_time is false, force sim_file to '' so no simulation
             # plugins are loaded.
             # If use_sim_time is true and the user did not provide a sim_file,
-            # use the example simulation file for the selected robot version.
+            # use the example simulation file for the selected robot model.
             # If the user did provide a sim_file, resolve it to an absolute path.
             # If the final path does not exist, warn and fall back to '' so the
             # robot can still be expanded without simulation plugins.
@@ -120,7 +118,7 @@ def _build_xacro_command(ctx: LaunchContext) -> Tuple[List[Any], List[str]]:
                 value = ''
             elif not value:
                 config_dir = Path(get_package_share_directory('robot_forklift_simple_3sw')).joinpath('config')
-                value = str(config_dir.joinpath(f'example_{robot_version}_simulation.yaml'))
+                value = str(config_dir.joinpath(f'example_{robot_model}_simulation.yaml'))
             else:
                 value = rlh.resolve_file(value)
 
@@ -137,17 +135,6 @@ def _build_xacro_command(ctx: LaunchContext) -> Tuple[List[Any], List[str]]:
         cmd.extend([' ', f'{xarg_name}:=', _quote_xarg_value_if_needed(value)])
 
     return cmd, msgs
-
-
-def _check_robot_version(robot_version: str) -> None:
-    """Raise if the requested robot version does not have a xacro under urdf."""
-    available_robot_versions = _get_robot_versions()
-
-    if robot_version not in available_robot_versions:
-        raise ValueError(
-            f"Version '{robot_version}' for the 'forklift_simple_3sw' robot is not available. "
-            f'Available robot versions: {", ".join(available_robot_versions)}'
-        )
 
 
 def _declare_logging_options() -> List[LaunchDescriptionEntity]:
@@ -197,40 +184,46 @@ def _declare_topic_remappings() -> List[LaunchDescriptionEntity]:
 
 
 def _declare_xargs(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
-    """Declare xargs launch arguments for the selected robot version."""
-    robot_version = LaunchConfiguration('robot_version').perform(ctx).strip()
-    _check_robot_version(robot_version)
+    """Declare xargs launch arguments for the selected robot model."""
+    robot_model = LaunchConfiguration('robot_model').perform(ctx).strip()
+    available_robot_models = robot_model_utils.get_robot_models()
 
-    available_xargs_versions = xargs.get_xargs_versions()
-
-    if robot_version not in available_xargs_versions:
+    if not robot_model_utils.robot_model_exists(robot_model):
         raise ValueError(
-            f"Version '{robot_version}' for the 'fs3sw' robot has no xargs configuration. "
-            f'Available xargs versions: {", ".join(available_xargs_versions)}'
+            f"Model '{robot_model}' for the 'forklift_simple_3sw' robot is not available. "
+            f'Available robot models: {", ".join(available_robot_models)}'
         )
 
-    return xargs.declare_launch_arguments(robot_version)
+    available_xargs_models = robot_model_utils.get_robot_models_with_xargs()
+
+    if robot_model not in available_xargs_models:
+        raise ValueError(
+            f"Model '{robot_model}' for the 'fs3sw' robot has no xargs configuration. "
+            f'Available xargs models: {", ".join(available_xargs_models)}'
+        )
+
+    return robot_model_utils.declare_launch_arguments(robot_model)
 
 
 def _include_three_swerve_kinematics(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
     """Include the three-swerve kinematics launch for this robot instance."""
-    robot_version = LaunchConfiguration('robot_version').perform(ctx).strip()
+    robot_model = LaunchConfiguration('robot_model').perform(ctx).strip()
     input_params_file = LaunchConfiguration('params_file').perform(ctx).strip()
 
     # If the user provided a params file via the 'params_file' launch argument, use it for the
-    # kinematics node. Otherwise, look for a default params file based on the robot version under
-    # the config directory. For example, if the robot version is "v1", look for
+    # kinematics node. Otherwise, look for a default params file based on the robot model under
+    # the config directory. For example, if the robot model is "v1", look for
     # "config/example_v1.yaml".
 
     if input_params_file:
         params_file = Path(input_params_file)
     else:
         config_dir = Path(get_package_share_directory('robot_forklift_simple_3sw')).joinpath('config')
-        params_file = config_dir.joinpath(f'example_{robot_version}.yaml')
+        params_file = config_dir.joinpath(f'example_{robot_model}.yaml')
 
     if not params_file.is_file():
         raise FileNotFoundError(
-            f"Params file '{params_file}' does not exist for robot version '{robot_version}'. "
+            f"Params file '{params_file}' does not exist for robot model '{robot_model}'. "
             f"Please provide a valid params file via the 'params_file' launch argument."
         )
 
@@ -255,8 +248,8 @@ def _include_three_swerve_kinematics(ctx: LaunchContext) -> List[LaunchDescripti
 
 
 def _launch_rsp(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
-    """Launch robot_state_publisher for the selected fs3sw robot version."""
-    robot_version = LaunchConfiguration('robot_version').perform(ctx).strip()
+    """Launch robot_state_publisher for the selected fs3sw robot model."""
+    robot_model = LaunchConfiguration('robot_model').perform(ctx).strip()
     namespace = LaunchConfiguration('namespace').perform(ctx).strip()
     robot_name = LaunchConfiguration('robot_name').perform(ctx).strip()
     robot_ns = rlh.create_robot_namespace(namespace, robot_name)
@@ -273,7 +266,7 @@ def _launch_rsp(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
         params_file = Path(input_params_file)
     else:
         config_dir = Path(get_package_share_directory('robot_forklift_simple_3sw')).joinpath('config')
-        params_file = config_dir.joinpath(f'example_{robot_version}.yaml')
+        params_file = config_dir.joinpath(f'example_{robot_model}.yaml')
 
     if not params_file.is_file():
         raise FileNotFoundError(
@@ -340,28 +333,8 @@ def _launch_rsp(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
     return ldes
 
 
-def _get_urdf_dir() -> Path:
-    """Return the directory that stores robot xacro files."""
-    urdf_dir = Path(get_package_share_directory('robot_forklift_simple_3sw')).joinpath('urdf')
-
-    if not urdf_dir.is_dir():
-        raise FileNotFoundError(f'URDF directory {urdf_dir!r} not found.')
-
-    return urdf_dir
-
-
-def _get_robot_versions() -> List[str]:
-    """Return available robot versions from xacro files under urdf."""
-    try:
-        urdf_dir = _get_urdf_dir()
-    except FileNotFoundError:
-        return []
-
-    return sorted(path.stem for path in urdf_dir.glob('*.xacro') if path.is_file())
-
-
 def _launch_bridge(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
-    """Launch the Gazebo bridge for the selected fs3sw robot version."""
+    """Launch the Gazebo bridge for the selected fs3sw robot model."""
     use_sim_time = perform_typed_substitution(
         ctx, normalize_typed_substitution(LaunchConfiguration('use_sim_time'), bool), bool
     )
@@ -369,18 +342,24 @@ def _launch_bridge(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
     if not use_sim_time:
         return []
 
-    robot_version = LaunchConfiguration('robot_version').perform(ctx).strip()
+    robot_model = LaunchConfiguration('robot_model').perform(ctx).strip()
     namespace = LaunchConfiguration('namespace').perform(ctx).strip()
     robot_name = LaunchConfiguration('robot_name').perform(ctx).strip()
     robot_ns = rlh.create_robot_namespace(namespace, robot_name)
-    _check_robot_version(robot_version)
+    available_robot_models = robot_model_utils.get_robot_models()
+
+    if not robot_model_utils.robot_model_exists(robot_model):
+        raise ValueError(
+            f"Model '{robot_model}' for the 'forklift_simple_3sw' robot is not available. "
+            f'Available robot models: {", ".join(available_robot_models)}'
+        )
 
     bridge_file = LaunchConfiguration('bridge_file').perform(ctx).strip()
 
     if not bridge_file:
         bridge_file = str(
             Path(get_package_share_directory('robot_forklift_simple_3sw')).joinpath(
-                'config', f'example_{robot_version}_bridge.yaml'
+                'config', f'example_{robot_model}_bridge.yaml'
             )
         )
 
@@ -394,7 +373,7 @@ def _launch_bridge(ctx: LaunchContext) -> List[LaunchDescriptionEntity]:
         params_file = Path(input_params_file)
     else:
         config_dir = Path(get_package_share_directory('robot_forklift_simple_3sw')).joinpath('config')
-        params_file = config_dir.joinpath(f'example_{robot_version}.yaml')
+        params_file = config_dir.joinpath(f'example_{robot_model}.yaml')
 
     if not params_file.is_file():
         raise FileNotFoundError(_tagged_msg(robot_ns, 'ERROR', f"Params file '{params_file}' not found."))

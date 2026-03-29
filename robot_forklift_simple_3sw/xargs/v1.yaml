@@ -46,29 +46,6 @@ top_lidar_c_mesh_use_low_res:
   default_value: "False"
   description: "Prefer low-resolution mesh for collision when using mesh."
   choices: ["True", "true", "False", "false"]
-top_imu_use_visual:
-  default_value: "True"
-  description: "Include visual element for the sensor."
-  choices: ["True", "true", "False", "false"]
-top_imu_use_collision:
-  default_value: "True"
-  description: "Include collision element for the sensor."
-  choices: ["True", "true", "False", "false"]
-top_imu_use_inertial:
-  default_value: "True"
-  description: "Include inertial element for the sensor."
-  choices: ["True", "true", "False", "false"]
-top_imu_use_v_mesh:
-  default_value: "True"
-  description: "Use a mesh for visual; if False, use a primitive."
-  choices: ["True", "true", "False", "false"]
-top_imu_color:
-  default_value: ""
-  description: "Optional color override 'r g b a'; empty keeps mesh color."
-top_imu_use_c_mesh:
-  default_value: "False"
-  description: "Use a mesh for collision; if False, use a primitive."
-  choices: ["True", "true", "False", "false"]
 rear_rgbd_use_visual:
   default_value: "True"
   description: "Include visual element for the sensor."

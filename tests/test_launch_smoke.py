@@ -5,8 +5,8 @@ from conftest import run_bash
 @pytest.mark.parametrize(
     ('launch_args', 'expected_text'),
     [
-        ('robot_version:=core', 'ThreeSwerveKinematicsSolverRos node initialized.'),
-        ('robot_version:=v1 use_sim_time:=True', 'Creating ROS->GZ Bridge: [cmd_vel'),
+        ('robot_model:=core', 'ThreeSwerveKinematicsSolverRos node initialized.'),
+        ('robot_model:=v1 use_sim_time:=True', 'Creating ROS->GZ Bridge: [cmd_vel'),
     ],
 )
 def test_robot_launch_smoke(launch_args: str, expected_text: str) -> None:

@@ -2,7 +2,7 @@
 <!--
 The word 'fs3sw' is obtained from the combination of the words '(f)orklift', '(s)imple' and '(3) (s)teerable
 (w)heels'.
-This xacro file defines the 'core' version of the fs3sw robot, a base with 3 steerable wheels and a simple forklift.
+This xacro file defines the 'core' model of the fs3sw robot, a base with 3 steerable wheels and a simple forklift.
 No sensors or extra elements are included.
 -->
 <robot name="fs3sw_core" xmlns:xacro="http://www.ros.org/wiki/xacro" xmlns:gz="http://gazebosim.org/schema">
@@ -33,7 +33,7 @@ No sensors or extra elements are included.
   <xacro:arg name="namespace"    default=""/>
   <xacro:arg name="robot_name"   default="fs3sw"/>
   <!--
-  File containing the simulation configuration for the selected robot version.
+  File containing the simulation configuration for the selected robot model.
   base = body + wheels.
   platform = base + fork.
   -->

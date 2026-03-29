@@ -51,7 +51,7 @@
   qos_profile: SENSOR_DATA
   lazy: True
 
-- topic_name: top_imu/data
+- topic_name: top_lidar/imu/data
   ros_type_name: sensor_msgs/msg/Imu
   gz_type_name: gz.msgs.IMU
   direction: GZ_TO_ROS
