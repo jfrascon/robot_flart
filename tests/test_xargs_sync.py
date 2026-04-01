@@ -14,26 +14,36 @@ def _xacro_arg_names(xacro_file: Path) -> set[str]:
 
 
 def test_xargs_models_match_available_robot_models() -> None:
-    assert robot_model_utils.get_robot_models() == ['core', 'v1']
-    assert robot_model_utils.get_robot_models_with_xargs() == ['core', 'v1']
+    assert robot_model_utils.get_models() == ['m1', 'm2']
+    assert robot_model_utils.get_models_with_xargs() == ['m1', 'm2']
 
 
-def test_robot_model_exists_matches_available_robot_models() -> None:
-    assert robot_model_utils.robot_model_exists('core')
-    assert robot_model_utils.robot_model_exists('v1')
-    assert not robot_model_utils.robot_model_exists('')
-    assert not robot_model_utils.robot_model_exists('v2')
+def test_model_exists_matches_available_robot_models() -> None:
+    assert robot_model_utils.model_exists('m1')
+    assert robot_model_utils.model_exists('m2')
+    assert not robot_model_utils.model_exists('common')
+    assert not robot_model_utils.model_exists('')
+    assert not robot_model_utils.model_exists('m3')
 
 
-def test_core_xargs_match_core_xacro_args() -> None:
-    core_arg_names = _xacro_arg_names(PACKAGE_DIR / 'urdf' / 'core.xacro') - RESERVED_LAUNCH_ARGS
+def test_model_has_xargs_matches_current_xargs_files() -> None:
+    assert robot_model_utils.model_has_xargs('m1')
+    assert robot_model_utils.model_has_xargs('m2')
+    assert not robot_model_utils.model_has_xargs('common')
+    assert not robot_model_utils.model_has_xargs('')
+    assert not robot_model_utils.model_has_xargs('m3')
 
-    assert set(robot_model_utils.get_xargs('core')) == core_arg_names
+
+def test_common_xargs_match_common_xacro_args() -> None:
+    common_arg_names = _xacro_arg_names(PACKAGE_DIR / 'urdf' / 'includes' / 'common.xacro') - RESERVED_LAUNCH_ARGS
+
+    assert set(robot_model_utils.get_xarg_names('m1')) == common_arg_names
 
 
-def test_v1_xargs_match_core_and_v1_xacro_args() -> None:
+def test_m2_xargs_match_common_and_m2_xacro_args() -> None:
     merged_arg_names = (
-        _xacro_arg_names(PACKAGE_DIR / 'urdf' / 'core.xacro') | _xacro_arg_names(PACKAGE_DIR / 'urdf' / 'v1.xacro')
+        _xacro_arg_names(PACKAGE_DIR / 'urdf' / 'includes' / 'common.xacro')
+        | _xacro_arg_names(PACKAGE_DIR / 'urdf' / 'models' / 'm2.xacro')
     ) - RESERVED_LAUNCH_ARGS
 
-    assert set(robot_model_utils.get_xargs('v1')) == merged_arg_names
+    assert set(robot_model_utils.get_xarg_names('m2')) == merged_arg_names

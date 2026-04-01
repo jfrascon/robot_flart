@@ -26,7 +26,7 @@ alpha_deg:
   default_value: "154"
   description: "Wheel layout angle in degrees, used in xacro as radians(alpha_deg)."
 body_mesh:
-  default_value: "robot_forklift_simple_3sw/meshes/forklift_simple_3aw_base.stl"
+  default_value: "robot_forklift_simple_3sw/meshes/forklift_simple_3sw_base.stl"
   description: "Body mesh path within package format <pkg>/<path>."
 body_scale:
   default_value: "1.0 1.0 1.0"

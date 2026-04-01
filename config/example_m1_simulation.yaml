@@ -1,6 +1,8 @@
-# This file shows the full simulation configuration for the model 'core' of the 'fs3sw' robot.
-# If you need to customize the simulation configuration, create a new file and pass it as a value for the parameter
-# 'sim_file' in the launch file 'robot.launch.py'.
+# This file shows the full simulation configuration for the model 'm1' of the
+# `robot_forklift_simple_3sw` robot.
+# If you need to customize the simulation configuration, create a new file and
+# pass it as a value for the parameter
+# 'sim_file' in the launch file 'm1.launch.py' or 'm2.launch.py'.
 
 # Plugin to control the mobile base in velocity.
 base_velocity_controller:

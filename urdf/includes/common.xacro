@@ -1,11 +1,16 @@
 <?xml version="1.0"?>
 <!--
-The word 'fs3sw' is obtained from the combination of the words '(f)orklift', '(s)imple' and '(3) (s)teerable
-(w)heels'.
-This xacro file defines the 'core' model of the fs3sw robot, a base with 3 steerable wheels and a simple forklift.
-No sensors or extra elements are included.
+Common xacro file for the fs3sw robot family.
+THIS FILE IS NOT A COMPLETE ROBOT MODEL. IT IS MEANT TO BE INCLUDED FROM
+THE PUBLIC MODEL XACRO FILES, FOR EXAMPLE M1.XACRO AND M2.XACRO.
+
+The common robot contains:
+- the rectangular forklift base
+- the three steerable wheels
+- the simple fork
+- the Gazebo plugins that belong to that common mechanical structure
 -->
-<robot name="fs3sw_core" xmlns:xacro="http://www.ros.org/wiki/xacro" xmlns:gz="http://gazebosim.org/schema">
+<robot name="robot_forklift_simple_3sw_common" xmlns:xacro="http://www.ros.org/wiki/xacro" xmlns:gz="http://gazebosim.org/schema">
 
   <xacro:property name="robot_forklift_simple_3sw_pkg_dir" value="$(find robot_forklift_simple_3sw)"/>
   <xacro:property name="robotics_description_pkg_dir"      value="$(find robotics_description)"/>
@@ -38,7 +43,7 @@ No sensors or extra elements are included.
   platform = base + fork.
   -->
   <xacro:arg name="sim_file"
-             default="${robot_forklift_simple_3sw_pkg_dir}/config/example_core_simulation.yaml"/>
+             default="${robot_forklift_simple_3sw_pkg_dir}/config/example_m1_simulation.yaml"/>
 
   <!--
   Args for body
@@ -56,7 +61,7 @@ No sensors or extra elements are included.
   <xacro:arg name="body_ground_clearance"  default="0.06"/>
   <xacro:arg name="dist_to_wheels"         default="0.50"/>
   <xacro:arg name="alpha_deg"              default="154"/>
-  <xacro:arg name="body_mesh"              default="robot_forklift_simple_3sw/meshes/forklift_simple_3aw_base.stl"/>
+  <xacro:arg name="body_mesh"              default="robot_forklift_simple_3sw/meshes/forklift_simple_3sw_base.stl"/>
   <xacro:arg name="body_scale"             default="1.0 1.0 1.0"/>
   <xacro:arg name="body_color"             default="0.0 0.0 1.0 1.0"/>
 
@@ -79,12 +84,11 @@ No sensors or extra elements are included.
   <xacro:arg name="s_wheel_slip2"                 default="0.0005"/>
 
   <!--
-  Usually, forks are attached to the robot, on the front or the back side. The fork usually is a heavy body.
-  Attaching the fork with a considerable mass to the robot base, at the front or back, will affect the base's center
-  of mass, which will affect the robot's dynamics and stability in simulation, producing oscillations or even making the
-  robot to tip over.
-  Since simulation is used for kinematic behavior instead of dynamic behavior, the inertia of the fork, so even though
-  it is attached to the robot, the robot will move as it has no fork attached.
+  A fork can add a large mass far from the base center of mass.
+  If that inertia is included in simulation, the robot can oscillate or even tip over.
+  This robot is used mainly for kinematic simulation, not for accurate dynamic simulation.
+  For that reason, the fork inertia is disabled by default, so the fork is visible and attached
+  to the robot, but it does not change the simulated base dynamics.
   -->
   <xacro:arg name="fork_use_inertial"   default="False"/>
   <xacro:arg name="fork_color"          default="0.1 0.1 0.1 1.0"/>
@@ -200,7 +204,6 @@ No sensors or extra elements are included.
   <xacro:property name="s_wheel_thickness"            value="$(arg s_wheel_thickness)"/>
   <xacro:property name="s_wheel_mesh"                 value=""/>
   <xacro:property name="s_wheel_mesh_scale"           value="1.0 1.0 1.0"/>
-  <xacro:property name="s_wheel_mesh_origin"          value="0.0 0.0 0.0 0.0 0.0 0.0"/>
   <xacro:property name="s_wheel_color"                value="$(arg s_wheel_color)"/>
   <xacro:property name="s_wheel_steering_joint_type" value="revolute"/>
   <!--
@@ -276,9 +279,10 @@ No sensors or extra elements are included.
   The default velocity limit of 0.5 m/s is based on typical lift speeds of industrial forklifts, which commonly
   operate in the range of [0.4, 0.6] m/s under load.
   -->
-  <xacro:property name="fork_limits" value="$(arg fork_limits)"/>
+  <xacro:property name="fork_limits"               value="$(arg fork_limits)"/>
   <!-- Distance from the ground to the bottom face of the tines. -->
-  <xacro:property name="fork_tines_rest_clearance"        value="$(arg fork_tines_rest_clearance)"/>
+  <xacro:property name="fork_tines_rest_clearance" value="$(arg fork_tines_rest_clearance)"/>
+  <xacro:property name="fork_open_tines"           value="True"/>
 
   <xacro:property name="robot_size_x" value="2.733"/>
   <xacro:property name="robot_size_y" value="0.774"/>
@@ -429,7 +433,6 @@ No sensors or extra elements are included.
                          use_inertial="${s_wheel_use_inertial}"
                          v_mesh="${s_wheel_mesh}"
                          v_mesh_scale="${s_wheel_mesh_scale}"
-                         v_mesh_origin="${s_wheel_mesh_origin}"
                          color="${s_wheel_color}"
                          radius="${s_wheel_radius}"
                          length="${s_wheel_thickness}"
@@ -452,7 +455,6 @@ No sensors or extra elements are included.
                          use_inertial="${s_wheel_use_inertial}"
                          v_mesh="${s_wheel_mesh}"
                          v_mesh_scale="${s_wheel_mesh_scale}"
-                         v_mesh_origin="${s_wheel_mesh_origin}"
                          color="${s_wheel_color}"
                          radius="${s_wheel_radius}"
                          length="${s_wheel_thickness}"
@@ -475,7 +477,6 @@ No sensors or extra elements are included.
                          use_inertial="${s_wheel_use_inertial}"
                          v_mesh="${s_wheel_mesh}"
                          v_mesh_scale="${s_wheel_mesh_scale}"
-                         v_mesh_origin="${s_wheel_mesh_origin}"
                          color="${s_wheel_color}"
                          radius="${s_wheel_radius}"
                          length="${s_wheel_thickness}"
@@ -531,6 +532,7 @@ No sensors or extra elements are included.
                      use_inertial="${fork_use_inertial}"
                      color="${fork_color}"
                      limits="${fork_limits}"
+                     open_tines="${fork_open_tines}"
                      joint_parent_fr_root_fr="${joint_base_fr_fork_fr_x} 0 ${joint_base_fr_fork_fr_z} 0 0 ${pi}"/>
 
   <!-- ===================================================================== -->
@@ -841,35 +843,6 @@ No sensors or extra elements are included.
         </xacro:if>
       </xacro:if>
 
-      <!--
-      Define a 'JointStatePublisher' Gazebo plugin to report the states of the joints.
-      -->
-      <xacro:property name="joint_state_publisher_sim_cfg"
-                      value="${sim_cfg.get('joint_state_publisher', dict())}"/>
-
-      <xacro:if value="${joint_state_publisher_sim_cfg.get('enabled', False)}">
-        <xacro:property name="js_topic"
-                        value="${joint_state_publisher_sim_cfg.get('topic', '')}"/>
-
-        <!-- No topic, no Gazebo plugin -->
-        <xacro:if value="${js_topic != ''}">
-          <xacro:resolve_topic prop_id="resolved_js_topic"
-                               topic="${js_topic}"
-                               namespace="${robot_namespace}"/>
-
-          <xacro:plugin_joint_state_publisher topic="${resolved_js_topic}">
-            <joint_names>
-              <joint_name>${robot_prefix}${fork_name}_root_joint</joint_name>
-              <joint_name>${robot_prefix}${steerable_wheel_0_name}_steering_joint</joint_name>
-              <joint_name>${robot_prefix}${steerable_wheel_0_name}_rotation_joint</joint_name>
-              <joint_name>${robot_prefix}${steerable_wheel_1_name}_steering_joint</joint_name>
-              <joint_name>${robot_prefix}${steerable_wheel_1_name}_rotation_joint</joint_name>
-              <joint_name>${robot_prefix}${steerable_wheel_2_name}_steering_joint</joint_name>
-              <joint_name>${robot_prefix}${steerable_wheel_2_name}_rotation_joint</joint_name>
-            </joint_names>
-          </xacro:plugin_joint_state_publisher>
-        </xacro:if>
-      </xacro:if>
     </gazebo>
   </xacro:if>
 </robot>

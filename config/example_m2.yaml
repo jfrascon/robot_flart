@@ -90,4 +90,4 @@
   ros__parameters:
     subscription_heartbeat: 1000
     # config_file, expand_gz_topic_names and override_timestamps_with_wall_time
-    # are forced in the launch file. See 'robot.launch.py' for details.
+    # are forced in the model launch file. See 'm1.launch.py' or 'm2.launch.py' for details.
