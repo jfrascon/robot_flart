@@ -1,4 +1,4 @@
-# robot_forki3
+# [`robot_forki3`](https://github.com/jfrascon/robot_forki3/)
 
 `robot_forki3` models a family of forklifts with three steerable wheels and a
 simple fork.
