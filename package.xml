@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>robot_forklift_simple_3sw</name>
+  <name>robot_forki3</name>
   <version>1.0.0</version>
-  <description>URDF descriptions for the robot model fs3sw</description>
+  <description>URDF descriptions for the forki3 robot family</description>
   <maintainer email="jfracon@gmail.com">Juan Francisco Rascon Crespo</maintainer>
   <license>BSD-3-Clause</license>
 

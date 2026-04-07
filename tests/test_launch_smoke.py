@@ -5,12 +5,12 @@ from conftest import run_bash
 @pytest.mark.parametrize(
     ('launch_file', 'launch_args', 'expected_text'),
     [
-        ('m1.launch.py', '', 'ThreeSwerveKinematicsSolverRos node initialized.'),
-        ('m2.launch.py', 'use_sim_time:=True', 'Creating ROS->GZ Bridge: [cmd_vel'),
+        ('model_base.launch.py', '', 'ThreeSwerveKinematicsSolverRos node initialized.'),
+        ('model_sensors1.launch.py', 'use_sim_time:=True', 'Creating ROS->GZ Bridge: [cmd_vel'),
     ],
 )
 def test_robot_launch_smoke(launch_file: str, launch_args: str, expected_text: str) -> None:
-    result = run_bash(f'timeout --signal=INT 8s ros2 launch robot_forklift_simple_3sw {launch_file} {launch_args}')
+    result = run_bash(f'timeout --signal=INT 8s ros2 launch robot_forki3 {launch_file} {launch_args}')
 
     output = result.stdout + result.stderr
 

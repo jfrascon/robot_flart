@@ -44,54 +44,86 @@
   qos_profile: SENSOR_DATA
   lazy: True
 
-- topic_name: top_lidar/scan/points
-  ros_type_name: sensor_msgs/msg/PointCloud2
-  gz_type_name: gz.msgs.PointCloudPacked
-  direction: GZ_TO_ROS
-  qos_profile: SENSOR_DATA
-  lazy: True
-
-- topic_name: top_lidar/imu/data
-  ros_type_name: sensor_msgs/msg/Imu
-  gz_type_name: gz.msgs.IMU
-  direction: GZ_TO_ROS
-  qos_profile: SENSOR_DATA
-  lazy: True
-
-- topic_name: rear_camera/rgbd/image
+- topic_name: fork_camera/rgbd/image
   ros_type_name: sensor_msgs/msg/Image
   gz_type_name: gz.msgs.Image
   direction: GZ_TO_ROS
   qos_profile: SENSOR_DATA
   lazy: True
 
-- topic_name: rear_camera/rgbd/depth_image
+- topic_name: fork_camera/rgbd/depth_image
   ros_type_name: sensor_msgs/msg/Image
   gz_type_name: gz.msgs.Image
   direction: GZ_TO_ROS
   qos_profile: SENSOR_DATA
   lazy: True
 
-- topic_name: rear_camera/rgbd/points
+- topic_name: fork_camera/rgbd/points
   ros_type_name: sensor_msgs/msg/PointCloud2
   gz_type_name: gz.msgs.PointCloudPacked
   direction: GZ_TO_ROS
   qos_profile: SENSOR_DATA
   lazy: True
 
-- topic_name: rear_camera/rgbd/camera_info
+- topic_name: fork_camera/rgbd/camera_info
   ros_type_name: sensor_msgs/msg/CameraInfo
   gz_type_name: gz.msgs.CameraInfo
   direction: GZ_TO_ROS
   qos_profile: SENSOR_DATA
   lazy: True
 
-- topic_name: rear_camera/rgbd/trigger
+- topic_name: fork_camera/rgbd/trigger
   ros_type_name: std_msgs/msg/Empty
   gz_type_name: gz.msgs.Empty
   direction: ROS_TO_GZ
   qos_profile: DEFAULT
   lazy: True
+
+# The fork infrared bridges are currently commented because fork_camera_infra1
+# and fork_camera_infra2 are disabled in the simulation
+# Uncomment these entries if those camera plugins are enabled again.
+
+# - topic_name: fork_camera/infra1/image
+#   ros_type_name: sensor_msgs/msg/Image
+#   gz_type_name: gz.msgs.Image
+#   direction: GZ_TO_ROS
+#   qos_profile: SENSOR_DATA
+#   lazy: True
+#
+# - topic_name: fork_camera/infra1/camera_info
+#   ros_type_name: sensor_msgs/msg/CameraInfo
+#   gz_type_name: gz.msgs.CameraInfo
+#   direction: GZ_TO_ROS
+#   qos_profile: SENSOR_DATA
+#   lazy: True
+#
+# - topic_name: fork_camera/infra1/trigger
+#   ros_type_name: std_msgs/msg/Empty
+#   gz_type_name: gz.msgs.Empty
+#   direction: ROS_TO_GZ
+#   qos_profile: DEFAULT
+#   lazy: True
+#
+# - topic_name: fork_camera/infra2/image
+#   ros_type_name: sensor_msgs/msg/Image
+#   gz_type_name: gz.msgs.Image
+#   direction: GZ_TO_ROS
+#   qos_profile: SENSOR_DATA
+#   lazy: True
+#
+# - topic_name: fork_camera/infra2/camera_info
+#   ros_type_name: sensor_msgs/msg/CameraInfo
+#   gz_type_name: gz.msgs.CameraInfo
+#   direction: GZ_TO_ROS
+#   qos_profile: SENSOR_DATA
+#   lazy: True
+#
+# - topic_name: fork_camera/infra2/trigger
+#   ros_type_name: std_msgs/msg/Empty
+#   gz_type_name: gz.msgs.Empty
+#   direction: ROS_TO_GZ
+#   qos_profile: DEFAULT
+#   lazy: True
 
 - topic_name: left_tine_camera/rgbd/image
   ros_type_name: sensor_msgs/msg/Image
@@ -127,86 +159,6 @@
   direction: ROS_TO_GZ
   qos_profile: DEFAULT
   lazy: True
-
-- topic_name: right_tine_camera/rgbd/image
-  ros_type_name: sensor_msgs/msg/Image
-  gz_type_name: gz.msgs.Image
-  direction: GZ_TO_ROS
-  qos_profile: SENSOR_DATA
-  lazy: True
-
-- topic_name: right_tine_camera/rgbd/depth_image
-  ros_type_name: sensor_msgs/msg/Image
-  gz_type_name: gz.msgs.Image
-  direction: GZ_TO_ROS
-  qos_profile: SENSOR_DATA
-  lazy: True
-
-- topic_name: right_tine_camera/rgbd/points
-  ros_type_name: sensor_msgs/msg/PointCloud2
-  gz_type_name: gz.msgs.PointCloudPacked
-  direction: GZ_TO_ROS
-  qos_profile: SENSOR_DATA
-  lazy: True
-
-- topic_name: right_tine_camera/rgbd/camera_info
-  ros_type_name: sensor_msgs/msg/CameraInfo
-  gz_type_name: gz.msgs.CameraInfo
-  direction: GZ_TO_ROS
-  qos_profile: SENSOR_DATA
-  lazy: True
-
-- topic_name: right_tine_camera/rgbd/trigger
-  ros_type_name: std_msgs/msg/Empty
-  gz_type_name: gz.msgs.Empty
-  direction: ROS_TO_GZ
-  qos_profile: DEFAULT
-  lazy: True
-
-# The rear infrared bridges are currently commented because rear_camera_infra1
-# and rear_camera_infra2 are disabled in the simulation file. Uncomment these
-# entries if those camera plugins are enabled again.
-# - topic_name: rear_camera/infra1/image
-#   ros_type_name: sensor_msgs/msg/Image
-#   gz_type_name: gz.msgs.Image
-#   direction: GZ_TO_ROS
-#   qos_profile: SENSOR_DATA
-#   lazy: True
-#
-# - topic_name: rear_camera/infra1/camera_info
-#   ros_type_name: sensor_msgs/msg/CameraInfo
-#   gz_type_name: gz.msgs.CameraInfo
-#   direction: GZ_TO_ROS
-#   qos_profile: SENSOR_DATA
-#   lazy: True
-#
-# - topic_name: rear_camera/infra1/trigger
-#   ros_type_name: std_msgs/msg/Empty
-#   gz_type_name: gz.msgs.Empty
-#   direction: ROS_TO_GZ
-#   qos_profile: DEFAULT
-#   lazy: True
-#
-# - topic_name: rear_camera/infra2/image
-#   ros_type_name: sensor_msgs/msg/Image
-#   gz_type_name: gz.msgs.Image
-#   direction: GZ_TO_ROS
-#   qos_profile: SENSOR_DATA
-#   lazy: True
-#
-# - topic_name: rear_camera/infra2/camera_info
-#   ros_type_name: sensor_msgs/msg/CameraInfo
-#   gz_type_name: gz.msgs.CameraInfo
-#   direction: GZ_TO_ROS
-#   qos_profile: SENSOR_DATA
-#   lazy: True
-#
-# - topic_name: rear_camera/infra2/trigger
-#   ros_type_name: std_msgs/msg/Empty
-#   gz_type_name: gz.msgs.Empty
-#   direction: ROS_TO_GZ
-#   qos_profile: DEFAULT
-#   lazy: True
 
 # The left-tine infrared bridges are currently commented because
 # left_tine_camera_infra1 and left_tine_camera_infra2 are disabled in the
@@ -253,6 +205,41 @@
 #   qos_profile: DEFAULT
 #   lazy: True
 
+- topic_name: right_tine_camera/rgbd/image
+  ros_type_name: sensor_msgs/msg/Image
+  gz_type_name: gz.msgs.Image
+  direction: GZ_TO_ROS
+  qos_profile: SENSOR_DATA
+  lazy: True
+
+- topic_name: right_tine_camera/rgbd/depth_image
+  ros_type_name: sensor_msgs/msg/Image
+  gz_type_name: gz.msgs.Image
+  direction: GZ_TO_ROS
+  qos_profile: SENSOR_DATA
+  lazy: True
+
+- topic_name: right_tine_camera/rgbd/points
+  ros_type_name: sensor_msgs/msg/PointCloud2
+  gz_type_name: gz.msgs.PointCloudPacked
+  direction: GZ_TO_ROS
+  qos_profile: SENSOR_DATA
+  lazy: True
+
+- topic_name: right_tine_camera/rgbd/camera_info
+  ros_type_name: sensor_msgs/msg/CameraInfo
+  gz_type_name: gz.msgs.CameraInfo
+  direction: GZ_TO_ROS
+  qos_profile: SENSOR_DATA
+  lazy: True
+
+- topic_name: right_tine_camera/rgbd/trigger
+  ros_type_name: std_msgs/msg/Empty
+  gz_type_name: gz.msgs.Empty
+  direction: ROS_TO_GZ
+  qos_profile: DEFAULT
+  lazy: True
+
 # The right-tine infrared bridges are currently commented because
 # right_tine_camera_infra1 and right_tine_camera_infra2 are disabled in the
 # simulation file. Uncomment these entries if those camera plugins are enabled.
@@ -297,3 +284,17 @@
 #   direction: ROS_TO_GZ
 #   qos_profile: DEFAULT
 #   lazy: True
+
+- topic_name: top_lidar/scan/points
+  ros_type_name: sensor_msgs/msg/PointCloud2
+  gz_type_name: gz.msgs.PointCloudPacked
+  direction: GZ_TO_ROS
+  qos_profile: SENSOR_DATA
+  lazy: True
+
+- topic_name: top_lidar/imu/data
+  ros_type_name: sensor_msgs/msg/Imu
+  gz_type_name: gz.msgs.IMU
+  direction: GZ_TO_ROS
+  qos_profile: SENSOR_DATA
+  lazy: True

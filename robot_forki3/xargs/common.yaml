@@ -3,6 +3,7 @@
 sim_file:
   default_value: ""
   description: "Path to simulation configuration. If empty, the default for the selected robot model is used."
+
 body_use_inertial:
   default_value: "True"
   description: "Use inertial element for the robot body. If False, a null inertia will be used"
@@ -26,7 +27,7 @@ alpha_deg:
   default_value: "154"
   description: "Wheel layout angle in degrees, used in xacro as radians(alpha_deg)."
 body_mesh:
-  default_value: "robot_forklift_simple_3sw/meshes/forklift_simple_3sw_base.stl"
+  default_value: "robot_forki3/meshes/forki3_base.stl"
   description: "Body mesh path within package format <pkg>/<path>."
 body_scale:
   default_value: "1.0 1.0 1.0"
@@ -34,6 +35,7 @@ body_scale:
 body_color:
   default_value: "0.0 0.0 1.0 1.0"
   description: "Body color as 'r g b a'."
+
 s_wheel_use_inertial:
   default_value: "True"
   description: "Use inertial element for wheels. If False, a null inertia will be used"
@@ -71,19 +73,33 @@ s_wheel_slip1:
 s_wheel_slip2:
   default_value: "0.0005"
   description: "Secondary slip compliance for wheel-ground contact."
+
+fork_use_visual:
+  default_value: "True"
+  description: "Include visual element for the fork body."
+  choices: ["True", "true", "False", "false"]
+fork_use_collision:
+  default_value: "True"
+  description: "Include collision element for the fork body."
+  choices: ["True", "true", "False", "false"]
 fork_use_inertial:
   default_value: "False"
-  description: "Use inertial element for fork"
+  description: "Use inertial element for the fork."
+  choices: ["True", "true", "False", "false"]
+fork_use_v_mesh:
+  default_value: "True"
+  description: "Use a mesh for the fork visual. If False, use a primitive."
   choices: ["True", "true", "False", "false"]
 fork_color:
   default_value: "0.1 0.1 0.1 1.0"
   description: "Fork color as 'r g b a'."
-fork_scale:
-  default_value: "1.0 1.0 1.0"
-  description: "Fork geometric scale as 'sx sy sz'."
+fork_use_c_mesh:
+  default_value: "True"
+  description: "Use a mesh for the fork collision. If False, use a primitive."
+  choices: ["True", "true", "False", "false"]
 fork_limits:
   default_value: "-0.01 0.8 0.5 20000.0"
   description: "Fork prismatic joint limits as 'lower upper velocity effort'."
-fork_tines_rest_clearance:
+fork_rest_clearance:
   default_value: "0.03"
-  description: "Distance from ground to tine bottom face at rest (m)."
+  description: "Rest clearance between the fork and the ground."
