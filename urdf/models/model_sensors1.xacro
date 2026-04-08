@@ -237,15 +237,13 @@ the common forklift model:
   The frame of the mesh is located, w.r.t ${prefix}${name}_bottom_screw_frame, at
   (x = 0.002375 m, y = 0 m, z = 0.0125 m, R = 0 rad, P = 0 rad, Y = 0 rad).
   The bottom face of the mesh is touching the root frame of the camera.
-  Therefore, x_min = 0.002375 - (0.025053/2) m = -0.0101515 m.
-  Therefore, we have to move the root frame of the camera 0.0101515 m in the positive x-axis of
-  fork's root frame to have the back face of the camera aligned with the back face of the fork.
-  And, since the height of the union body that joins the tines of the fork is 6 cm, the root frame
-  of the camera has to be located at 6 cm in the z-axis of the fork's root frame.
+  Therefore
+    x_min = 0.002375 - (0.025053/2) m = -0.0101515 m.
+    x_max = 0.002375 + (0.025053/2) m = 0.0148995 m.
   -->
-  <xacro:property name="fork_rgbd_mount_x" value="0.0101515"/>
+  <xacro:property name="fork_rgbd_mount_x" value="${-0.0148995 - 0.01}"/>
   <xacro:property name="fork_rgbd_mount_y" value="0"/>
-  <xacro:property name="fork_rgbd_mount_z" value="${tine_size_z}"/>
+  <xacro:property name="fork_rgbd_mount_z" value="0"/>
 
   <xacro:realsense_d435_rgbd name="fork_camera"
                              prefix="${robot_prefix}"
@@ -327,9 +325,11 @@ the common forklift model:
                              sim_infra2_trigger_topic="${fork_camera_infra2_sim_trigger_topic}"/>
 
   <!--
-  The tine cameras are mounted near the front opening of each tine.
-  The x position uses the reference tine length and the fixed D435 body offset
-  used above. The y position places each camera at the center of its tine.
+  The tine cameras are mounted on `${robot_prefix}${fork_name}_carriage_link`.
+  The x position places each camera near the front opening of its tine.
+  The y position places each camera at the center of its tine.
+  The z position places each camera slightly above the bottom face of the tine, which usually
+  has 1 mm thickness.
   -->
   <!-- ===================================================================== -->
   <!-- LEFT TINE CAMERA: REALSENSE D435 -->
@@ -362,13 +362,12 @@ the common forklift model:
   The D435 front face is 0.0149 m in front of its root frame.
   tine_size_x - 0.0149 - 0.01 places the camera 1 cm behind the front opening of the left tine.
   -->
-  <xacro:property name="left_tine_rgbd_mount_x"
-                  value="${fork_carriage_len_x + tine_size_x - 0.0149 - 0.01}"/>
+  <xacro:property name="left_tine_rgbd_mount_x" value="${tine_size_x - 0.0149 - 0.01}"/>
 
   <xacro:property name="left_tine_rgbd_mount_y"
                   value="${0.5*(tine_separation + tine_size_y)}"/>
 
-  <xacro:property name="left_tine_rgbd_mount_z" value="0.001"/>
+  <xacro:property name="left_tine_rgbd_mount_z" value="${-tine_size_z + 0.001}"/>
 
   <xacro:realsense_d435_rgbd name="left_tine_camera"
                              prefix="${robot_prefix}"
