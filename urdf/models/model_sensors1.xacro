@@ -358,21 +358,18 @@ the common forklift model:
                                  sim_cfg="${left_tine_camera_infra2_sim_cfg}"/>
 
   <!--
-  The left tine camera is mounted in the carriage frame, not in `${robot_prefix}${base_name}_link`.
+  The left tine camera is mounted in the tine frame, not in `${robot_prefix}${base_name}_link`.
   The D435 front face is 0.0149 m in front of its root frame.
   tine_size_x - 0.0149 - 0.01 places the camera 1 cm behind the front opening of the left tine.
   -->
-  <xacro:property name="left_tine_rgbd_mount_x" value="${tine_size_x - 0.0149 - 0.01}"/>
-
-  <xacro:property name="left_tine_rgbd_mount_y"
-                  value="${0.5*(tine_separation + tine_size_y)}"/>
-
+  <xacro:property name="left_tine_rgbd_mount_x" value="${(0.5 * tine_size_x) - 0.0149 - 0.01}"/>
+  <xacro:property name="left_tine_rgbd_mount_y" value="0"/>
   <xacro:property name="left_tine_rgbd_mount_z" value="${-tine_size_z + 0.001}"/>
 
   <xacro:realsense_d435_rgbd name="left_tine_camera"
                              prefix="${robot_prefix}"
                              namespace="${robot_namespace}"
-                             parent_frame="${robot_prefix}${fork_name}_carriage_link"
+                             parent_frame="${robot_prefix}${fork_name}_left_tine_link"
                              use_visual="${left_tine_rgbd_use_visual}"
                              use_collision="${left_tine_rgbd_use_collision}"
                              use_inertial="${left_tine_rgbd_use_inertial}"
@@ -476,7 +473,7 @@ the common forklift model:
 
   <!--
   The right tine camera uses the same x and z coordinates as the left tine camera.
-  The y coordinate is mirrored around the carriage center line.
+  The y coordinate is mirrored around the tine center line.
   -->
   <xacro:property name="right_tine_rgbd_mount_x" value="${left_tine_rgbd_mount_x}"/>
   <xacro:property name="right_tine_rgbd_mount_y" value="${-left_tine_rgbd_mount_y}"/>
@@ -485,7 +482,7 @@ the common forklift model:
   <xacro:realsense_d435_rgbd name="right_tine_camera"
                              prefix="${robot_prefix}"
                              namespace="${robot_namespace}"
-                             parent_frame="${robot_prefix}${fork_name}_carriage_link"
+                             parent_frame="${robot_prefix}${fork_name}_right_tine_link"
                              use_visual="${right_tine_rgbd_use_visual}"
                              use_collision="${right_tine_rgbd_use_collision}"
                              use_inertial="${right_tine_rgbd_use_inertial}"

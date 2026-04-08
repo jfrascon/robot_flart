@@ -481,7 +481,8 @@ The common robot contains:
     ${xacro.fatal("xacro args fork_limits and fork_rest_clearance are inconsistent: the allowed downward fork travel exceeds the rest clearance")}
   </xacro:if>
 
-  <xacro:property name="fork_carriage_len_x"   value="0.03"/>
+  <xacro:property name="fork_carriage_len_x"   value="0.06"/>
+  <xacro:property name="fork_carriage_len_z"   value="0.06"/>
   <xacro:property name="fork_carriage_mount_x" value="${-0.5 * body_size_x}"/>
   <xacro:property name="fork_carriage_mount_y" value="0"/>
   <xacro:property name="fork_carriage_mount_z" value="${-body_ground_clearance + fork_rest_clearance}"/>
@@ -500,6 +501,7 @@ The common robot contains:
                      color="${fork_color}"
                      use_c_mesh="${fork_use_c_mesh}"
                      carriage_size_x="${fork_carriage_len_x}"
+                     carriage_size_z="${fork_carriage_len_z}"
                      limits="${fork_limits}"
                      joint_parent_fr_root_fr="${fork_carriage_mount_x} ${fork_carriage_mount_y} ${fork_carriage_mount_z} 0 0 ${pi}"/>
 
