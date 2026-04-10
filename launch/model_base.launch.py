@@ -2,20 +2,20 @@ import os
 
 import ros2_launch_helpers as rlh
 from ament_index_python.packages import get_package_share_directory
-from launch import LaunchDescription, LaunchDescriptionEntity
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction, SetLaunchConfiguration
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.substitutions import FindPackageShare
 
+from launch import LaunchDescription, LaunchDescriptionEntity
 from robot_forki3 import model_utils
 
 
 def generate_launch_description() -> LaunchDescription:
     """
-    Build the launch description for the `base` model of the `robot_forki3`
-    package.
+    Build the launch description for this model of the `robot_forki3` package.
     """
+
     robot_model = 'base'
 
     ldes: list[LaunchDescriptionEntity] = [
@@ -28,7 +28,7 @@ def generate_launch_description() -> LaunchDescription:
         DeclareLaunchArgument(
             'params_file',
             default_value=os.path.join(
-                get_package_share_directory('robot_forki3'), 'config', 'model_base', 'example_params.yaml'
+                get_package_share_directory('robot_forki3'), 'config', f'model_{robot_model}', 'example_params.yaml'
             ),
             description='Path to params file. If empty, the selected model launch picks its default.',
         ),
@@ -41,7 +41,7 @@ def generate_launch_description() -> LaunchDescription:
         DeclareLaunchArgument(
             'bridge_file',
             default_value=os.path.join(
-                get_package_share_directory('robot_forki3'), 'config', 'model_base', 'example_bridge.yaml'
+                get_package_share_directory('robot_forki3'), 'config', f'model_{robot_model}', 'example_bridge.yaml'
             ),
             description='Path to bridge file. If empty, the selected model launch picks its default.',
         ),
@@ -114,32 +114,26 @@ def _include_bridge() -> IncludeLaunchDescription:
         PythonLaunchDescriptionSource(
             PathJoinSubstitution([FindPackageShare('robot_forki3'), 'launch', '_bridge.launch.py'])
         ),
-        # Launch context keys declared in `_bridge.lauch.py` that do not appear in
-        # `launch_arguments` are already present in the launch context, so there is no need to set
-        # them again in `launch_arguments`.
+        # Launch file `_bridge.lauch.py` uses the launch context keys:
+        # `project_namespace` (def: '')
+        # `robot_name` (def: 'forki3')
+        # `params_file` (def: '')
+        # `use_sim_time` (def: 'False')
+        # `config_file` (def: '')
+        # `subscription_heartbeat` (def: '')
+        # `expand_gz_topic_names` (def: '')
+        # `override_timestamps_with_wall_time` (def: '')
+        # `override_frame_id` (def: '')
+        # DeclareLaunchArguments for node remappings, node options and node logging options.
+        #
+        # Launch context keys used by `_bridge.lauch.py` that do not appear in `launch_arguments`
+        # either are already present in the launch context, so there is no need to set them again in
+        # `launch_arguments`, or they will be inserted in the launch context with default value when
+        # the proper DeclaredLaunchArgument action from the file `_bridge.lauch.py` is executed.
         launch_arguments={
             'config_file': LaunchConfiguration('bridge_file'),
             'bridge_node_options': LaunchConfiguration('bridge_node_options'),
             'bridge_node_logging_options': LaunchConfiguration('bridge_node_logging_options'),
-        }.items(),
-    )
-
-
-def _include_rsp() -> IncludeLaunchDescription:
-    """
-    Include the robot state publisher launch file for the selected model.
-    """
-    return IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            PathJoinSubstitution([FindPackageShare('robot_forki3'), 'launch', '_rsp.launch.py'])
-        ),
-        # Launch context keys declared in `_rsp.lauch.py` that do not appear in `launch_arguments`
-        # are already present in the launch context, so there is no need to set them again in
-        # `launch_arguments`.
-        launch_arguments={
-            'node_remappings': LaunchConfiguration('rsp_node_remappings'),
-            'node_options': LaunchConfiguration('rsp_node_options'),
-            'node_logging_options': LaunchConfiguration('rsp_node_logging_options'),
         }.items(),
     )
 
@@ -154,9 +148,52 @@ def _include_three_swerve_kinematics() -> IncludeLaunchDescription:
                 [FindPackageShare('ground_vehicle_kinematics'), 'launch', 'three_swerve_kinematics.launch.py']
             )
         ),
+        # Launch file `three_swerve_kinematics.lauch.py` uses the launch context keys:
+        # `namespace` (def: 'robot')
+        # `robot_prefix` (def: 'robot_')
+        # `params_file` (def: 'package://ground_vehicle_kinematics/config/example_three_swerve_kinematics.yaml')
+        # `use_sim_time` (def: 'False')
+        # DeclareLaunchArguments for node remappings, node options and node logging options.
+        #
+        # Launch context keys used by `three_swerve_kinematics.lauch.py` that do not appear in
+        # `launch_arguments` either are already present in the launch context, so there is no need
+        # to set them again in `launch_arguments`, or they will be inserted in the launch context
+        # with default value when the proper DeclaredLaunchArgument action from the file
+        # `three_swerve_kinematics.lauch.py` is executed.
         launch_arguments={
             'node_remappings': LaunchConfiguration('three_swerve_kinematics_node_remappings'),
             'node_options': LaunchConfiguration('three_swerve_kinematics_node_options'),
             'node_logging_options': LaunchConfiguration('three_swerve_kinematics_node_logging_options'),
+        }.items(),
+    )
+
+
+def _include_rsp() -> IncludeLaunchDescription:
+    """
+    Include the robot state publisher launch file for the selected model.
+    """
+    return IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            PathJoinSubstitution([FindPackageShare('robot_forki3'), 'launch', '_rsp.launch.py'])
+        ),
+        # Launch file `_rsp.lauch.py` uses the launch context keys:
+        # `project_namespace` (def: '')
+        # `robot_model` (def: 'base')
+        # `robot_name` (def: 'forki3')
+        # `params_file` (def: '')
+        # `use_sim_time` (def: 'False')
+        # `publish_frequency` (def: '')
+        # `ignore_timestamp` (def: '')
+        # `use_robot_description_topic` (def: '')
+        # DeclareLaunchArguments for node remappings, node options and node logging options.
+        #
+        # Launch context keys used by `_rsp.lauch.py` that do not appear in `launch_arguments`
+        # either are already present in the launch context, so there is no need to set them again in
+        # `launch_arguments`, or they will be inserted in the launch context with default value when
+        # the proper DeclaredLaunchArgument action from the file `_rsp.lauch.py` is executed.
+        launch_arguments={
+            'node_remappings': LaunchConfiguration('rsp_node_remappings'),
+            'node_options': LaunchConfiguration('rsp_node_options'),
+            'node_logging_options': LaunchConfiguration('rsp_node_logging_options'),
         }.items(),
     )
