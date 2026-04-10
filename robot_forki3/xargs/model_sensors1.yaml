@@ -15,37 +15,128 @@ top_platform_use_inertial:
 top_platform_color:
   default_value: "0.0 0.0 1.0 1.0"
   description: "Optional color override 'r g b a'; default matches the base color."
-top_lidar_use_visual:
+
+front_top_lidar_use_visual:
   default_value: "True"
   description: "Include visual element for the sensor body."
   choices: ["True", "true", "False", "false"]
-top_lidar_use_collision:
+front_top_lidar_use_collision:
   default_value: "True"
   description: "Include collision element for the sensor body."
   choices: ["True", "true", "False", "false"]
-top_lidar_use_inertial:
+front_top_lidar_use_inertial:
   default_value: "True"
   description: "Include inertial element for the sensor body."
   choices: ["True", "true", "False", "false"]
-top_lidar_use_v_mesh:
-  default_value: "False"
+front_top_lidar_use_v_mesh:
+  default_value: "True"
   description: "Use a mesh for visual; if False, use a primitive."
   choices: ["True", "true", "False", "false"]
-top_lidar_v_mesh_use_low_res:
+front_top_lidar_v_mesh_use_low_res:
   default_value: "True"
   description: "Prefer low-resolution mesh for visual when using mesh."
   choices: ["True", "true", "False", "false"]
-top_lidar_color:
+front_top_lidar_color:
   default_value: ""
   description: "Optional color override 'r g b a'; empty keeps mesh color."
-top_lidar_use_c_mesh:
+front_top_lidar_use_c_mesh:
   default_value: "False"
   description: "Use a mesh for collision; if False, use a primitive."
   choices: ["True", "true", "False", "false"]
-top_lidar_c_mesh_use_low_res:
-  default_value: "False"
+front_top_lidar_c_mesh_use_low_res:
+  default_value: "True"
   description: "Prefer low-resolution mesh for collision when using mesh."
   choices: ["True", "true", "False", "false"]
+front_top_lidar_mount:
+  # tilt_angle = pitch = 20 deg = 0.34906585 rad
+  # base_frame is at the center of the bottom face of the chassis.
+  # x = x_front_top_corner_chassis + lidar_rad*cos(180 - tilt_angle) + offset_x =
+  #   = 0.11 + 0.03*cos(160) + 0 = 0.081809221
+  # z = body_size_z + lidar_rad*sin(180 - tilt_angle) + offset_z =
+  #   = body_size_z + 0.03*sin(160) + 0 = 1.650260604
+  default_value: "0.081809221 0 1.650260604 0 0.34906585 0"
+  description: "Optional pose override 'x y z roll pitch yaw' for the front top lidar mount."
+
+back_top_lidar_use_visual:
+  default_value: "True"
+  description: "Include visual element for the sensor body."
+  choices: ["True", "true", "False", "false"]
+back_top_lidar_use_collision:
+  default_value: "True"
+  description: "Include collision element for the sensor body."
+  choices: ["True", "true", "False", "false"]
+back_top_lidar_use_inertial:
+  default_value: "True"
+  description: "Include inertial element for the sensor body."
+  choices: ["True", "true", "False", "false"]
+back_top_lidar_use_v_mesh:
+  default_value: "True"
+  description: "Use a mesh for visual; if False, use a primitive."
+  choices: ["True", "true", "False", "false"]
+back_top_lidar_v_mesh_use_low_res:
+  default_value: "True"
+  description: "Prefer low-resolution mesh for visual when using mesh."
+  choices: ["True", "true", "False", "false"]
+back_top_lidar_color:
+  default_value: "0 0 0 1"
+  description: "Optional color override 'r g b a'; empty keeps mesh color."
+back_top_lidar_use_c_mesh:
+  default_value: "False"
+  description: "Use a mesh for collision; if False, use a primitive."
+  choices: ["True", "true", "False", "false"]
+back_top_lidar_c_mesh_use_low_res:
+  default_value: "True"
+  description: "Prefer low-resolution mesh for collision when using mesh."
+  choices: ["True", "true", "False", "false"]
+back_top_lidar_mount:
+  # tilt_angle = pitch = 20 deg = 0.34906585 rad
+  # base_frame is at the center of the bottom face of the chassis.
+  # x = x_back_top_corner_chassis + lidar_rad*cos(tilt_angle) + offset_x =
+  #   = -0.7655 + 0.03*cos(20) + 0 = −0.737309221
+  # z = body_size_z + lidar_rad*sin(180 - tilt_angle) + offset_z =
+  #   = body_size_z + 0.03*sin(20) + 0 = 1.650260604
+  default_value: "-0.737309221 0 1.650260604 0 0.34906585 3.141592654"
+  description: "Optional pose override 'x y z roll pitch yaw' for the back top lidar mount."
+
+back_bottom_lidar_use_visual:
+  default_value: "True"
+  description: "Include visual element for the sensor body."
+  choices: ["True", "true", "False", "false"]
+back_bottom_lidar_use_collision:
+  default_value: "True"
+  description: "Include collision element for the sensor body."
+  choices: ["True", "true", "False", "false"]
+back_bottom_lidar_use_inertial:
+  default_value: "True"
+  description: "Include inertial element for the sensor body."
+  choices: ["True", "true", "False", "false"]
+back_bottom_lidar_use_v_mesh:
+  default_value: "True"
+  description: "Use a mesh for visual; if False, use a primitive."
+  choices: ["True", "true", "False", "false"]
+back_bottom_lidar_v_mesh_use_low_res:
+  default_value: "True"
+  description: "Prefer low-resolution mesh for visual when using mesh."
+  choices: ["True", "true", "False", "false"]
+back_bottom_lidar_color:
+  default_value: "0 0 0 1"
+  description: "Optional color override 'r g b a'; empty keeps mesh color."
+back_bottom_lidar_use_c_mesh:
+  default_value: "False"
+  description: "Use a mesh for collision; if False, use a primitive."
+  choices: ["True", "true", "False", "false"]
+back_bottom_lidar_c_mesh_use_low_res:
+  default_value: "True"
+  description: "Prefer low-resolution mesh for collision when using mesh."
+  choices: ["True", "true", "False", "false"]
+# roll = 180 deg (3.141592654 rad), therefore lidar is upside down.
+# x = 0.5 * (body_size_x - sick_s300_size_x) - 0.01 = 0.7025
+# z = -body_ground_clearance + sick_s300_size_z + 0.20
+#   = -0.06 + 0.152 + 0.20 = 0.292
+back_bottom_lidar_mount:
+  default_value: "-0.7025 0 0.292 3.141592654 0 3.141592654"
+  description: "Optional pose override 'x y z roll pitch yaw' for the back bottom lidar mount."
+
 fork_rgbd_use_visual:
   default_value: "True"
   description: "Include visual element for the sensor."
@@ -69,6 +160,7 @@ fork_rgbd_use_c_mesh:
   default_value: "False"
   description: "Use a mesh for collision; if False, use a primitive."
   choices: ["True", "true", "False", "false"]
+
 left_tine_rgbd_use_visual:
   default_value: "True"
   description: "Include visual element for the sensor."
@@ -92,6 +184,7 @@ left_tine_rgbd_use_c_mesh:
   default_value: "False"
   description: "Use a mesh for collision; if False, use a primitive."
   choices: ["True", "true", "False", "false"]
+
 right_tine_rgbd_use_visual:
   default_value: "True"
   description: "Include visual element for the sensor."

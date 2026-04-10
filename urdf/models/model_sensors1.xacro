@@ -23,24 +23,11 @@ the common forklift model:
   <!-- ===================================================================== -->
   <!-- ARGS -->
   <!-- ===================================================================== -->
-  <xacro:arg name="top_platform_use_visual"        default="True"/>
-  <xacro:arg name="top_platform_use_collision"     default="True"/>
-  <xacro:arg name="top_platform_use_inertial"      default="True"/>
-  <xacro:arg name="top_platform_color"             default="0.0 0.0 1.0 1.0"/> <!-- By default same color as base -->
 
-  <xacro:arg name="top_lidar_use_visual"         default="True"/>
-  <xacro:arg name="top_lidar_use_collision"      default="True"/>
-  <xacro:arg name="top_lidar_use_inertial"       default="True"/>
-  <xacro:arg name="top_lidar_use_v_mesh"         default="False"/>
-  <!--
-  The low resolution mesh has its own color. Since the low resolution mesh is used by default, the default value for
-  color is empty.
-  -->
-  <xacro:arg name="top_lidar_v_mesh_use_low_res" default="True"/>
-  <xacro:arg name="top_lidar_color"              default=""/>
-  <!-- Use shape instead of mesh for collision by default. -->
-  <xacro:arg name="top_lidar_use_c_mesh"         default="False"/>
-  <xacro:arg name="top_lidar_c_mesh_use_low_res" default="False"/>
+  <xacro:arg name="top_platform_use_visual"      default="True"/>
+  <xacro:arg name="top_platform_use_collision"   default="True"/>
+  <xacro:arg name="top_platform_use_inertial"    default="True"/>
+  <xacro:arg name="top_platform_color"           default="0.0 0.0 1.0 1.0"/> <!-- By default same color as base -->
 
   <xacro:arg name="fork_rgbd_use_visual"       default="True"/>
   <xacro:arg name="fork_rgbd_use_collision"    default="True"/>
@@ -82,16 +69,6 @@ the common forklift model:
   <xacro:property name="top_platform_size_x"            value="0.08"/>
   <xacro:property name="top_platform_size_y"            value="0.08"/>
   <xacro:property name="top_platform_size_z"            value="0.146"/>
-
-  <!-- Top LiDAR: Robosense Airy -->
-  <xacro:property name="top_lidar_use_visual"         value="$(arg top_lidar_use_visual)"/>
-  <xacro:property name="top_lidar_use_collision"      value="$(arg top_lidar_use_collision)"/>
-  <xacro:property name="top_lidar_use_inertial"       value="$(arg top_lidar_use_inertial)"/>
-  <xacro:property name="top_lidar_use_v_mesh"         value="$(arg top_lidar_use_v_mesh)"/>
-  <xacro:property name="top_lidar_v_mesh_use_low_res" value="$(arg top_lidar_v_mesh_use_low_res)"/>
-  <xacro:property name="top_lidar_color"              value="$(arg top_lidar_color)"/>
-  <xacro:property name="top_lidar_use_c_mesh"         value="$(arg top_lidar_use_c_mesh)"/>
-  <xacro:property name="top_lidar_c_mesh_use_low_res" value="$(arg top_lidar_c_mesh_use_low_res)"/>
 
   <!-- Rear RGBD: RealSense D435 -->
   <xacro:property name="fork_rgbd_use_visual"         value="$(arg fork_rgbd_use_visual)"/>
@@ -143,60 +120,274 @@ the common forklift model:
   </joint>
 
   <!-- ===================================================================== -->
-  <!-- TOP LIDAR: ROBOSENSE AIRY -->
+  <!-- FRONT TOP LIDAR: ROBOSENSE AIRY -->
   <!-- ===================================================================== -->
 
-  <xacro:property name="top_lidar_sim_cfg" value="${sim_cfg.get('top_lidar', dict())}"/>
+  <!-- Arguments for the Robosense Airy mounted on the top of the robot, frontal -->
+  <xacro:arg name="front_top_lidar_use_visual"         default="True"/>
+  <xacro:arg name="front_top_lidar_use_collision"      default="True"/>
+  <xacro:arg name="front_top_lidar_use_inertial"       default="True"/>
+  <xacro:arg name="front_top_lidar_use_v_mesh"         default="False"/>
+  <!--
+  The low resolution mesh has its own color.
+  Since the low resolution mesh is used by default, the default value for color is empty.
+  -->
+  <xacro:arg name="front_top_lidar_v_mesh_use_low_res" default="True"/>
+  <xacro:arg name="front_top_lidar_color"              default=""/>
+  <!-- Use shape instead of mesh for collision by default. -->
+  <xacro:arg name="front_top_lidar_use_c_mesh"         default="False"/>
+  <xacro:arg name="front_top_lidar_c_mesh_use_low_res" default="False"/>
+  <!--
+  tilt_angle = pitch = 20 deg = 0.34906585 rad
+  base_frame is at the center of the bottom face of the chassis.
+  x = x_front_top_corner_chassis + lidar_rad*cos(180 - tilt_angle) + offset_x =
+    = 0.11 + 0.03*cos(160) + 0 = 0.081809221
+  z = body_size_z + lidar_rad*sin(180 - tilt_angle) + offset_z =
+    = body_size_z + 0.03*sin(160) + 0 = 1.650260604
+  -->
+
+  <xacro:arg name="front_top_lidar_mount"              default="0.081809221 0 1.650260604 0 0.34906585 0"/>
+
+  <xacro:property name="front_top_lidar_use_visual"         value="$(arg front_top_lidar_use_visual)"/>
+  <xacro:property name="front_top_lidar_use_collision"      value="$(arg front_top_lidar_use_collision)"/>
+  <xacro:property name="front_top_lidar_use_inertial"       value="$(arg front_top_lidar_use_inertial)"/>
+  <xacro:property name="front_top_lidar_use_v_mesh"         value="$(arg front_top_lidar_use_v_mesh)"/>
+  <xacro:property name="front_top_lidar_v_mesh_use_low_res" value="$(arg front_top_lidar_v_mesh_use_low_res)"/>
+  <xacro:property name="front_top_lidar_color"              value="$(arg front_top_lidar_color)"/>
+  <xacro:property name="front_top_lidar_use_c_mesh"         value="$(arg front_top_lidar_use_c_mesh)"/>
+  <xacro:property name="front_top_lidar_c_mesh_use_low_res" value="$(arg front_top_lidar_c_mesh_use_low_res)"/>
+  <xacro:property name="front_top_lidar_mount"              value="$(arg front_top_lidar_mount)"/>
+
+  <xacro:property name="front_top_lidar_mount_seq"   value="${front_top_lidar_mount.split()}"/>
+
+  <xacro:if value="${len(front_top_lidar_mount_seq) != 6}">
+    ${xacro.fatal("xacro arg front_top_lidar_mount must have 6 elements: 'x y z roll pitch yaw'")}
+  </xacro:if>
+
+  <xacro:property name="front_top_lidar_sim_cfg"            value="${sim_cfg.get('front_top_lidar', dict())}"/>
 
   <!--
-  top_lidar_sim_cfg contains the simulation configuration for the Airy lidar plugin.
-  top_lidar_imu_sim_cfg contains the simulation configuration for the integrated IMU plugin.
+  `front_top_lidar_sim_cfg` contains the simulation configuration for the LiDAR 3D plugin.
+  `front_top_lidar_imu_sim_cfg` contains the simulation configuration for the IMU plugin.
   -->
-  <xacro:property name="top_lidar_imu_sim_cfg" value="${sim_cfg.get('top_lidar_imu', dict())}"/>
+  <xacro:property name="front_top_lidar_imu_sim_cfg"
+                  value="${sim_cfg.get('front_top_lidar_imu', dict())}"/>
 
-  <xacro:set_props_plugin_lidar_3d_ring prop_prefix="top_lidar_sim"
-                                        sim_cfg="${top_lidar_sim_cfg}"/>
+  <xacro:set_props_plugin_lidar_3d_ring prop_prefix="front_top_lidar_sim"
+                                        sim_cfg="${front_top_lidar_sim_cfg}"/>
 
-  <xacro:set_props_plugin_imu prop_prefix="top_lidar_imu_sim"
-                              imu_sim_cfg="${top_lidar_imu_sim_cfg}"/>
+  <xacro:set_props_plugin_imu prop_prefix="front_top_lidar_imu_sim"
+                              imu_sim_cfg="${front_top_lidar_imu_sim_cfg}"/>
 
   <xacro:robosense_airy
-      name="top_lidar"
+      name="front_top_lidar"
       prefix="${robot_prefix}"
-      parent_frame="${robot_prefix}top_platform_link"
-      use_visual="${top_lidar_use_visual}"
-      use_collision="${top_lidar_use_collision}"
-      use_inertial="${top_lidar_use_inertial}"
-      use_v_mesh="${top_lidar_use_v_mesh}"
-      v_mesh_use_low_res="${top_lidar_v_mesh_use_low_res}"
-      color="${top_lidar_color}"
-      use_c_mesh="${top_lidar_use_c_mesh}"
-      c_mesh_use_low_res="${top_lidar_c_mesh_use_low_res}"
-      joint_parent_fr_root_fr="0.0 0.0 ${top_platform_size_z} 0.0 0.0 0.0"
-      sim_lidar_enabled="${use_sim_mode and top_lidar_sim_enabled}"
-      sim_lidar_always_on="${top_lidar_sim_always_on}"
-      sim_lidar_visualize="${top_lidar_sim_visualize}"
-      sim_lidar_update_rate="${top_lidar_sim_update_rate}"
-      sim_lidar_hor_fov_deg="${top_lidar_sim_hor_fov_deg}"
-      sim_lidar_hor_res_deg="${top_lidar_sim_hor_res_deg}"
-      sim_lidar_ver_fov_deg="${top_lidar_sim_ver_fov_deg}"
-      sim_lidar_ver_res_deg="${top_lidar_sim_ver_res_deg}"
-      sim_lidar_dist_span="${top_lidar_sim_dist_span}"
-      sim_lidar_gaussian_noise="${top_lidar_sim_gaussian_noise}"
-      sim_imu_enabled="${use_sim_mode and top_lidar_imu_sim_enabled}"
-      sim_imu_use_gravity="${top_lidar_imu_sim_use_gravity}"
-      sim_imu_always_on="${top_lidar_imu_sim_always_on}"
-      sim_imu_update_rate="${top_lidar_imu_sim_update_rate}"
-      sim_imu_ang_vel_gaussian_noise="${top_lidar_imu_sim_ang_vel_gaussian_noise}"
-      sim_imu_ang_vel_gaussian_noise_bias="${top_lidar_imu_sim_ang_vel_gaussian_noise_bias}"
-      sim_imu_ang_vel_gaussian_noise_dynamic_bias="${top_lidar_imu_sim_ang_vel_gaussian_noise_dynamic_bias}"
-      sim_imu_lin_acc_gaussian_noise="${top_lidar_imu_sim_lin_acc_gaussian_noise}"
-      sim_imu_lin_acc_gaussian_noise_bias="${top_lidar_imu_sim_lin_acc_gaussian_noise_bias}"
-      sim_imu_lin_acc_gaussian_noise_dynamic_bias="${top_lidar_imu_sim_lin_acc_gaussian_noise_dynamic_bias}"
-      sim_imu_use_orientation="${top_lidar_imu_sim_use_orientation}"
+      parent_frame="${robot_prefix}${base_name}_link"
+      use_visual="${front_top_lidar_use_visual}"
+      use_collision="${front_top_lidar_use_collision}"
+      use_inertial="${front_top_lidar_use_inertial}"
+      use_v_mesh="${front_top_lidar_use_v_mesh}"
+      v_mesh_use_low_res="${front_top_lidar_v_mesh_use_low_res}"
+      color="${front_top_lidar_color}"
+      use_c_mesh="${front_top_lidar_use_c_mesh}"
+      c_mesh_use_low_res="${front_top_lidar_c_mesh_use_low_res}"
+      joint_parent_fr_root_fr="${front_top_lidar_mount}"
+      sim_lidar_enabled="${use_sim_mode and front_top_lidar_sim_enabled}"
+      sim_lidar_always_on="${front_top_lidar_sim_always_on}"
+      sim_lidar_visualize="${front_top_lidar_sim_visualize}"
+      sim_lidar_update_rate="${front_top_lidar_sim_update_rate}"
+      sim_lidar_hor_fov_deg="${front_top_lidar_sim_hor_fov_deg}"
+      sim_lidar_hor_res_deg="${front_top_lidar_sim_hor_res_deg}"
+      sim_lidar_ver_fov_deg="${front_top_lidar_sim_ver_fov_deg}"
+      sim_lidar_ver_res_deg="${front_top_lidar_sim_ver_res_deg}"
+      sim_lidar_dist_span="${front_top_lidar_sim_dist_span}"
+      sim_lidar_gaussian_noise="${front_top_lidar_sim_gaussian_noise}"
+      sim_imu_enabled="${use_sim_mode and front_top_lidar_imu_sim_enabled}"
+      sim_imu_use_gravity="${front_top_lidar_imu_sim_use_gravity}"
+      sim_imu_always_on="${front_top_lidar_imu_sim_always_on}"
+      sim_imu_update_rate="${front_top_lidar_imu_sim_update_rate}"
+      sim_imu_ang_vel_gaussian_noise="${front_top_lidar_imu_sim_ang_vel_gaussian_noise}"
+      sim_imu_ang_vel_gaussian_noise_bias="${front_top_lidar_imu_sim_ang_vel_gaussian_noise_bias}"
+      sim_imu_ang_vel_gaussian_noise_dynamic_bias="${front_top_lidar_imu_sim_ang_vel_gaussian_noise_dynamic_bias}"
+      sim_imu_lin_acc_gaussian_noise="${front_top_lidar_imu_sim_lin_acc_gaussian_noise}"
+      sim_imu_lin_acc_gaussian_noise_bias="${front_top_lidar_imu_sim_lin_acc_gaussian_noise_bias}"
+      sim_imu_lin_acc_gaussian_noise_dynamic_bias="${front_top_lidar_imu_sim_lin_acc_gaussian_noise_dynamic_bias}"
+      sim_imu_use_orientation="${front_top_lidar_imu_sim_use_orientation}"
       namespace="${robot_namespace}"
-      sim_lidar_base_topic="${top_lidar_sim_base_topic}"
-      sim_imu_topic="${top_lidar_imu_sim_topic}"/>
+      sim_lidar_base_topic="${front_top_lidar_sim_base_topic}"
+      sim_imu_topic="${front_top_lidar_imu_sim_topic}"/>
+
+  <!-- ===================================================================== -->
+  <!-- BACK TOP LIDAR: ROBOSENSE AIRY -->
+  <!-- ===================================================================== -->
+
+  <!-- Arguments for the Robosense Airy mounted on the top of the robot, back -->
+  <xacro:arg name="back_top_lidar_use_visual"         default="True"/>
+  <xacro:arg name="back_top_lidar_use_collision"      default="True"/>
+  <xacro:arg name="back_top_lidar_use_inertial"       default="True"/>
+  <xacro:arg name="back_top_lidar_use_v_mesh"         default="True"/>
+  <!--
+  The low resolution mesh has its own color.
+  Since the low resolution mesh is used by default, the default value for color is empty.
+  -->
+  <xacro:arg name="back_top_lidar_v_mesh_use_low_res" default="True"/>
+  <xacro:arg name="back_top_lidar_color"              default="0 0 0 1"/>
+  <!-- Use shape instead of mesh for collision by default. -->
+  <xacro:arg name="back_top_lidar_use_c_mesh"         default="False"/>
+  <xacro:arg name="back_top_lidar_c_mesh_use_low_res" default="True"/>
+  <!--
+  tilt_angle = pitch = 20 deg = 0.34906585 rad
+  base_frame is at the center of the bottom face of the chassis.
+  x = x_back_top_corner_chassis + lidar_rad*cos(tilt_angle) + offset_x =
+    = -0.7655 + 0.03*cos(20) + 0 = −0.737309221
+  z = body_size_z + lidar_rad*sin(180 - tilt_angle) + offset_z =
+    = body_size_z + 0.03*sin(20) + 0 = 1.650260604
+  -->
+
+  <xacro:arg name="back_top_lidar_mount"
+             default="-0.737309221 0 1.650260604 0 0.34906585 3.141592654"/>
+
+  <xacro:property name="back_top_lidar_use_visual"         value="$(arg back_top_lidar_use_visual)"/>
+  <xacro:property name="back_top_lidar_use_collision"      value="$(arg back_top_lidar_use_collision)"/>
+  <xacro:property name="back_top_lidar_use_inertial"       value="$(arg back_top_lidar_use_inertial)"/>
+  <xacro:property name="back_top_lidar_use_v_mesh"         value="$(arg back_top_lidar_use_v_mesh)"/>
+  <xacro:property name="back_top_lidar_v_mesh_use_low_res" value="$(arg back_top_lidar_v_mesh_use_low_res)"/>
+  <xacro:property name="back_top_lidar_color"              value="$(arg back_top_lidar_color)"/>
+  <xacro:property name="back_top_lidar_use_c_mesh"         value="$(arg back_top_lidar_use_c_mesh)"/>
+  <xacro:property name="back_top_lidar_c_mesh_use_low_res" value="$(arg back_top_lidar_c_mesh_use_low_res)"/>
+  <xacro:property name="back_top_lidar_mount"              value="$(arg back_top_lidar_mount)"/>
+
+  <xacro:property name="back_top_lidar_mount_seq"          value="${back_top_lidar_mount.split()}"/>
+
+  <xacro:if value="${len(back_top_lidar_mount_seq) != 6}">
+    ${xacro.fatal("xacro arg back_top_lidar_mount must have 6 elements: 'x y z roll pitch yaw'")}
+  </xacro:if>
+
+  <xacro:property name="back_top_lidar_sim_cfg"            value="${sim_cfg.get('back_top_lidar', dict())}"/>
+
+  <!--
+  `back_top_lidar_sim_cfg` contains the simulation configuration for the LiDAR 3D plugin.
+  `back_top_lidar_imu_sim_cfg` contains the simulation configuration for the IMU plugin.
+  -->
+  <xacro:property name="back_top_lidar_imu_sim_cfg"
+                  value="${sim_cfg.get('back_top_lidar_imu', dict())}"/>
+
+  <xacro:set_props_plugin_lidar_3d_ring prop_prefix="back_top_lidar_sim"
+                                        sim_cfg="${back_top_lidar_sim_cfg}"/>
+
+  <xacro:set_props_plugin_imu prop_prefix="back_top_lidar_imu_sim"
+                              imu_sim_cfg="${back_top_lidar_imu_sim_cfg}"/>
+
+  <xacro:robosense_airy
+      name="back_top_lidar"
+      prefix="${robot_prefix}"
+      parent_frame="${robot_prefix}${base_name}_link"
+      use_visual="${back_top_lidar_use_visual}"
+      use_collision="${back_top_lidar_use_collision}"
+      use_inertial="${back_top_lidar_use_inertial}"
+      use_v_mesh="${back_top_lidar_use_v_mesh}"
+      v_mesh_use_low_res="${back_top_lidar_v_mesh_use_low_res}"
+      color="${back_top_lidar_color}"
+      use_c_mesh="${back_top_lidar_use_c_mesh}"
+      c_mesh_use_low_res="${back_top_lidar_c_mesh_use_low_res}"
+      joint_parent_fr_root_fr="${back_top_lidar_mount}"
+      sim_lidar_enabled="${use_sim_mode and back_top_lidar_sim_enabled}"
+      sim_lidar_always_on="${back_top_lidar_sim_always_on}"
+      sim_lidar_visualize="${back_top_lidar_sim_visualize}"
+      sim_lidar_update_rate="${back_top_lidar_sim_update_rate}"
+      sim_lidar_hor_fov_deg="${back_top_lidar_sim_hor_fov_deg}"
+      sim_lidar_hor_res_deg="${back_top_lidar_sim_hor_res_deg}"
+      sim_lidar_ver_fov_deg="${back_top_lidar_sim_ver_fov_deg}"
+      sim_lidar_ver_res_deg="${back_top_lidar_sim_ver_res_deg}"
+      sim_lidar_dist_span="${back_top_lidar_sim_dist_span}"
+      sim_lidar_gaussian_noise="${back_top_lidar_sim_gaussian_noise}"
+      sim_imu_enabled="${use_sim_mode and back_top_lidar_imu_sim_enabled}"
+      sim_imu_use_gravity="${back_top_lidar_imu_sim_use_gravity}"
+      sim_imu_always_on="${back_top_lidar_imu_sim_always_on}"
+      sim_imu_update_rate="${back_top_lidar_imu_sim_update_rate}"
+      sim_imu_ang_vel_gaussian_noise="${back_top_lidar_imu_sim_ang_vel_gaussian_noise}"
+      sim_imu_ang_vel_gaussian_noise_bias="${back_top_lidar_imu_sim_ang_vel_gaussian_noise_bias}"
+      sim_imu_ang_vel_gaussian_noise_dynamic_bias="${back_top_lidar_imu_sim_ang_vel_gaussian_noise_dynamic_bias}"
+      sim_imu_lin_acc_gaussian_noise="${back_top_lidar_imu_sim_lin_acc_gaussian_noise}"
+      sim_imu_lin_acc_gaussian_noise_bias="${back_top_lidar_imu_sim_lin_acc_gaussian_noise_bias}"
+      sim_imu_lin_acc_gaussian_noise_dynamic_bias="${back_top_lidar_imu_sim_lin_acc_gaussian_noise_dynamic_bias}"
+      sim_imu_use_orientation="${back_top_lidar_imu_sim_use_orientation}"
+      namespace="${robot_namespace}"
+      sim_lidar_base_topic="${back_top_lidar_sim_base_topic}"
+      sim_imu_topic="${back_top_lidar_imu_sim_topic}"/>
+
+  <!-- ===================================================================== -->
+  <!-- BACK BOTTOM LIDAR: SICK S300 -->
+  <!-- ===================================================================== -->
+
+  <!-- Arguments for the front bottom Sick S300 mounted on the robot's body -->
+  <xacro:arg name="back_bottom_lidar_use_visual"         default="True"/>
+  <xacro:arg name="back_bottom_lidar_use_collision"      default="True"/>
+  <xacro:arg name="back_bottom_lidar_use_inertial"       default="True"/>
+  <xacro:arg name="back_bottom_lidar_use_v_mesh"         default="True"/>
+  <xacro:arg name="back_bottom_lidar_v_mesh_use_low_res" default="True"/>
+  <xacro:arg name="back_bottom_lidar_color"              default="0 0 0 1"/>
+  <!-- Use shape instead of mesh for collision by default. -->
+  <xacro:arg name="back_bottom_lidar_use_c_mesh"         default="False"/>
+  <xacro:arg name="back_bottom_lidar_c_mesh_use_low_res" default="True"/>
+  <!--
+  roll = 180 deg (3.141592654 rad), therefore lidar is upside down.
+  x = 0.5 * (body_size_x - sick_s300_size_x) - 0.01 = 0.7025
+  z = -body_ground_clearance + sick_s300_size_z + 0.20
+    = -0.06 + 0.152 + 0.20 = 0.292
+  -->
+  <xacro:arg name="back_bottom_lidar_mount"              default= "-0.7025 0 0.292 3.141592654 0 3.141592654"/>
+
+  <xacro:property name="back_bottom_lidar_use_visual"         value="$(arg back_bottom_lidar_use_visual)"/>
+  <xacro:property name="back_bottom_lidar_use_collision"      value="$(arg back_bottom_lidar_use_collision)"/>
+  <xacro:property name="back_bottom_lidar_use_inertial"       value="$(arg back_bottom_lidar_use_inertial)"/>
+  <xacro:property name="back_bottom_lidar_use_v_mesh"         value="$(arg back_bottom_lidar_use_v_mesh)"/>
+  <xacro:property name="back_bottom_lidar_v_mesh_use_low_res" value="$(arg back_bottom_lidar_v_mesh_use_low_res)"/>
+  <xacro:property name="back_bottom_lidar_color"              value="$(arg back_bottom_lidar_color)"/>
+  <xacro:property name="back_bottom_lidar_use_c_mesh"         value="$(arg back_bottom_lidar_use_c_mesh)"/>
+  <xacro:property name="back_bottom_lidar_c_mesh_use_low_res" value="$(arg back_bottom_lidar_c_mesh_use_low_res)"/>
+  <xacro:property name="back_bottom_lidar_mount"              value="$(arg back_bottom_lidar_mount)"/>
+
+  <xacro:property name="back_bottom_lidar_sim_cfg"
+                  value="${sim_cfg.get('back_bottom_lidar', dict())}"/>
+
+  <xacro:set_props_plugin_lidar_2d prop_prefix="back_bottom_lidar_sim"
+                                   sim_cfg="${back_bottom_lidar_sim_cfg}"/>
+
+  <xacro:property name="back_bottom_lidar_size_x" value="0.106"/>
+  <xacro:property name="back_bottom_lidar_size_z" value="0.152"/>
+
+  <xacro:property name="back_bottom_lidar_joint_parent_fr_root_fr"
+                  value="${0.5 * (top_body_size_x - back_bottom_lidar_size_x)}
+                         0.0
+                         ${-ground_clearance + back_bottom_lidar_size_z + back_bottom_lidar_ground_clearance}
+                         ${pi}
+                         0.0
+                         0.0"/>
+
+  <xacro:sick_s300
+    name="back_bottom_lidar"
+    prefix="${robot_prefix}"
+    parent_frame="${robot_prefix}${base_name}_link"
+    use_visual="${back_bottom_lidar_use_visual}"
+    use_collision="${back_bottom_lidar_use_collision}"
+    use_inertial="${back_bottom_lidar_use_inertial}"
+    use_v_mesh="${back_bottom_lidar_use_v_mesh}"
+    v_mesh_use_low_res="${back_bottom_lidar_v_mesh_use_low_res}"
+    color="${back_bottom_lidar_color}"
+    use_c_mesh="${back_bottom_lidar_use_c_mesh}"
+    c_mesh_use_low_res="${back_bottom_lidar_c_mesh_use_low_res}"
+    joint_parent_fr_root_fr="${back_bottom_lidar_mount}"
+    sim_lidar_enabled="${use_sim_mode and back_bottom_lidar_sim_enabled}"
+    sim_lidar_always_on="${back_bottom_lidar_sim_always_on}"
+    sim_lidar_visualize="${back_bottom_lidar_sim_visualize}"
+    sim_lidar_update_rate="${back_bottom_lidar_sim_update_rate}"
+    sim_lidar_hor_fov_deg="${back_bottom_lidar_sim_hor_fov_deg}"
+    sim_lidar_hor_res_deg="${back_bottom_lidar_sim_hor_res_deg}"
+    sim_lidar_dist_span="${back_bottom_lidar_sim_dist_span}"
+    sim_lidar_gaussian_noise="${back_bottom_lidar_sim_gaussian_noise}"
+    namespace="${robot_namespace}"
+    sim_lidar_topic="${back_bottom_lidar_sim_topic}"/>
 
   <!-- ===================================================================== -->
   <!-- FORK CAMERA: REALSENSE D435 -->

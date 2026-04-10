@@ -59,7 +59,7 @@ The common robot contains:
   <xacro:arg name="body_ground_clearance"  default="0.06"/>
   <xacro:arg name="dist_to_wheels"         default="0.50"/>
   <xacro:arg name="alpha_deg"              default="154"/>
-  <xacro:arg name="body_mesh"              default="robot_forki3/meshes/forki3_base.stl"/>
+  <xacro:arg name="body_mesh"              default="robot_forki3/meshes/forklift_chassis.stl"/>
   <xacro:arg name="body_scale"             default="1.0 1.0 1.0"/>
   <xacro:arg name="body_color"             default="0.0 0.0 1.0 1.0"/>
 
@@ -97,10 +97,6 @@ The common robot contains:
   <xacro:arg name="fork_use_c_mesh"     default="True"/>
   <xacro:arg name="fork_limits"         default="-0.01 0.8 0.5 20000.0"/>
   <xacro:arg name="fork_rest_clearance" default="0.03"/>
-
-  <!-- ===================================================================== -->
-  <!-- DEFINITION OF PROPERTIES -->
-  <!-- ===================================================================== -->
 
   <!-- Create properties from args for easy manipulation. -->
 
