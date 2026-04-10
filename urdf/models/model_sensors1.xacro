@@ -127,7 +127,7 @@ the common forklift model:
   <xacro:arg name="front_top_lidar_use_visual"         default="True"/>
   <xacro:arg name="front_top_lidar_use_collision"      default="True"/>
   <xacro:arg name="front_top_lidar_use_inertial"       default="True"/>
-  <xacro:arg name="front_top_lidar_use_v_mesh"         default="False"/>
+  <xacro:arg name="front_top_lidar_use_v_mesh"         default="True"/>
   <!--
   The low resolution mesh has its own color.
   Since the low resolution mesh is used by default, the default value for color is empty.
@@ -136,7 +136,7 @@ the common forklift model:
   <xacro:arg name="front_top_lidar_color"              default=""/>
   <!-- Use shape instead of mesh for collision by default. -->
   <xacro:arg name="front_top_lidar_use_c_mesh"         default="False"/>
-  <xacro:arg name="front_top_lidar_c_mesh_use_low_res" default="False"/>
+  <xacro:arg name="front_top_lidar_c_mesh_use_low_res" default="True"/>
   <!--
   tilt_angle = pitch = 20 deg = 0.34906585 rad
   base_frame is at the center of the bottom face of the chassis.
