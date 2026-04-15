@@ -24,7 +24,7 @@ The common robot contains:
   <xacro:include filename="${robotics_description_pkg_dir}/urdf/wheels/all_wheels.xacro"/>
   <xacro:include filename="${robotics_description_pkg_dir}/urdf/wheels/generic_macros/all_wheels_plugins.xacro"/>
   <xacro:include filename="${robotics_description_pkg_dir}/urdf/extras/fork_simple/fork_simple_macro.xacro"/>
-  <xacro:include filename="${robotics_description_pkg_dir}/urdf/extras/fork_simple/generic_macros/plugin_fork_joint_f64_pos_velcmd_macro.xacro"/>
+  <xacro:include filename="${robotics_description_pkg_dir}/urdf/extras/fork_simple/generic_macros/plugin_fork_joint_f64_pos_pid_macro.xacro"/>
   <xacro:include filename="${robotics_description_pkg_dir}/urdf/gz_system_plugins/all_gz_system_plugins.xacro"/>
 
   <!-- ===================================================================== -->
@@ -777,13 +777,9 @@ The common robot contains:
       <!--
       Define a 'JointPositionController' Gazebo plugin to control the
       `${robot_prefix}${fork_name}_carriage_joint` in position.
-      In this case, we use a float64 messages (std_msgs/msg/Float64) to transport the position
-      for the `${robot_prefix}${fork_name}_carriage_joint`, instead of using actuator messages
-      (actuator_msgs/msg/Actutors).
-      A velocity command, derived from the position, is used to control the position of the
-      `${robot_prefix}${fork_name}_carriage_joint`, instead of using PIDs.
-      By using velocity commands, bypassing the PIDs, we can achieve a perfect position for the
-      joint.
+      In this case, we use Float64 messages (std_msgs/msg/Float64) to transport the position
+      target and Gazebo uses the PID-position mode of `JointPositionController`.
+      The PID gains and limits are read from `sim_cfg.fork_controller`.
       -->
       <xacro:property name="fork_controller_sim_cfg" value="${sim_cfg.get('fork_controller', dict())}"/>
 
@@ -792,9 +788,17 @@ The common robot contains:
 
         <!-- No topic, no Gazebo plugin -->
         <xacro:if value="${fork_topic != ''}">
-          <xacro:plugin_fork_joint_f64_pos_velcmd
+          <xacro:plugin_fork_joint_f64_pos_pid
             joint_name="${robot_prefix}${fork_name}_carriage_joint"
             joint_limits="${fork_limits}"
+            p_gain="${fork_controller_sim_cfg.get('p_gain', 200.0)}"
+            i_gain="${fork_controller_sim_cfg.get('i_gain', 5.0)}"
+            d_gain="${fork_controller_sim_cfg.get('d_gain', 20.0)}"
+            i_max="${fork_controller_sim_cfg.get('i_max', 50.0)}"
+            i_min="${fork_controller_sim_cfg.get('i_min', -50.0)}"
+            cmd_max="${fork_controller_sim_cfg.get('cmd_max', 200.0)}"
+            cmd_min="${fork_controller_sim_cfg.get('cmd_min', -200.0)}"
+            cmd_offset="${fork_controller_sim_cfg.get('cmd_offset', 0.0)}"
             initial_position="${fork_controller_sim_cfg.get('initial_position', '')}"
             namespace="${robot_namespace}"
             topic="${fork_topic}"/>
