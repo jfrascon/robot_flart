@@ -103,3 +103,7 @@ fork_limits:
 fork_rest_clearance:
   default_value: "0.03"
   description: "Rest clearance between the fork and the ground."
+fork_tine_open:
+  default_value: "False"
+  description: "If True, tines are left open (no front closing plates). If False, front plates close the tine openings."
+  choices: ["True", "true", "False", "false"]
