@@ -125,14 +125,14 @@
 #   qos_profile: DEFAULT
 #   lazy: True
 
-- topic_name: top_lidar/scan/points
+- topic_name: front_top_lidar/scan/points
   ros_type_name: sensor_msgs/msg/PointCloud2
   gz_type_name: gz.msgs.PointCloudPacked
   direction: GZ_TO_ROS
   qos_profile: SENSOR_DATA
   lazy: True
 
-- topic_name: top_lidar/imu/data
+- topic_name: front_top_lidar/imu/data
   ros_type_name: sensor_msgs/msg/Imu
   gz_type_name: gz.msgs.IMU
   direction: GZ_TO_ROS
@@ -153,7 +153,7 @@
   qos_profile: SENSOR_DATA
   lazy: True
 
-- topic_name: back_bottom/scan
+- topic_name: back_bottom_lidar/scan
   ros_type_name: sensor_msgs/msg/LaserScan
   gz_type_name: gz.msgs.LaserScan
   direction: GZ_TO_ROS
