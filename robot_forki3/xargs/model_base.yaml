@@ -1,5 +1,8 @@
-# All xarg values in this file are stored as strings.
+# All xacro argument values in this file are stored as strings.
 # This includes numbers, booleans and any other scalar values.
+
+# Xacro arguments defined by urdf/includes/common.xacro.
+# These fields configure the common Forki3 platform shared by every public model.
 sim_file:
   default_value: ""
   description: "Path to simulation configuration. If empty, the default for the selected robot model is used."

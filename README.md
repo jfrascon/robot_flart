@@ -104,14 +104,16 @@ The shared internal Xacro file lives in:
 `common.xacro` is not a public robot model. It is an internal Xacro file used
 by the public robot models.
 
-The Xacro argument catalog is split in the same way:
-- [robot_forki3/xargs/common.yaml](robot_forki3/xargs/common.yaml)
+The xargs system uses one complete YAML file for each public model:
+- [robot_forki3/xargs/model_base.yaml](robot_forki3/xargs/model_base.yaml)
 - [robot_forki3/xargs/model_sensors1.yaml](robot_forki3/xargs/model_sensors1.yaml)
 
-`base` uses the arguments from `common.yaml`.
+Each `model_<robot_model>.yaml` file lists every `xacro:arg` exposed by that
+public model. The YAML file includes arguments defined by internal Xacro
+includes such as `urdf/includes/common.xacro`.
 
-`sensors1` uses the arguments from `common.yaml` plus the arguments from
-`model_sensors1.yaml`.
+`common.xacro` remains an internal URDF reuse point. It is not a public robot
+model and it does not have a launch-facing xargs YAML file.
 
 ## Configuration Files
 
