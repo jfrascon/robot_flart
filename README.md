@@ -1,149 +1,148 @@
 # [`robot_forki3`](https://github.com/jfrascon/robot_forki3/)
 
-`robot_forki3` models a family of forklifts with three steerable wheels and a
-simple fork.
+`robot_forki3` describes a family of ground robots with three steerable wheels.
 
-The package name identifies the robot family. Each concrete variant of that
-family is identified by a short robot model name.
+The package provides two public robot models:
 
-The current public models are:
-- `base`: the base forklift robot
-- `sensors1`: the same base robot plus the current sensor set
+- `base`: the three-swerve mobile platform with its simple fork.
+- `sensors1`: the same platform with its current sensor layout.
 
-The term `simple` refers to the fork geometry used in this package. The fork is
-simple enough to represent a fork with two tines and a core body that links the
-tines together, but it does not try to model the hydraulic system, the lifting
-mechanism, or the tilting mechanism of a real forklift.
+## Public Launch Files
 
-The simple fork model is imported from `robotics_description`.
+Each model has a real-robot entry point and a standalone Gazebo debug entry point:
 
-## Quick Start
+- `real_model_base.launch.py`
+- `real_model_sensors1.launch.py`
+- `debug_model_base.launch.py`
+- `debug_model_sensors1.launch.py`
 
-Launch the base robot without simulation:
+Launch the real base model:
 
 ```bash
-ros2 launch robot_forki3 model_base.launch.py
+ros2 launch robot_forki3 real_model_base.launch.py
 ```
 
-Launch the sensorized robot:
+Launch the real sensors1 model:
 
 ```bash
-ros2 launch robot_forki3 model_sensors1.launch.py
+ros2 launch robot_forki3 real_model_sensors1.launch.py
 ```
 
-Launch the sensorized robot in simulation mode:
+Real launch files start the fork serial driver.
+The default parameters use `/dev/ttyACM0`.
+Pass another `robot_params_file` when the device uses a different port.
+
+Launch either model in the package-local debug world:
 
 ```bash
-ros2 launch robot_forki3 model_sensors1.launch.py use_sim_time:=True
+ros2 launch robot_forki3 debug_model_base.launch.py
+ros2 launch robot_forki3 debug_model_sensors1.launch.py
 ```
 
-When `use_sim_time:=True`, the package also launches the ROS-GZ bridge for that
-robot model.
+The debug world places four worker models around the robot.
+The workers provide visible objects for testing the simulated lidar and camera data in RViz.
+The first debug launch requires network access to download those worker models from Gazebo Fuel.
+Later offline launches work only while the models remain in the local Gazebo cache.
 
-## Main Launch Files
+The RViz debug configuration enables both 3-D lidars, the rear 2-D lidar, the RGB and depth
+camera images, and the RGB-D point cloud.
+The two IMU topics remain available to ROS tools but require an additional RViz IMU display plugin.
 
-The public launch entry points are:
-- [launch/model_base.launch.py](launch/model_base.launch.py)
-- [launch/model_sensors1.launch.py](launch/model_sensors1.launch.py)
-
-These are the launch files a user is expected to start directly. Each launch
-file fixes its robot model internally.
-
-The package also contains these internal reusable launch files:
-- [launch/_rsp.launch.py](launch/_rsp.launch.py)
-- [launch/_bridge.launch.py](launch/_bridge.launch.py)
-
-`launch/_rsp.launch.py` builds the `xacro` command and starts
-`robot_state_publisher`.
-
-`launch/_bridge.launch.py` starts the Gazebo bridge node.
-
-Useful launch arguments:
-- `use_sim_time`: set to `True` for simulation
-- `project_namespace`: namespace prefix shared by all robot instances in one project
-- `robot_name`: robot instance name
-- `params_file`: kinematics and node parameters file
-- `sim_file`: simulation plugin configuration file for the selected model
-- `bridge_file`: ROS <-> Gazebo bridge configuration file
-
-To inspect the launch arguments of one public model launch file:
+The package also installs convenience scripts that pass every default configuration file explicitly:
 
 ```bash
-ros2 launch robot_forki3 model_base.launch.py --show-args
+$(ros2 pkg prefix robot_forki3)/share/robot_forki3/scripts/debug_model_base_with_defaults.sh
+$(ros2 pkg prefix robot_forki3)/share/robot_forki3/scripts/debug_model_sensors1_with_defaults.sh
 ```
 
-`model_base.launch.py --show-args` shows the launch arguments declared by
-`launch/model_base.launch.py`.
+Additional launch arguments can be appended to either command.
+For example, this starts the base model without RViz or the Gazebo GUI:
 
-Because `model_base.launch.py` and `model_sensors1.launch.py` fix the model
-internally, this output also includes the `xacro:arg` values of that selected
-model.
+```bash
+$(ros2 pkg prefix robot_forki3)/share/robot_forki3/scripts/debug_model_base_with_defaults.sh \
+    rviz_enabled:=False gzgui_enabled:=False
+```
 
-## Launch Architecture
+## Internal Launch Files
 
-`model_base.launch.py` and `model_sensors1.launch.py` each declare the public
-launch arguments of that model launch file.
+The public launch files compose these internal launch files:
 
-Each model launch file:
-- fixes `robot_model` internally
-- declares the model xargs through `model_utils`
-- forwards those xargs to `launch/_rsp.launch.py`
-- includes `launch/_bridge.launch.py`
-- includes `three_swerve_kinematics.launch.py` from
-  `ground_vehicle_kinematics`
+- `_robot_state_publisher.launch.py`: generates `robot_description` and starts `robot_state_publisher`.
+- `_bridge.launch.py`: starts the model-specific ROS-Gazebo bridge.
+- `_ground_vehicle_kinematics.launch.py`: starts the three-swerve kinematics node.
+- `_fork_control.launch.py`: starts fork control and, in real mode, the serial driver.
 
-## Xacro Structure
+Every `IncludeLaunchDescription` passes its child inputs explicitly through `launch_arguments`.
+This prevents a child from accidentally inheriting a value left in the launch context by an earlier include.
 
-The public Xacro models live in:
-- [urdf/models/model_base.xacro](urdf/models/model_base.xacro)
-- [urdf/models/model_sensors1.xacro](urdf/models/model_sensors1.xacro)
+Node action properties use one JSON launch argument named `node_args` in launch files that own one node.
+Launch files that compose several nodes expose one descriptive `*_node_args` argument for each node.
+The node name provided inside `node_args` overrides the default name defined by the child launch file.
 
-The shared internal Xacro file lives in:
-- [urdf/includes/common.xacro](urdf/includes/common.xacro)
+The debug launch files expose `robot_description_topic` as the topic shared by `robot_state_publisher` and Gazebo spawn.
+A relative value resolves inside the robot namespace, while an absolute value keeps its root namespace.
+The debug launch prepends this topic remapping before the advanced remappings in `robot_rsp_node_args`.
 
-`common.xacro` is not a public robot model. It is an internal Xacro file used
-by the public robot models.
+## Model Configuration
 
-The xargs system uses one complete YAML file for each public model:
-- [robot_forki3/xargs/model_base.yaml](robot_forki3/xargs/model_base.yaml)
-- [robot_forki3/xargs/model_sensors1.yaml](robot_forki3/xargs/model_sensors1.yaml)
+Each model keeps its complete default configuration in one directory:
 
-Each `model_<robot_model>.yaml` file lists every `xacro:arg` exposed by that
-public model. The YAML file includes arguments defined by internal Xacro
-includes such as `urdf/includes/common.xacro`.
+```text
+config/
+├── model_base/
+│   ├── default_params.yaml
+│   ├── default_xacro_args.yaml
+│   ├── default_simulation.yaml
+│   └── default_bridge.yaml
+└── model_sensors1/
+    ├── default_params.yaml
+    ├── default_xacro_args.yaml
+    ├── default_simulation.yaml
+    └── default_bridge.yaml
+```
 
-`common.xacro` remains an internal URDF reuse point. It is not a public robot
-model and it does not have a launch-facing xargs YAML file.
+The files have separate responsibilities:
 
-## Configuration Files
+- `default_params.yaml` configures ROS nodes.
+- `default_xacro_args.yaml` configures model-description choices.
+- `default_simulation.yaml` configures Gazebo plugins.
+- `default_bridge.yaml` configures ROS-Gazebo topic bridges.
 
-Example files are stored in:
-- [config/model_base/example_params.yaml](config/model_base/example_params.yaml)
-- [config/model_sensors1/example_params.yaml](config/model_sensors1/example_params.yaml)
-- [config/model_base/example_simulation.yaml](config/model_base/example_simulation.yaml)
-- [config/model_sensors1/example_simulation.yaml](config/model_sensors1/example_simulation.yaml)
-- [config/model_base/example_bridge.yaml](config/model_base/example_bridge.yaml)
-- [config/model_sensors1/example_bridge.yaml](config/model_sensors1/example_bridge.yaml)
+An enabled simulation component must define the topic required by its Gazebo plugin.
+The `pose_publisher` component requires at least one of `topic`, `topic_with_covariance`, or `tf_topic`.
+Xacro expansion fails instead of silently omitting an enabled plugin when this contract is violated.
 
-Typical use:
-- use `config/model_*/example_params.yaml` for robot and kinematics parameters
-- use `config/model_*/example_simulation.yaml` for Gazebo plugin configuration
-- use `config/model_*/example_bridge.yaml` for ROS <-> Gazebo channel configuration
+`use_sim_time` is also owned by each node launch file.
+It must not be placed in `default_params.yaml`.
 
-If `params_file` or `bridge_file` are not provided, the selected model launch
-file uses its matching example file. If one of those arguments is explicitly set
-to an empty string, the corresponding external file is not loaded.
+The real-robot launch files render `default_params.yaml` once when `robot_params_file_allow_substs` is true.
+Every child then receives the same rendered file with parameter substitutions disabled.
+When substitutions are disabled, every child receives the original file unchanged.
 
-If `sim_file` is not provided and `use_sim_time:=True`, `_rsp.launch.py` falls
-back to the matching `config/model_*/example_simulation.yaml` file for the
-selected model.
+Runtime Xacro arguments such as `namespace`, `robot_name`, and `sim_file` are owned by launch files.
+They must not be placed in `default_xacro_args.yaml`.
 
-## Robot Models
+## Debug Startup Order
 
-Currently the package exposes these robot models:
-- `base`
-- `sensors1`
+The debug launch files start actions in this order:
 
-`base` is the base forklift robot.
+1. Gazebo debug world.
+2. `robot_state_publisher`.
+3. Gazebo model spawn process.
+4. ROS-Gazebo bridge.
+5. Ground-vehicle kinematics.
+6. Fork control.
+7. RViz when enabled.
 
-`sensors1` extends the base robot with the current sensor set.
+The current launch files start these processes in the listed order.
+The bridge, kinematics, fork control and RViz start only after the Gazebo spawn process exits successfully.
+If Gazebo cannot spawn the model, the debug launch reports the return code and shuts down.
+
+## Inspecting Launch Arguments
+
+Use `--show-args` with any public launch file:
+
+```bash
+ros2 launch robot_forki3 real_model_base.launch.py --show-args
+ros2 launch robot_forki3 debug_model_sensors1.launch.py --show-args
+```

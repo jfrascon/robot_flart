@@ -174,7 +174,7 @@ the common forklift model:
       use_c_mesh="${front_top_lidar_use_c_mesh}"
       c_mesh_use_low_res="${front_top_lidar_c_mesh_use_low_res}"
       joint_parent_fr_root_fr="${front_top_lidar_mount}"
-      sim_lidar_enabled="${use_sim_mode and front_top_lidar_sim_enabled}"
+      sim_lidar_enabled="${sim_file != '' and front_top_lidar_sim_enabled}"
       sim_lidar_always_on="${front_top_lidar_sim_always_on}"
       sim_lidar_visualize="${front_top_lidar_sim_visualize}"
       sim_lidar_update_rate="${front_top_lidar_sim_update_rate}"
@@ -184,7 +184,7 @@ the common forklift model:
       sim_lidar_ver_res_deg="${front_top_lidar_sim_ver_res_deg}"
       sim_lidar_dist_span="${front_top_lidar_sim_dist_span}"
       sim_lidar_gaussian_noise="${front_top_lidar_sim_gaussian_noise}"
-      sim_imu_enabled="${use_sim_mode and front_top_lidar_imu_sim_enabled}"
+      sim_imu_enabled="${sim_file != '' and front_top_lidar_imu_sim_enabled}"
       sim_imu_use_gravity="${front_top_lidar_imu_sim_use_gravity}"
       sim_imu_always_on="${front_top_lidar_imu_sim_always_on}"
       sim_imu_update_rate="${front_top_lidar_imu_sim_update_rate}"
@@ -273,7 +273,7 @@ the common forklift model:
       use_c_mesh="${back_top_lidar_use_c_mesh}"
       c_mesh_use_low_res="${back_top_lidar_c_mesh_use_low_res}"
       joint_parent_fr_root_fr="${back_top_lidar_mount}"
-      sim_lidar_enabled="${use_sim_mode and back_top_lidar_sim_enabled}"
+      sim_lidar_enabled="${sim_file != '' and back_top_lidar_sim_enabled}"
       sim_lidar_always_on="${back_top_lidar_sim_always_on}"
       sim_lidar_visualize="${back_top_lidar_sim_visualize}"
       sim_lidar_update_rate="${back_top_lidar_sim_update_rate}"
@@ -283,7 +283,7 @@ the common forklift model:
       sim_lidar_ver_res_deg="${back_top_lidar_sim_ver_res_deg}"
       sim_lidar_dist_span="${back_top_lidar_sim_dist_span}"
       sim_lidar_gaussian_noise="${back_top_lidar_sim_gaussian_noise}"
-      sim_imu_enabled="${use_sim_mode and back_top_lidar_imu_sim_enabled}"
+      sim_imu_enabled="${sim_file != '' and back_top_lidar_imu_sim_enabled}"
       sim_imu_use_gravity="${back_top_lidar_imu_sim_use_gravity}"
       sim_imu_always_on="${back_top_lidar_imu_sim_always_on}"
       sim_imu_update_rate="${back_top_lidar_imu_sim_update_rate}"
@@ -318,7 +318,7 @@ the common forklift model:
   z = -body_ground_clearance + sick_s300_size_z + 0.20
     = -0.06 + 0.152 + 0.20 = 0.292
   -->
-  <xacro:arg name="back_bottom_lidar_mount"              default= "-0.7025 0 0.292 3.141592654 0 3.141592654"/>
+  <xacro:arg name="back_bottom_lidar_mount"              default="-0.7025 0 0.292 3.141592654 0 3.141592654"/>
 
   <xacro:property name="back_bottom_lidar_use_visual"         value="$(arg back_bottom_lidar_use_visual)"/>
   <xacro:property name="back_bottom_lidar_use_collision"      value="$(arg back_bottom_lidar_use_collision)"/>
@@ -360,16 +360,16 @@ the common forklift model:
     use_c_mesh="${back_bottom_lidar_use_c_mesh}"
     c_mesh_use_low_res="${back_bottom_lidar_c_mesh_use_low_res}"
     joint_parent_fr_root_fr="${back_bottom_lidar_mount}"
-    sim_lidar_enabled="${use_sim_mode and back_bottom_lidar_sim_enabled}"
-    sim_lidar_always_on="${back_bottom_lidar_sim_always_on}"
-    sim_lidar_visualize="${back_bottom_lidar_sim_visualize}"
-    sim_lidar_update_rate="${back_bottom_lidar_sim_update_rate}"
-    sim_lidar_hor_fov_deg="${back_bottom_lidar_sim_hor_fov_deg}"
-    sim_lidar_hor_res_deg="${back_bottom_lidar_sim_hor_res_deg}"
-    sim_lidar_dist_span="${back_bottom_lidar_sim_dist_span}"
-    sim_lidar_gaussian_noise="${back_bottom_lidar_sim_gaussian_noise}"
+    sim_enabled="${sim_file != '' and back_bottom_lidar_sim_enabled}"
+    sim_always_on="${back_bottom_lidar_sim_always_on}"
+    sim_visualize="${back_bottom_lidar_sim_visualize}"
+    sim_update_rate="${back_bottom_lidar_sim_update_rate}"
+    sim_hor_fov_deg="${back_bottom_lidar_sim_hor_fov_deg}"
+    sim_hor_res_deg="${back_bottom_lidar_sim_hor_res_deg}"
+    sim_dist_span="${back_bottom_lidar_sim_dist_span}"
+    sim_gaussian_noise="${back_bottom_lidar_sim_gaussian_noise}"
     namespace="${robot_namespace}"
-    sim_lidar_topic="${back_bottom_lidar_sim_topic}"/>
+    sim_topic="${back_bottom_lidar_sim_topic}"/>
 
   <!-- ===================================================================== -->
   <!-- FORK CAMERA: REALSENSE D435 -->
@@ -429,8 +429,8 @@ the common forklift model:
                              color="${fork_rgbd_color}"
                              use_c_mesh="${fork_rgbd_use_c_mesh}"
                              joint_parent_fr_root_fr="${fork_rgbd_mount_x} ${fork_rgbd_mount_y} ${fork_rgbd_mount_z} 0 0 0"
-                             use_sensor_frames_and_joints="${use_sim_mode}"
-                             sim_rgbd_enabled="${use_sim_mode and fork_camera_rgbd_sim_enabled}"
+                             use_sensor_frames_and_joints="${sim_file != ''}"
+                             sim_rgbd_enabled="${sim_file != '' and fork_camera_rgbd_sim_enabled}"
                              sim_rgbd_use_gravity="${fork_camera_rgbd_sim_use_gravity}"
                              sim_rgbd_always_on="${fork_camera_rgbd_sim_always_on}"
                              sim_rgbd_visualize="${fork_camera_rgbd_sim_visualize}"
@@ -450,7 +450,7 @@ the common forklift model:
                              sim_rgbd_distortion_k_p="${fork_camera_rgbd_sim_distortion_k_p}"
                              sim_rgbd_distortion_center="${fork_camera_rgbd_sim_distortion_center}"
                              sim_rgbd_gaussian_noise="${fork_camera_rgbd_sim_gaussian_noise}"
-                             sim_infra1_enabled="${use_sim_mode and fork_camera_infra1_sim_enabled}"
+                             sim_infra1_enabled="${sim_file != '' and fork_camera_infra1_sim_enabled}"
                              sim_infra1_use_gravity="${fork_camera_infra1_sim_use_gravity}"
                              sim_infra1_always_on="${fork_camera_infra1_sim_always_on}"
                              sim_infra1_visualize="${fork_camera_infra1_sim_visualize}"
@@ -469,7 +469,7 @@ the common forklift model:
                              sim_infra1_distortion_k_p="${fork_camera_infra1_sim_distortion_k_p}"
                              sim_infra1_distortion_center="${fork_camera_infra1_sim_distortion_center}"
                              sim_infra1_gaussian_noise="${fork_camera_infra1_sim_gaussian_noise}"
-                             sim_infra2_enabled="${use_sim_mode and fork_camera_infra2_sim_enabled}"
+                             sim_infra2_enabled="${sim_file != '' and fork_camera_infra2_sim_enabled}"
                              sim_infra2_use_gravity="${fork_camera_infra2_sim_use_gravity}"
                              sim_infra2_always_on="${fork_camera_infra2_sim_always_on}"
                              sim_infra2_visualize="${fork_camera_infra2_sim_visualize}"
@@ -499,7 +499,7 @@ the common forklift model:
 
 
 
-  <xacro:if value="${use_sim_mode}">
+  <xacro:if value="${sim_file != ''}">
     <gazebo>
       <!--
       Define a 'JointStatePublisher' Gazebo plugin to report the states of the joints.
@@ -511,7 +511,11 @@ the common forklift model:
         <xacro:property name="js_topic"
                         value="${joint_state_publisher_sim_cfg.get('topic', '')}"/>
 
-        <!-- No topic, no Gazebo plugin -->
+        <xacro:if value="${js_topic == ''}">
+          ${xacro.fatal(
+            "joint_state_publisher.topic is required when joint_state_publisher.enabled is true.")}
+        </xacro:if>
+
         <xacro:if value="${js_topic != ''}">
           <xacro:resolve_topic prop_id="resolved_js_topic"
                                topic="${js_topic}"

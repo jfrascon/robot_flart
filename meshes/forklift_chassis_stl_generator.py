@@ -4,10 +4,11 @@
 from __future__ import annotations
 
 import argparse
-import struct
+from collections.abc import Sequence
 from datetime import datetime
+import math
 from pathlib import Path
-from typing import Sequence
+import struct
 
 Vec2 = tuple[float, float]
 Vec3 = tuple[float, float, float]
@@ -209,7 +210,14 @@ def write_binary_stl(path: Path, triangles: Sequence[Triangle], name: str = 'she
 def build_model(thickness_m: float) -> list[Triangle]:
     triangles: list[Triangle] = []
 
-    side_profile = [(-0.7655, 0.82), (0.11, 0.82), (0.11, 0.0), (0.7655, -0.41), (0.7655, -0.82), (-0.7655, -0.82)]
+    side_profile = [
+        (-0.7655, 0.82),
+        (0.11, 0.82),
+        (0.11, 0.0),
+        (0.7655, -0.41),
+        (0.7655, -0.82),
+        (-0.7655, -0.82),
+    ]
 
     y_outer_right = -0.3870
     y_inner_right = -0.3850
@@ -230,9 +238,16 @@ def build_model(thickness_m: float) -> list[Triangle]:
         j = (i + 1) % len(side_profile)
         x1, z1 = side_profile[i]
         x2, z2 = side_profile[j]
-        plate_outer = [(x1, y_inner_left, z1), (x2, y_inner_left, z2), (x2, y_inner_right, z2), (x1, y_inner_right, z1)]
+        plate_outer = [
+            (x1, y_inner_left, z1),
+            (x2, y_inner_left, z2),
+            (x2, y_inner_right, z2),
+            (x1, y_inner_right, z1),
+        ]
         nx, nz = interior_normal_for_edge(side_profile, i)
-        triangles.extend(extrude_polygon_one_sided(plate_outer, (nx * thickness_m, 0.0, nz * thickness_m)))
+        triangles.extend(
+            extrude_polygon_one_sided(plate_outer, (nx * thickness_m, 0.0, nz * thickness_m))
+        )
 
     # Rear plate only on upper half: z in [0.0, 0.82], open below z=0.
     rear_upper_outer = [
@@ -246,13 +261,32 @@ def build_model(thickness_m: float) -> list[Triangle]:
     return triangles
 
 
+def positive_finite_float(raw_value: str) -> float:
+    """Parse a positive finite floating-point command-line value."""
+    try:
+        value = float(raw_value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(f"'{raw_value}' is not a number") from exc
+
+    if not math.isfinite(value) or value <= 0.0:
+        raise argparse.ArgumentTypeError(f"'{raw_value}' must be a positive finite number")
+
+    return value
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description='Generate STL from top+side views.')
     parser.add_argument(
-        '--output', type=Path, default=Path(f'forklift_base_{datetime.now():%Y%m%d}.stl'), help='Output STL file path.'
+        '--output',
+        type=Path,
+        default=Path(f'forklift_base_{datetime.now():%Y%m%d}.stl'),
+        help='Output STL file path.',
     )
     parser.add_argument(
-        '--thickness-mm', type=float, default=2.0, help='Sheet thickness in millimeters (default: 2.0).'
+        '--thickness-mm',
+        type=positive_finite_float,
+        default=2.0,
+        help='Sheet thickness in millimeters (default: 2.0).',
     )
     return parser.parse_args()
 
@@ -262,7 +296,10 @@ def main() -> None:
     thickness_m = args.thickness_mm / 1000.0
     triangles = build_model(thickness_m)
     write_binary_stl(args.output, triangles)
-    print(f'Wrote {args.output} with {len(triangles)} triangles (thickness={args.thickness_mm:.3f} mm).')
+    print(
+        f'Wrote {args.output} with {len(triangles)} triangles '
+        f'(thickness={args.thickness_mm:.3f} mm).'
+    )
 
 
 if __name__ == '__main__':

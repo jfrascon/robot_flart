@@ -1,9 +1,7 @@
 # This file shows the full simulation configuration for the model 'sensors1'
 # of the `robot_forki3` robot.
 # If you need to customize the simulation configuration, create a new file and
-# pass it as a value for the parameter
-# 'sim_file' in the launch file 'model_base.launch.py' or
-# 'model_sensors1.launch.py'.
+# pass it through `robot_sim_file` in a `debug_model_*.launch.py` entry point.
 
 # Plugin to control the mobile base in velocity.
 base_velocity_controller:
@@ -12,15 +10,15 @@ base_velocity_controller:
   initial_linear_vel: {"x": 0.0, "y": 0.0, "z": 0.0}
   initial_angular_vel: {"x": 0.0, "y": 0.0, "z": 0.0}
 
-base_pose_ground_truth_publisher:
+pose_publisher:
   enabled: true
-  fixed_frame: map
-  offset: {"x": 0.0, "y": 0.0, "z": 0.0, "R": 0.0, "P": 0.0, "Y": 0.0}
+  reference_frame: map
+  local_offset: {"x": 0.0, "y": 0.0, "z": 0.0, "R": 0.0, "P": 0.0, "Y": 0.0}
   global_offset: {"x": 0.0, "y": 0.0, "z": 0.0, "R": 0.0, "P": 0.0, "Y": 0.0}
   gaussian_noise: 0.0
-  publication_frequency: 50.0
-  nav_topic_no_cov: base_pose_ground_truth_no_cov # published
-  nav_topic_cov: base_pose_ground_truth # published
+  msg_publication_freq: 50.0
+  topic: base_pose_ground_truth_no_cov # published
+  topic_with_covariance: base_pose_ground_truth # published
   tf_topic: tf_sim_world_fr_robot_root_fr # published
 
 # Plugin to control the steering joint of the steerable wheel 0

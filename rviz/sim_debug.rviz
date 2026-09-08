@@ -1,0 +1,590 @@
+Panels:
+  - Class: rviz_common/Displays
+    Help Height: 70
+    Name: Displays
+    Property Tree Widget:
+      Expanded: ~
+      Splitter Ratio: 0.5
+    Tree Height: 363
+  - Class: rviz_common/Views
+    Expanded:
+      - /Current View1
+    Name: Views
+    Splitter Ratio: 0.5
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Alpha: 0.5
+      Cell Size: 1
+      Class: rviz_default_plugins/Grid
+      Color: 160; 160; 164
+      Enabled: true
+      Line Style:
+        Line Width: 0.029999999329447746
+        Value: Lines
+      Name: Grid
+      Normal Cell Count: 0
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
+      Plane: XY
+      Plane Cell Count: 20
+      Reference Frame: <Fixed Frame>
+      Value: true
+    - Class: rviz_default_plugins/TF
+      Enabled: true
+      Filter (blacklist): ""
+      Filter (whitelist): ""
+      Frame Timeout: 15
+      Frames:
+        All Enabled: true
+        forki3_back_bottom_lidar_link:
+          Value: true
+        forki3_back_bottom_lidar_root_link:
+          Value: true
+        forki3_back_top_lidar_imu_link:
+          Value: true
+        forki3_back_top_lidar_link:
+          Value: true
+        forki3_back_top_lidar_root_link:
+          Value: true
+        forki3_base_ballast_link:
+          Value: true
+        forki3_base_footprint_link:
+          Value: true
+        forki3_base_link:
+          Value: true
+        forki3_fork_camera_bottom_screw_frame:
+          Value: true
+        forki3_fork_camera_color_frame:
+          Value: true
+        forki3_fork_camera_color_optical_frame:
+          Value: true
+        forki3_fork_camera_depth_frame:
+          Value: true
+        forki3_fork_camera_depth_optical_frame:
+          Value: true
+        forki3_fork_camera_infra1_frame:
+          Value: true
+        forki3_fork_camera_infra1_optical_frame:
+          Value: true
+        forki3_fork_camera_infra2_frame:
+          Value: true
+        forki3_fork_camera_infra2_optical_frame:
+          Value: true
+        forki3_fork_camera_link:
+          Value: true
+        forki3_fork_carriage_link:
+          Value: true
+        forki3_fork_left_mast_link:
+          Value: true
+        forki3_fork_left_tine_bottom_plate_link:
+          Value: true
+        forki3_fork_left_tine_front_plate_link:
+          Value: true
+        forki3_fork_left_tine_link:
+          Value: true
+        forki3_fork_left_tine_shank_link:
+          Value: true
+        forki3_fork_right_mast_link:
+          Value: true
+        forki3_fork_right_tine_bottom_plate_link:
+          Value: true
+        forki3_fork_right_tine_front_plate_link:
+          Value: true
+        forki3_fork_right_tine_link:
+          Value: true
+        forki3_fork_right_tine_shank_link:
+          Value: true
+        forki3_fork_root_link:
+          Value: true
+        forki3_front_top_lidar_imu_link:
+          Value: true
+        forki3_front_top_lidar_link:
+          Value: true
+        forki3_front_top_lidar_root_link:
+          Value: true
+        forki3_steerable_wheel_0_rotation_link:
+          Value: true
+        forki3_steerable_wheel_0_steerable_link:
+          Value: true
+        forki3_steerable_wheel_1_rotation_link:
+          Value: true
+        forki3_steerable_wheel_1_steerable_link:
+          Value: true
+        forki3_steerable_wheel_2_rotation_link:
+          Value: true
+        forki3_steerable_wheel_2_steerable_link:
+          Value: true
+        forki3_top_platform_link:
+          Value: true
+      Marker Scale: 0.5
+      Name: TF
+      Show Arrows: true
+      Show Axes: true
+      Show Names: false
+      Tree:
+        forki3_base_footprint_link:
+          forki3_base_link:
+            forki3_back_bottom_lidar_root_link:
+              forki3_back_bottom_lidar_link: {}
+            forki3_back_top_lidar_root_link:
+              forki3_back_top_lidar_link:
+                forki3_back_top_lidar_imu_link: {}
+            forki3_base_ballast_link: {}
+            forki3_fork_root_link:
+              forki3_fork_carriage_link:
+                forki3_fork_camera_bottom_screw_frame:
+                  forki3_fork_camera_link:
+                    forki3_fork_camera_color_frame:
+                      forki3_fork_camera_color_optical_frame: {}
+                    forki3_fork_camera_depth_frame:
+                      forki3_fork_camera_depth_optical_frame: {}
+                    forki3_fork_camera_infra1_frame:
+                      forki3_fork_camera_infra1_optical_frame: {}
+                    forki3_fork_camera_infra2_frame:
+                      forki3_fork_camera_infra2_optical_frame: {}
+                forki3_fork_left_tine_link:
+                  forki3_fork_left_tine_front_plate_link: {}
+                forki3_fork_left_tine_shank_link: {}
+                forki3_fork_right_tine_link:
+                  forki3_fork_right_tine_front_plate_link: {}
+                forki3_fork_right_tine_shank_link: {}
+              forki3_fork_left_mast_link: {}
+              forki3_fork_left_tine_bottom_plate_link: {}
+              forki3_fork_right_mast_link: {}
+              forki3_fork_right_tine_bottom_plate_link: {}
+            forki3_front_top_lidar_root_link:
+              forki3_front_top_lidar_link:
+                forki3_front_top_lidar_imu_link: {}
+            forki3_steerable_wheel_0_steerable_link:
+              forki3_steerable_wheel_0_rotation_link: {}
+            forki3_steerable_wheel_1_steerable_link:
+              forki3_steerable_wheel_1_rotation_link: {}
+            forki3_steerable_wheel_2_steerable_link:
+              forki3_steerable_wheel_2_rotation_link: {}
+            forki3_top_platform_link: {}
+      Update Interval: 0
+      Value: true
+    - Alpha: 1
+      Class: rviz_default_plugins/RobotModel
+      Collision Enabled: false
+      Description File: ""
+      Description Source: Topic
+      Description Topic:
+        Depth: 5
+        Durability Policy: Transient Local
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /sim_debug/forki3/robot_description
+      Enabled: true
+      Links:
+        All Links Enabled: true
+        Expand Joint Details: false
+        Expand Link Details: false
+        Expand Tree: false
+        Link Tree Style: Links in Alphabetic Order
+        forki3_back_bottom_lidar_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        forki3_back_bottom_lidar_root_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        forki3_back_top_lidar_imu_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        forki3_back_top_lidar_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        forki3_back_top_lidar_root_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        forki3_base_ballast_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        forki3_base_footprint_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        forki3_base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        forki3_fork_camera_bottom_screw_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        forki3_fork_camera_color_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        forki3_fork_camera_color_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        forki3_fork_camera_depth_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        forki3_fork_camera_depth_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        forki3_fork_camera_infra1_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        forki3_fork_camera_infra1_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        forki3_fork_camera_infra2_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        forki3_fork_camera_infra2_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        forki3_fork_camera_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        forki3_fork_carriage_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        forki3_fork_left_mast_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        forki3_fork_left_tine_bottom_plate_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        forki3_fork_left_tine_front_plate_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        forki3_fork_left_tine_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        forki3_fork_left_tine_shank_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        forki3_fork_right_mast_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        forki3_fork_right_tine_bottom_plate_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        forki3_fork_right_tine_front_plate_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        forki3_fork_right_tine_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        forki3_fork_right_tine_shank_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        forki3_fork_root_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        forki3_front_top_lidar_imu_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        forki3_front_top_lidar_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        forki3_front_top_lidar_root_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        forki3_steerable_wheel_0_rotation_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        forki3_steerable_wheel_0_steerable_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        forki3_steerable_wheel_1_rotation_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        forki3_steerable_wheel_1_steerable_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        forki3_steerable_wheel_2_rotation_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        forki3_steerable_wheel_2_steerable_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        forki3_top_platform_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+      Mass Properties:
+        Inertia: false
+        Mass: false
+      Name: RobotModel
+      TF Prefix: ""
+      Update Interval: 0
+      Value: true
+      Visual Enabled: true
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz_default_plugins/PointCloud2
+      Color: 255; 149; 149
+      Color Transformer: FlatColor
+      Decay Time: 0
+      Enabled: true
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Max Intensity: 0
+      Min Color: 0; 0; 0
+      Min Intensity: 0
+      Name: front_top_lidar
+      Position Transformer: XYZ
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.019999999552965164
+      Style: Flat Squares
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Best Effort
+        Value: /sim_debug/forki3/front_top_lidar/scan/points
+      Use Fixed Frame: true
+      Use rainbow: true
+      Value: true
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz_default_plugins/PointCloud2
+      Color: 170; 255; 127
+      Color Transformer: FlatColor
+      Decay Time: 0
+      Enabled: true
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Max Intensity: 0
+      Min Color: 0; 0; 0
+      Min Intensity: 0
+      Name: back_top_lidar
+      Position Transformer: XYZ
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.019999999552965164
+      Style: Flat Squares
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Best Effort
+        Value: /sim_debug/forki3/back_top_lidar/scan/points
+      Use Fixed Frame: true
+      Use rainbow: true
+      Value: true
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz_default_plugins/LaserScan
+      Color: 85; 255; 255
+      Color Transformer: FlatColor
+      Decay Time: 0
+      Enabled: true
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Max Intensity: 0
+      Min Color: 0; 0; 0
+      Min Intensity: 0
+      Name: back_bottom_lidar
+      Position Transformer: XYZ
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.05000000074505806
+      Style: Flat Squares
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Best Effort
+        Value: /sim_debug/forki3/back_bottom_lidar/scan
+      Use Fixed Frame: true
+      Use rainbow: true
+      Value: true
+    - Class: rviz_default_plugins/Image
+      Enabled: false
+      Max Value: 1
+      Median window: 5
+      Min Value: 0
+      Name: fork_camera_rgb
+      Normalize Range: true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Best Effort
+        Value: /sim_debug/forki3/fork_camera/rgbd/image
+      Value: false
+    - Class: rviz_default_plugins/Image
+      Enabled: false
+      Max Value: 1
+      Median window: 5
+      Min Value: 0
+      Name: fork_camera_depth
+      Normalize Range: true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Best Effort
+        Value: /sim_debug/forki3/fork_camera/rgbd/depth_image
+      Value: false
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz_default_plugins/PointCloud2
+      Color: 255; 85; 255
+      Color Transformer: FlatColor
+      Decay Time: 0
+      Enabled: false
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Max Intensity: 0
+      Min Color: 0; 0; 0
+      Min Intensity: 0
+      Name: fork_camera_points
+      Position Transformer: XYZ
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.019999999552965164
+      Style: Flat Squares
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Best Effort
+        Value: /sim_debug/forki3/fork_camera/rgbd/points
+      Use Fixed Frame: true
+      Use rainbow: true
+      Value: false
+  Enabled: true
+  Global Options:
+    Background Color: 48; 48; 48
+    Fixed Frame: forki3_base_footprint_link
+    Frame Rate: 30
+  Name: root
+  Tools:
+    - Class: rviz_default_plugins/Interact
+      Hide Inactive Objects: true
+    - Class: rviz_default_plugins/MoveCamera
+    - Class: rviz_default_plugins/Select
+  Transformation:
+    Current:
+      Class: rviz_default_plugins/TF
+  Value: true
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Distance: 2.6722655296325684
+      Enable Stereo Rendering:
+        Stereo Eye Separation: 0.05999999865889549
+        Stereo Focal Distance: 1
+        Swap Stereo Eyes: false
+        Value: false
+      Focal Point:
+        X: -1.314365267753601
+        Y: 0.39173996448516846
+        Z: 0.5461950302124023
+      Focal Shape Fixed Size: true
+      Focal Shape Size: 0.05000000074505806
+      Invert Z Axis: false
+      Name: Current View
+      Near Clip Distance: 0.009999999776482582
+      Pitch: 0.914999783039093
+      Target Frame: forki3_base_footprint_link
+      Value: Orbit (rviz_default_plugins)
+      Yaw: 1.6931825876235962
+    Saved: ~
+Window Geometry:
+  Displays:
+    collapsed: false
+  Height: 900
+  Hide Left Dock: false
+  Hide Right Dock: false
+  QMainWindow State: 000000ff00000000fd00000001000000000000019b0000032efc0200000004fb0000001e0066006f0072006b005f00630061006d006500720061005f007200670062000000003b000000d60000001600fffffffb000000220066006f0072006b005f00630061006d006500720061005f0064006500700074006800000000e9000000a70000001600fffffffb000000100044006900730070006c006100790073010000003b000001ec000000c700fffffffb0000000a00560069006500770073010000022d0000013c000000a000ffffff000003ff0000032e00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  Views:
+    collapsed: false
+  Width: 1440
+  X: 60
+  Y: 40
+  fork_camera_depth:
+    collapsed: false
+  fork_camera_rgb:
+    collapsed: false

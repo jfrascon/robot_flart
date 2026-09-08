@@ -30,12 +30,6 @@ The common robot contains:
   <!-- ===================================================================== -->
   <!-- ARGS -->
   <!-- ===================================================================== -->
-  <!--
-  When the xacro file is used in a real deployment, use_sim_mode should be set to False, wich provokes that no
-  simulation plugins are loaded.
-  When the xacro file is used in simulation, use_sim_mode should be set to True, so the simulation plugins are loaded.
-  -->
-  <xacro:arg name="use_sim_mode" default="False"/>
   <xacro:arg name="namespace"    default=""/>
   <xacro:arg name="robot_name"   default="forki3"/>
   <!--
@@ -75,11 +69,6 @@ The common robot contains:
   -->
   <xacro:arg name="s_wheel_steering_joint_limits" default="-3.1416 3.1416 100.0 100000.0"/>
   <xacro:arg name="s_wheel_rotation_joint_limits" default="100.0 100000.0"/>
-  <xacro:arg name="s_wheel_max_contacts"          default="1"/>
-  <xacro:arg name="s_wheel_mu"                    default="0.05"/>
-  <xacro:arg name="s_wheel_mu2"                   default="0.5"/>
-  <xacro:arg name="s_wheel_slip1"                 default="0.005"/>
-  <xacro:arg name="s_wheel_slip2"                 default="0.0005"/>
 
   <!-- Arguments for the fork -->
   <xacro:arg name="fork_use_visual"     default="True"/>
@@ -101,7 +90,6 @@ The common robot contains:
 
   <!-- Create properties from args for easy manipulation. -->
 
-  <xacro:property name="use_sim_mode" value="$(arg use_sim_mode)"/>
   <xacro:property name="namespace"    value="$(arg namespace)"/>
   <xacro:property name="robot_name"   value="$(arg robot_name)"/>
 
@@ -111,16 +99,11 @@ The common robot contains:
   <!-- Set the property 'robot_prefix' -->
   <xacro:make_prefix prop_id="robot_prefix" name="${robot_name}"/>
 
-  <!--
-  If use_sim_mode is False (working in a real deployment), do not load the simulation configuration from the
-  simulation file.
-  If use_sim_mode is True (working in simulation mode), and a configuration file is provided, load the simulation
-  configuration from the file. If no configuration file is provided, use an empty configuration, so no gz-plugins are
-  loaded.
-  -->
-  <xacro:property name="sim_file"    value="$(arg sim_file)"/>
+  <!-- A non-empty sim_file enables the simulation plugins configured by that file. -->
+  <xacro:property name="sim_file_raw" value="$(arg sim_file)"/>
+  <xacro:property name="sim_file"     value="${str(sim_file_raw).strip()}"/>
   <xacro:property name="sim_cfg"
-                  value="${xacro.load_yaml(sim_file) if use_sim_mode and sim_file != '' else dict()}"/>
+                  value="${xacro.load_yaml(sim_file) if sim_file != '' else dict()}"/>
 
   <!-- Names for components -->
   <xacro:property name="base_name"                value="base"/>
@@ -315,11 +298,6 @@ The common robot contains:
   <xacro:property name="s_wheel_steering_joint_limits" value="$(arg s_wheel_steering_joint_limits)"/>
   <xacro:property name="s_wheel_rotation_joint_type"   value="continuous"/>
   <xacro:property name="s_wheel_rotation_joint_limits" value="$(arg s_wheel_rotation_joint_limits)"/>
-  <xacro:property name="s_wheel_max_contacts"          value="$(arg s_wheel_max_contacts)"/>
-  <xacro:property name="s_wheel_mu"                    value="$(arg s_wheel_mu)"/>
-  <xacro:property name="s_wheel_mu2"                   value="$(arg s_wheel_mu2)"/>
-  <xacro:property name="s_wheel_slip1"                 value="$(arg s_wheel_slip1)"/>
-  <xacro:property name="s_wheel_slip2"                 value="$(arg s_wheel_slip2)"/>
 
   <!-- z-coordinate of each steerable wheel w.r.t it parent frame -->
   <xacro:property name="z_s_wheel" value="${-body_ground_clearance + s_wheel_radius}"/>
@@ -377,11 +355,6 @@ The common robot contains:
                          steering_joint_limits="${s_wheel_steering_joint_limits}"
                          rotation_joint_type="${s_wheel_rotation_joint_type}"
                          rotation_joint_limits="${s_wheel_rotation_joint_limits}"
-                         max_contacts="${s_wheel_max_contacts}"
-                         mu="${s_wheel_mu}"
-                         mu2="${s_wheel_mu2}"
-                         slip1="${s_wheel_slip1}"
-                         slip2="${s_wheel_slip2}"
                          joint_parent_fr_wheel_fr="${x_s_wheel_longitudinal} 0.0 ${z_s_wheel} 0.0 0.0 0.0"/>
 
   <xacro:steerable_wheel name="${steerable_wheel_1_name}"
@@ -399,11 +372,6 @@ The common robot contains:
                          steering_joint_limits="${s_wheel_steering_joint_limits}"
                          rotation_joint_type="${s_wheel_rotation_joint_type}"
                          rotation_joint_limits="${s_wheel_rotation_joint_limits}"
-                         max_contacts="${s_wheel_max_contacts}"
-                         mu="${s_wheel_mu}"
-                         mu2="${s_wheel_mu2}"
-                         slip1="${s_wheel_slip1}"
-                         slip2="${s_wheel_slip2}"
                          joint_parent_fr_wheel_fr="${x_s_wheel_left} ${y_s_wheel_left} ${z_s_wheel} 0.0 0.0 0.0"/>
 
   <xacro:steerable_wheel name="${steerable_wheel_2_name}"
@@ -421,11 +389,6 @@ The common robot contains:
                          steering_joint_limits="${s_wheel_steering_joint_limits}"
                          rotation_joint_type="${s_wheel_rotation_joint_type}"
                          rotation_joint_limits="${s_wheel_rotation_joint_limits}"
-                         max_contacts="${s_wheel_max_contacts}"
-                         mu="${s_wheel_mu}"
-                         mu2="${s_wheel_mu2}"
-                         slip1="${s_wheel_slip1}"
-                         slip2="${s_wheel_slip2}"
                          joint_parent_fr_wheel_fr="${x_s_wheel_right} ${y_s_wheel_right} ${z_s_wheel} 0.0 0.0 0.0"/>
 
   <!-- ===================================================================== -->
@@ -498,7 +461,7 @@ The common robot contains:
   <!-- PLUGINS FOR THE BASE -->
   <!-- ===================================================================== -->
 
-  <xacro:if value="${use_sim_mode}">
+  <xacro:if value="${sim_file != ''}">
     <gazebo>
       <!--
       To find the reference for the system Gazebo plugins:
@@ -529,7 +492,11 @@ The common robot contains:
         -->
         <xacro:property name="bvc_topic" value="${base_velocity_controller_sim_cfg.get('topic', '')}"/>
 
-        <!-- If the topic is empty, then the plugin is not loaded. -->
+        <xacro:if value="${bvc_topic == ''}">
+          ${xacro.fatal(
+            "base_velocity_controller.topic is required when base_velocity_controller.enabled is true.")}
+        </xacro:if>
+
         <xacro:if value="${bvc_topic != ''}">
           <xacro:resolve_topic prop_id="bvc_resolved_topic"
                                topic="${bvc_topic}"
@@ -549,71 +516,83 @@ The common robot contains:
       </xacro:if>
 
       <!--
-      Insert the `OdometryPublisher` Gazebo plugin to publish true pose of the robot's w.r.t a selected fixed frame in
-      Gazebo.
-      IMPORTANT: The fixed frame does not need to be the world frame of Gazebo, it can be any pose (position +
-      orientation) in Gazebo. For this goal you use the fields ....
-      More details about this plugin in package://robotics_description/urdf/gz_system_plugins/plugin_odometry_publisher_macro.xacro
+      Publish the pose of the robot base with respect to a configured reference frame.
+      More details are available in
+      package://robotics_description/urdf/gz_system_plugins/plugin_pose_publisher_in_reference_frame_macro.xacro.
       -->
-      <xacro:property name="base_pose_ground_truth_publisher_sim_cfg"
-                      value="${sim_cfg.get('base_pose_ground_truth_publisher', dict())}"/>
+      <xacro:property name="pose_publisher_sim_cfg"
+                      value="${sim_cfg.get('pose_publisher', dict())}"/>
 
-      <xacro:if value="${base_pose_ground_truth_publisher_sim_cfg.get('enabled', False)}">
-        <!--
-        Preppend the prefix `bpgtp_` to all the properties related to the (b)ase (p)ose (g)round
-        (t)ruth (p)ublisher Gazebo plugin, to avoid name conflicts with other Gazebo plugins.
-        -->
-        <xacro:property name="bpgtp_nav_topic_no_cov"
-                        value="${base_pose_ground_truth_publisher_sim_cfg.get('nav_topic_no_cov', '')}"/>
+      <xacro:if value="${pose_publisher_sim_cfg.get('enabled', False)}">
+        <xacro:property name="pose_pub_topic"
+                        value="${pose_publisher_sim_cfg.get('topic', '') or ''}"/>
+        <xacro:property name="pose_pub_topic_with_covariance"
+                        value="${pose_publisher_sim_cfg.get('topic_with_covariance', '') or ''}"/>
+        <xacro:property name="pose_pub_tf_topic"
+                        value="${pose_publisher_sim_cfg.get('tf_topic', '') or ''}"/>
 
-        <xacro:property name="bpgtp_nav_topic_cov"
-                        value="${base_pose_ground_truth_publisher_sim_cfg.get('nav_topic_cov', '')}"/>
+        <xacro:if value="${pose_pub_topic == '' and pose_pub_topic_with_covariance == '' and pose_pub_tf_topic == ''}">
+          ${xacro.fatal("pose_publisher requires at least one output topic when enabled.")}
+        </xacro:if>
 
-        <xacro:property name="bpgtp_tf_topic"
-                        value="${base_pose_ground_truth_publisher_sim_cfg.get('tf_topic', '')}"/>
+        <xacro:if value="${pose_pub_topic != '' or pose_pub_topic_with_covariance != '' or pose_pub_tf_topic != ''}">
+          <xacro:if value="${pose_pub_topic != ''}">
+            <xacro:resolve_topic prop_id="pose_pub_resolved_topic"
+                                 topic="${pose_pub_topic}"
+                                 namespace="${robot_namespace}"/>
+          </xacro:if>
+          <xacro:if value="${pose_pub_topic == ''}">
+            <xacro:property name="pose_pub_resolved_topic" value=""/>
+          </xacro:if>
 
-        <!-- If one of the topics is empty, then the plugin is not loaded. -->
-        <xacro:if value="${bpgtp_nav_topic_cov != '' and bpgtp_nav_topic_no_cov != '' and bpgtp_tf_topic != ''}">
-          <xacro:resolve_topic prop_id="bpgtp_resolved_nav_topic_cov"
-                               topic="${bpgtp_nav_topic_cov}"
-                               namespace="${robot_namespace}"/>
+          <xacro:if value="${pose_pub_topic_with_covariance != ''}">
+            <xacro:resolve_topic prop_id="pose_pub_resolved_topic_with_covariance"
+                                 topic="${pose_pub_topic_with_covariance}"
+                                 namespace="${robot_namespace}"/>
+          </xacro:if>
+          <xacro:if value="${pose_pub_topic_with_covariance == ''}">
+            <xacro:property name="pose_pub_resolved_topic_with_covariance" value=""/>
+          </xacro:if>
 
-          <xacro:resolve_topic prop_id="bpgtp_resolved_nav_topic_no_cov"
-                               topic="${bpgtp_nav_topic_no_cov}"
-                               namespace="${robot_namespace}"/>
+          <xacro:if value="${pose_pub_tf_topic != ''}">
+            <xacro:resolve_topic prop_id="pose_pub_resolved_tf_topic"
+                                 topic="${pose_pub_tf_topic}"
+                                 namespace="${robot_namespace}"/>
+          </xacro:if>
+          <xacro:if value="${pose_pub_tf_topic == ''}">
+            <xacro:property name="pose_pub_resolved_tf_topic" value=""/>
+          </xacro:if>
 
-          <xacro:resolve_topic prop_id="bpgtp_resolved_tf_topic"
-                               topic="${bpgtp_tf_topic}"
-                               namespace="${robot_namespace}"/>
+          <xacro:property name="pose_pub_reference_frame"
+                          value="${pose_publisher_sim_cfg.get('reference_frame', '') or ''}"/>
+          <xacro:if value="${pose_pub_reference_frame == ''}">
+            ${xacro.fatal("pose_publisher.reference_frame is required when enabled.")}
+          </xacro:if>
 
-          <xacro:property name="bpgtp_fixed_frame"
-                          value="${base_pose_ground_truth_publisher_sim_cfg.get('fixed_frame', 'sim_world')}"/>
+          <xacro:property name="pose_pub_local_offset"
+                          value="${pose_publisher_sim_cfg.get(
+                            'local_offset', dict(x=0, y=0, z=0, R=0, P=0, Y=0))}"/>
+          <xacro:property name="pose_pub_global_offset"
+                          value="${pose_publisher_sim_cfg.get(
+                            'global_offset', dict(x=0, y=0, z=0, R=0, P=0, Y=0))}"/>
+          <xacro:property name="pose_pub_gaussian_noise"
+                          value="${pose_publisher_sim_cfg.get('gaussian_noise', 0)}"/>
+          <xacro:property name="pose_pub_msg_publication_freq"
+                          value="${pose_publisher_sim_cfg.get('msg_publication_freq', 50)}"/>
 
-          <xacro:property name="bpgtp_offset"
-                          value="${base_pose_ground_truth_publisher_sim_cfg.get('offset', dict(x=0, y=0, z=0, R=0, P=0, Y=0))}"/>
-
-          <xacro:property name="bpgtp_global_offset"
-                          value="${base_pose_ground_truth_publisher_sim_cfg.get('global_offset', dict(x=0, y=0, z=0, R=0, P=0, Y=0))}"/>
-
-          <xacro:property name="bpgtp_gaussian_noise"
-                          value="${base_pose_ground_truth_publisher_sim_cfg.get('gaussian_noise', 0)}"/>
-
-          <xacro:property name="bpgtp_publication_frequency"
-                          value="${base_pose_ground_truth_publisher_sim_cfg.get('publication_frequency', 50)}"/>
-
-          <xacro:plugin_odometry_publisher
-            odom_frame="${bpgtp_fixed_frame}"
-            robot_base_frame="${robot_prefix}${base_name}_footprint_link"
-            odom_publish_frequency="${bpgtp_publication_frequency}"
-            odom_topic="${bpgtp_resolved_nav_topic_no_cov}"
-            odom_covariance_topic="${bpgtp_resolved_nav_topic_cov}"
-            tf_topic="${bpgtp_resolved_tf_topic}"
+          <xacro:plugin_pose_publisher_in_reference_frame
+            reference_frame="${pose_pub_reference_frame}"
+            robot_frame="${robot_prefix}${base_name}_footprint_link"
+            msg_publication_freq="${pose_pub_msg_publication_freq}"
+            topic="${pose_pub_resolved_topic}"
+            topic_with_covariance="${pose_pub_resolved_topic_with_covariance}"
+            tf_topic="${pose_pub_resolved_tf_topic}"
             dimensions="2"
-            xyz_offset="${bpgtp_offset['x']} ${bpgtp_offset['y']} ${bpgtp_offset['z']}"
-            rpy_offset="${bpgtp_offset['R']} ${bpgtp_offset['P']} ${bpgtp_offset['Y']}"
-            xyz_global_offset="${bpgtp_global_offset['x']} ${bpgtp_global_offset['y']} ${bpgtp_global_offset['z']}"
-            rpy_global_offset="${bpgtp_global_offset['R']} ${bpgtp_global_offset['P']} ${bpgtp_global_offset['Y']}"
-            gaussian_noise="${bpgtp_gaussian_noise}"/>
+            xyz_offset="${pose_pub_local_offset['x']} ${pose_pub_local_offset['y']} ${pose_pub_local_offset['z']}"
+            rpy_offset="${pose_pub_local_offset['R']} ${pose_pub_local_offset['P']} ${pose_pub_local_offset['Y']}"
+            xyz_global_offset="${pose_pub_global_offset['x']} ${pose_pub_global_offset['y']} ${pose_pub_global_offset['z']}"
+            rpy_global_offset="${pose_pub_global_offset['R']} ${pose_pub_global_offset['P']} ${pose_pub_global_offset['Y']}"
+            gaussian_noise="${pose_pub_gaussian_noise}"/>
         </xacro:if>
       </xacro:if>
 
@@ -641,7 +620,11 @@ The common robot contains:
         <xacro:property name="sw0_sj_topic"
                         value="${sw0_sj_controller_sim_cfg.get('topic', '')}"/>
 
-        <!-- No topic, no Gazebo plugin -->
+        <xacro:if value="${sw0_sj_topic == ''}">
+          ${xacro.fatal(
+            "base_steerable_wheel_0_steering_joint_controller.topic is required when enabled.")}
+        </xacro:if>
+
         <xacro:if value="${sw0_sj_topic != ''}">
           <xacro:plugin_swheel_steering_joint_am_pos_velcmd
             joint_name="${robot_prefix}${steerable_wheel_0_name}_steering_joint"
@@ -664,7 +647,11 @@ The common robot contains:
         <xacro:property name="sw1_sj_topic"
                         value="${sw1_sj_controller_sim_cfg.get('topic', '')}"/>
 
-        <!-- No topic, no Gazebo plugin -->
+        <xacro:if value="${sw1_sj_topic == ''}">
+          ${xacro.fatal(
+            "base_steerable_wheel_1_steering_joint_controller.topic is required when enabled.")}
+        </xacro:if>
+
         <xacro:if value="${sw1_sj_topic != ''}">
           <xacro:plugin_swheel_steering_joint_am_pos_velcmd
             joint_name="${robot_prefix}${steerable_wheel_1_name}_steering_joint"
@@ -687,7 +674,11 @@ The common robot contains:
         <xacro:property name="sw2_sj_topic"
                         value="${sw2_sj_controller_sim_cfg.get('topic', '')}"/>
 
-        <!-- No topic, no Gazebo plugin -->
+        <xacro:if value="${sw2_sj_topic == ''}">
+          ${xacro.fatal(
+            "base_steerable_wheel_2_steering_joint_controller.topic is required when enabled.")}
+        </xacro:if>
+
         <xacro:if value="${sw2_sj_topic != ''}">
           <xacro:plugin_swheel_steering_joint_am_pos_velcmd
             joint_name="${robot_prefix}${steerable_wheel_2_name}_steering_joint"
@@ -720,7 +711,11 @@ The common robot contains:
         <xacro:property name="sw0_rj_topic"
                         value="${sw0_rj_controller_sim_cfg.get('topic', '')}"/>
 
-        <!-- No topic, no Gazebo plugin -->
+        <xacro:if value="${sw0_rj_topic == ''}">
+          ${xacro.fatal(
+            "base_steerable_wheel_0_rotation_joint_controller.topic is required when enabled.")}
+        </xacro:if>
+
         <xacro:if value="${sw0_rj_topic != ''}">
           <xacro:plugin_wheel_rotation_joint_am_vel
             joint_name="${robot_prefix}${steerable_wheel_0_name}_rotation_joint"
@@ -742,7 +737,11 @@ The common robot contains:
         <xacro:property name="sw1_rj_topic"
                         value="${sw1_rj_controller_sim_cfg.get('topic', '')}"/>
 
-        <!-- No topic, no Gazebo plugin -->
+        <xacro:if value="${sw1_rj_topic == ''}">
+          ${xacro.fatal(
+            "base_steerable_wheel_1_rotation_joint_controller.topic is required when enabled.")}
+        </xacro:if>
+
         <xacro:if value="${sw1_rj_topic != ''}">
           <xacro:plugin_wheel_rotation_joint_am_vel
             joint_name="${robot_prefix}${steerable_wheel_1_name}_rotation_joint"
@@ -764,7 +763,11 @@ The common robot contains:
         <xacro:property name="sw2_rj_topic"
                         value="${sw2_rj_controller_sim_cfg.get('topic', '')}"/>
 
-        <!-- No topic, no Gazebo plugin -->
+        <xacro:if value="${sw2_rj_topic == ''}">
+          ${xacro.fatal(
+            "base_steerable_wheel_2_rotation_joint_controller.topic is required when enabled.")}
+        </xacro:if>
+
         <xacro:if value="${sw2_rj_topic != ''}">
           <xacro:plugin_wheel_rotation_joint_am_vel
             joint_name="${robot_prefix}${steerable_wheel_2_name}_rotation_joint"
@@ -788,7 +791,10 @@ The common robot contains:
       <xacro:if value="${fork_controller_sim_cfg.get('enabled', False)}">
         <xacro:property name="fork_topic" value="${fork_controller_sim_cfg.get('topic', '')}"/>
 
-        <!-- No topic, no Gazebo plugin -->
+        <xacro:if value="${fork_topic == ''}">
+          ${xacro.fatal("fork_controller.topic is required when fork_controller.enabled is true.")}
+        </xacro:if>
+
         <xacro:if value="${fork_topic != ''}">
           <xacro:plugin_fork_joint_f64_pos_pid
             joint_name="${robot_prefix}${fork_name}_carriage_joint"
